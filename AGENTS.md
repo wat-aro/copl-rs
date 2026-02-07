@@ -48,6 +48,21 @@ Last updated: 2026-02-07
 - Base cycle: `Red -> Green -> Refactor`.
 - Start from the smallest failing test, implement the minimum to pass, then refactor.
 
+## ADR Policy
+
+- Create or update an ADR under `docs/adr/` when any of the following changes:
+  - Public CLI contract (command shape, options, compatibility rules)
+  - Module boundaries or ownership of major components
+  - Development process and quality gates that affect team workflow
+- Include `Context`, `Decision`, and `Consequences` in each ADR.
+
+## Documentation Sync Policy
+
+- When implementation changes architecture, command behavior, or operational policy:
+  - Update `docs/design.md` in the same PR/commit set.
+  - Update `README.md` if user-facing behavior or setup changes.
+  - Update `docs/PLAN.md` progress when milestone status changes.
+
 ## Pre-Commit Validation
 
 - Run these checks by default before committing:
@@ -70,5 +85,17 @@ Last updated: 2026-02-07
 ## Operations
 
 - Keep progress details updated in `docs/PLAN.md`.
+- Keep architecture and design decisions updated in `docs/design.md`.
+- Keep architecture decision records in `docs/adr/`.
 - Codex should refer to `docs/PLAN.md` when checking implementation plans.
+- Codex should refer to `docs/design.md` when discussing design and refactoring decisions.
+- Codex should refer to `docs/adr/` when discussing historical design tradeoffs.
 - If policies change, update both this file and `docs/PLAN.md`.
+
+## Definition of Done
+
+- A task is considered done when all applicable items are completed:
+  - Code changes are implemented.
+  - Tests for the changed behavior are added/updated.
+  - Related docs are updated (`README.md`, `docs/design.md`, `docs/PLAN.md`, ADRs as needed).
+  - Validation gates pass (`cargo fmt`, `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`).
