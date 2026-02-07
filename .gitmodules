@@ -1,0 +1,3 @@
+[submodule "copl"]
+	path = copl
+	url = git@github.com:wat-aro/copl.git

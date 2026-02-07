@@ -1,0 +1,9 @@
+pub mod nat;
+
+use crate::core::{CheckError, CheckReport, Game, GameKind};
+
+pub fn run_checker(game: GameKind, source: &str) -> Result<CheckReport, CheckError> {
+    match game {
+        GameKind::Nat => nat::NatGame.check(source),
+    }
+}
