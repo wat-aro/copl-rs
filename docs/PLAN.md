@@ -1,7 +1,7 @@
 # Nat Checker 実装計画
 
 最終更新日: 2026-02-06
-このフェーズのスコープ: M1 実装中（骨組みと CLI 経路まで着手済み）
+このフェーズのスコープ: M2 実装中（Nat 構文とパーサまで着手済み）
 
 ## 目的
 
@@ -28,12 +28,12 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - [x] モジュール境界（`cli` / `core` / `games`、Nat は `syntax` / `parser` / `checker`）を合意する。
 - [x] game レジストリ方式（`enum GameKind + match`）を合意する。
 - [x] プロジェクトの足場（`Cargo.toml` と `src/` の初期構成）を作る。
-- [ ] Nat の項と判断を表す型付き AST を実装する。
+- [x] Nat の項と判断を表す型付き AST を実装する。
 - [ ] 規則ごとの型付き導出ノード（rule-indexed）を実装する。
-- [ ] Nat ASCII 記法のパーサを実装する。
+- [x] Nat ASCII 記法のパーサを実装する。
 - [ ] Nat 導出の checker 本体を実装する。
 - [x] `copl-rs <subcommand> --game <name> [file]` の CLI を実装する。
-- [ ] 正常系フィクスチャ（`001.copl`-`008.copl`）のテストを追加する。
+- [x] 正常系フィクスチャ（`001.copl`-`008.copl`）のテストを追加する。
 - [ ] 異常系テスト（規則不一致、木構造不正、結果項の不一致）を追加する。
 - [ ] 新しい game を追加する手順を文書化する。
 

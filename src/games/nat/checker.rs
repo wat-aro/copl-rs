@@ -11,10 +11,10 @@ impl Game for NatGame {
     }
 
     fn check(&self, source: &str) -> Result<CheckReport, CheckError> {
-        let _parsed = parse_source(source)?;
+        let parsed = parse_source(source)?;
         Ok(CheckReport {
             game: self.kind(),
-            summary: "checker route reached (M1 placeholder)".to_string(),
+            summary: format!("parsed root rule {}", parsed.rule.as_str()),
         })
     }
 }
