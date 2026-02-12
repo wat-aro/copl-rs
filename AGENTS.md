@@ -2,7 +2,7 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-07
+Last updated: 2026-02-12
 
 ## Scope
 
@@ -74,7 +74,7 @@ Last updated: 2026-02-07
 ## Validation and Error Policy
 
 - Use a hand-written recursive-descent parser.
-- Unknown rule names should fail immediately.
+- Unknown rule names should be reported as `RuleViolation` errors during checker rule resolution.
 - Error output is plain text first (JSON mode can be considered later).
 
 ## Input Specification References

@@ -20,7 +20,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 ### Out of scope now
 
 - `resolver` command implementation.
-- Full Nat derivation parser and rule validation.
+- JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
 
@@ -98,11 +98,13 @@ Error output is currently plain text.
 
 ## 7. Nat Implementation Status
 
-Current Nat checker is a scaffold:
+Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 
-- `parser.rs` returns `NatSource` for non-empty input.
-- `checker.rs` invokes parser and returns placeholder summary.
-- Full grammar and derivation-rule checking are not implemented yet.
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `checker.rs` validates Nat rule constraints (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
+- Rule definitions are fixed and referenced statically from checker-local rule IDs.
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 
 ## 8. Extension Strategy
 
@@ -138,12 +140,12 @@ Development style follows TDD (`Red -> Green -> Refactor`).
 
 ## 10. Open Items
 
-- Define full Nat AST and parser/lexer boundaries.
-- Implement Nat rule validation with precise diagnostics.
+- Improve diagnostics to pinpoint failing premise paths more explicitly.
+- Expand invalid-case fixtures for broader rule-violation coverage.
 - Decide if CLI parsing should be split per-subcommand module before adding `resolver`.
 - Decide output schema for machine-readable mode (if JSON is introduced later).
 
 ## 11. Current Direction Note
 
-- Nat derivations are parsed into a generic tree (`judgment + rule + premises`).
+- Nat derivations are parsed into a generic tree (`judgment + raw rule name + subderivations`).
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).

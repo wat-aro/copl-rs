@@ -1,7 +1,7 @@
 use crate::core::{CheckError, SourceSpan};
 
 use super::lexer::{tokenize, Token, TokenKind};
-use super::syntax::{NatDerivation, NatJudgment, NatOperator, NatRule, NatTerm};
+use super::syntax::{NatDerivation, NatJudgment, NatOperator, NatTerm};
 
 pub fn parse_source(source: &str) -> Result<NatDerivation, CheckError> {
     if source.trim().is_empty() {
@@ -28,14 +28,14 @@ impl Parser {
     fn parse_derivation(&mut self) -> Result<NatDerivation, CheckError> {
         let judgment = self.parse_judgment()?;
         self.expect_keyword_by()?;
-        let rule = self.parse_rule()?;
+        let rule_name = self.parse_rule_name()?;
         self.expect_lbrace()?;
-        let premises = self.parse_premises()?;
+        let subderivations = self.parse_subderivations()?;
         self.expect_rbrace()?;
         Ok(NatDerivation {
             judgment,
-            rule,
-            premises,
+            rule_name,
+            subderivations,
         })
     }
 
@@ -76,24 +76,22 @@ impl Parser {
         Err(self.error_here("expected Nat term"))
     }
 
-    fn parse_rule(&mut self) -> Result<NatRule, CheckError> {
+    fn parse_rule_name(&mut self) -> Result<String, CheckError> {
         let token = self.peek();
         let TokenKind::Identifier(name) = &token.kind else {
             return Err(self.error_here("expected rule name"));
         };
         let name = name.clone();
-        let span = token.span.clone();
         self.bump();
-        NatRule::parse(&name)
-            .ok_or_else(|| self.error_with_span(&format!("unknown rule name: {name}"), span))
+        Ok(name)
     }
 
-    fn parse_premises(&mut self) -> Result<Vec<NatDerivation>, CheckError> {
+    fn parse_subderivations(&mut self) -> Result<Vec<NatDerivation>, CheckError> {
         if self.at_rbrace() {
             return Ok(Vec::new());
         }
 
-        let mut premises = vec![self.parse_derivation()?];
+        let mut subderivations = vec![self.parse_derivation()?];
         loop {
             if self.at_rbrace() {
                 break;
@@ -102,9 +100,9 @@ impl Parser {
             if self.at_rbrace() {
                 break;
             }
-            premises.push(self.parse_derivation()?);
+            subderivations.push(self.parse_derivation()?);
         }
-        Ok(premises)
+        Ok(subderivations)
     }
 
     fn expect_keyword_by(&mut self) -> Result<(), CheckError> {
@@ -250,14 +248,14 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::parse_source;
-    use crate::games::nat::syntax::{NatOperator, NatRule, NatTerm};
+    use crate::games::nat::syntax::{NatOperator, NatTerm};
 
     #[test]
     fn parses_fixture_001() {
         let source = include_str!("../../../copl/001.copl");
         let parsed = parse_source(source).expect("fixture should parse");
-        assert_eq!(parsed.rule, NatRule::PZero);
-        assert!(parsed.premises.is_empty());
+        assert_eq!(parsed.rule_name, "P-Zero");
+        assert!(parsed.subderivations.is_empty());
         assert_eq!(parsed.judgment.operator, NatOperator::Plus);
         assert_eq!(parsed.judgment.left, NatTerm::Z);
         assert_eq!(parsed.judgment.right, NatTerm::Z);
@@ -280,9 +278,9 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_rule_name_immediately() {
+    fn accepts_unknown_rule_name_as_syntax() {
         let source = "Z plus Z is Z by P-Unknown {}";
-        let err = parse_source(source).expect_err("parser should fail");
-        assert!(err.message().contains("unknown rule name"));
+        let parsed = parse_source(source).expect("parser should accept syntax");
+        assert_eq!(parsed.rule_name, "P-Unknown");
     }
 }

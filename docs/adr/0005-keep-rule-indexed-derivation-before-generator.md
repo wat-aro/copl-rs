@@ -15,8 +15,8 @@ For CoPL derivation checking, premise-count mismatches are better classified as 
 
 Use a generic derivation tree for Nat parser output and move premise-arity validation to checker.
 
-- Parse Nat input into `judgment + rule + premises` without enforcing rule-specific premise counts in parser.
-- Keep unknown rule names as immediate parse errors.
+- Parse Nat input into `judgment + rule + subderivations` (premise-proving child derivations) without enforcing rule-specific premise counts in parser.
+- Keep unknown rule names syntactically valid in parser, and report them as `RuleViolation` errors during checker rule resolution.
 - Validate rule-specific premise arity and structural constraints in checker.
 - Report these violations as `RuleViolation`, not `Parse`.
 

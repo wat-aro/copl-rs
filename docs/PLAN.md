@@ -1,7 +1,7 @@
 # Nat Checker 実装計画
 
 最終更新日: 2026-02-12
-このフェーズのスコープ: M2 実装中（Nat 構文とパーサまで着手済み）
+このフェーズのスコープ: M3 実装中（Nat checker の規則検証まで着手済み）
 
 ## 目的
 
@@ -22,19 +22,19 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - [x] Nat の規則（`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`）と ASCII 入力例を確認する。
 - [x] CLI の大枠方針（`copl-rs <subcommand> --game <name> <file>`）を合意する。
 - [x] パーサ方針（手書き再帰下降）を合意する。
-- [x] 厳格性方針（未知の規則名は即時エラー）を合意する。
+- [x] 厳格性方針（未知の規則名は checker で `RuleViolation` エラーとして扱う）を合意する。
 - [x] エラー出力方針（まずはプレーンテキスト）を合意する。
 - [x] 初期 crate 構成（1 crate）と `main` / `lib` 分離方針を合意する。
 - [x] モジュール境界（`cli` / `core` / `games`、Nat は `syntax` / `parser` / `checker`）を合意する。
 - [x] game レジストリ方式（`enum GameKind + match`）を合意する。
 - [x] プロジェクトの足場（`Cargo.toml` と `src/` の初期構成）を作る。
 - [x] Nat の項と判断を表す型付き AST を実装する。
-- [x] 汎用導出木（`rule + premises`）を実装する。
+- [x] 汎用導出木（`rule + subderivations`）を実装する。
 - [x] Nat ASCII 記法のパーサを実装する。
-- [ ] Nat 導出の checker 本体を実装する。
+- [x] Nat 導出の checker 本体を実装する。
 - [x] `copl-rs <subcommand> --game <name> [file]` の CLI を実装する。
 - [x] 正常系フィクスチャ（`001.copl`-`008.copl`）のテストを追加する。
-- [ ] 異常系テスト（規則不一致、木構造不正、結果項の不一致）を追加する。
+- [x] 異常系テスト（規則不一致、木構造不正、結果項の不一致）を追加する。
 - [ ] 新しい game を追加する手順を文書化する。
 
 ## 規則モデル（Nat）
@@ -48,8 +48,9 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 想定する型表現:
 - `NatTerm`: 再帰 enum（`Z | S(Box<NatTerm>)`）
 - `NatJudgment`: `Plus` と `Times` の和型
-- `NatDerivation`: judgment / rule / premises を保持する汎用導出木
-- premises 個数など規則ごとの整合性は checker で検証し、違反は `RuleViolation` として扱う
+- `NatDerivation`: judgment / raw rule name / subderivations（前提に対応する子導出）を保持する汎用導出木
+- `NatDerivationRule`: checker 側で静的定義する規則仕様（arity と推論関数）
+- subderivations 個数など規則ごとの整合性は checker で検証し、違反は `RuleViolation` として扱う
 
 ## 提案アーキテクチャ（将来の game 追加対応）
 
@@ -80,7 +81,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - 規則名（`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`）を保持する。
 - 完了条件: `001.copl`-`008.copl` を型付き Nat 証明木へ変換できる。
 - 注記（2026-02-12）:
-  - premises 個数不一致はパース段階で拒否せず、checker の導出規則違反として扱う方針に変更。
+  - subderivations 個数不一致はパース段階で拒否せず、checker の導出規則違反として扱う方針に変更。
 
 ### M3: Nat チェック
 - 型付き前提から宣言的に規則検証を行う。
@@ -103,12 +104,12 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - 当面のサブコマンドは `checker` のみとする（`resolver` は将来追加）。
 - game 指定は共通で `--game <name>` を使う。
 - パーサは手書き再帰下降を採用する。
-- 未知の規則名は即時エラーとする。
+- 未知の規則名は parser では受理し、checker の規則解決で `RuleViolation` エラーとして扱う。
 - エラー出力はまずプレーンテキストのみとする（JSON は後続検討）。
 - 初期構成は 1 crate とし、`main` は CLI、ロジックは `src/lib.rs` に置く。
 - モジュール境界は `cli` / `core` / `games` とし、`games/nat` は `syntax` / `parser` / `checker` に分ける。
 - game レジストリは `enum GameKind + match` を採用する。
-- Nat は汎用導出木（`rule + premises`）としてパースし、premises 個数不一致はパースエラーではなく導出規則違反として checker で扱う（ADR-0005）。
+- Nat は汎用導出木（`rule + subderivations`）としてパースし、subderivations 個数不一致はパースエラーではなく導出規則違反として checker で扱う（ADR-0005）。
 - 想定形:
   - `copl-rs checker --game nat <file>`
   - （将来）`copl-rs resolver --game nat <file>`

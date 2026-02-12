@@ -5,15 +5,17 @@ The current target is a checker for the `Nat` game.
 
 ## Current Status
 
-- Implementation phase: M1 (project skeleton and CLI route)
+- Implementation phase: M3 (Nat checker validation)
 - Implemented:
   - CLI: `copl-rs checker --game nat [file]`
   - `stdin` input when `[file]` is omitted
   - Game dispatch via `enum GameKind + match`
   - Input size limit (8 MiB) and UTF-8 validation
+  - Nat ASCII parser (`judgment + raw rule name + subderivations`)
+  - Nat derivation rule validation (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`)
 - Not implemented yet:
-  - Full Nat parser
-  - Full Nat derivation rule checking (currently returns a placeholder result)
+  - `resolver` subcommand
+  - Machine-readable (JSON) error output mode
 
 ## Requirements
 
