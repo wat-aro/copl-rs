@@ -26,6 +26,7 @@ impl Parser {
     }
 
     fn parse_derivation(&mut self) -> Result<NatDerivation, CheckError> {
+        let span = self.peek().span.clone();
         let judgment = self.parse_judgment()?;
         self.expect_keyword_by()?;
         let rule_name = self.parse_rule_name()?;
@@ -33,6 +34,7 @@ impl Parser {
         let subderivations = self.parse_subderivations()?;
         self.expect_rbrace()?;
         Ok(NatDerivation {
+            span,
             judgment,
             rule_name,
             subderivations,
@@ -282,5 +284,19 @@ mod tests {
         let source = "Z plus Z is Z by P-Unknown {}";
         let parsed = parse_source(source).expect("parser should accept syntax");
         assert_eq!(parsed.rule_name, "P-Unknown");
+    }
+
+    #[test]
+    fn records_derivation_spans_for_root_and_subderivations() {
+        let source = r#"
+S(Z) plus Z is S(Z) by P-Succ {
+  Z plus Z is Z by P-Zero {}
+}
+"#;
+        let parsed = parse_source(source).expect("parser should succeed");
+        assert_eq!(parsed.span.line, 2);
+        assert_eq!(parsed.span.column, 1);
+        assert_eq!(parsed.subderivations[0].span.line, 3);
+        assert_eq!(parsed.subderivations[0].span.column, 3);
     }
 }

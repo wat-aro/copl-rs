@@ -13,6 +13,7 @@ The current target is a checker for the `Nat` game.
   - Input size limit (8 MiB) and UTF-8 validation
   - Nat ASCII parser (`judgment + raw rule name + subderivations`)
   - Nat derivation rule validation (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`)
+  - Rule-violation diagnostics with source location (`line:column`)
 - Not implemented yet:
   - `resolver` subcommand
   - Machine-readable (JSON) error output mode

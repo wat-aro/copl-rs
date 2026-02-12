@@ -63,6 +63,10 @@ impl Game for NatGame {
 }
 
 fn infer_judgment(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
+    infer_judgment_impl(derivation).map_err(|err| ensure_error_has_span(err, derivation))
+}
+
+fn infer_judgment_impl(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
     let inferred_subderivations = derivation
         .subderivations
         .iter()
@@ -92,6 +96,14 @@ fn infer_judgment(derivation: &NatDerivation) -> Result<NatJudgment, CheckError>
     }
 
     Ok(inferred)
+}
+
+fn ensure_error_has_span(err: CheckError, derivation: &NatDerivation) -> CheckError {
+    if err.span().is_some() {
+        err
+    } else {
+        err.with_span(derivation.span.clone())
+    }
 }
 
 fn infer_p_zero(declared: &NatJudgment, _premises: &[NatJudgment]) -> Result<NatJudgment, String> {
@@ -176,6 +188,7 @@ fn rule_violation(derivation: &NatDerivation, detail: impl Into<String>) -> Chec
         format_judgment(&derivation.judgment),
         derivation.rule_name
     ))
+    .with_span(derivation.span.clone())
 }
 
 fn format_judgment(judgment: &NatJudgment) -> String {
@@ -232,6 +245,11 @@ mod tests {
         let err = NatGame.check(source).expect_err("check should fail");
         assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
         assert!(err.message().contains("expects 0 premise(s), but got 1"));
+        let span = err
+            .span()
+            .expect("checker inconsistency should have source span");
+        assert_eq!(span.line, 1);
+        assert_eq!(span.column, 1);
     }
 
     #[test]
@@ -240,6 +258,11 @@ mod tests {
         let err = NatGame.check(source).expect_err("check should fail");
         assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
         assert!(err.message().contains("does not match declared judgment"));
+        let span = err
+            .span()
+            .expect("checker inconsistency should have source span");
+        assert_eq!(span.line, 1);
+        assert_eq!(span.column, 1);
     }
 
     #[test]
@@ -248,6 +271,11 @@ mod tests {
         let err = NatGame.check(source).expect_err("check should fail");
         assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
         assert!(err.message().contains("does not match declared judgment"));
+        let span = err
+            .span()
+            .expect("checker inconsistency should have source span");
+        assert_eq!(span.line, 1);
+        assert_eq!(span.column, 1);
     }
 
     #[test]
@@ -263,6 +291,11 @@ S(Z) times Z is Z by T-Succ {
         let err = NatGame.check(source).expect_err("check should fail");
         assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
         assert!(err.message().contains("T-Succ premises must connect as"));
+        let span = err
+            .span()
+            .expect("checker inconsistency should have source span");
+        assert_eq!(span.line, 2);
+        assert_eq!(span.column, 1);
     }
 
     #[test]
@@ -271,5 +304,22 @@ S(Z) times Z is Z by T-Succ {
         let err = NatGame.check(source).expect_err("check should fail");
         assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
         assert!(err.message().contains("unknown rule name"));
+        let span = err.span().expect("rule violation should have source span");
+        assert_eq!(span.line, 1);
+        assert_eq!(span.column, 1);
+    }
+
+    #[test]
+    fn reports_rule_violation_at_failing_subderivation_location() {
+        let source = r#"
+S(Z) plus Z is S(Z) by P-Succ {
+  Z plus Z is Z by P-Unknown {}
+}
+"#;
+        let err = NatGame.check(source).expect_err("check should fail");
+        assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
+        let span = err.span().expect("rule violation should have source span");
+        assert_eq!(span.line, 3);
+        assert_eq!(span.column, 3);
     }
 }

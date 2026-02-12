@@ -1,3 +1,5 @@
+use crate::core::SourceSpan;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NatTerm {
     Z,
@@ -20,6 +22,7 @@ pub struct NatJudgment {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NatDerivation {
+    pub span: SourceSpan,
     pub judgment: NatJudgment,
     pub rule_name: String,
     pub subderivations: Vec<NatDerivation>,

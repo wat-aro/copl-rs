@@ -105,6 +105,7 @@ Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 - Rule definitions are fixed and referenced statically from checker-local rule IDs.
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`).
 
 ## 8. Extension Strategy
 

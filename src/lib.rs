@@ -198,4 +198,24 @@ mod tests {
         .expect_err("run should fail");
         assert!(result.to_string().contains("I/O error"));
     }
+
+    #[test]
+    fn reports_rule_violation_with_source_location() {
+        let mut stdin =
+            &b"S(Z) plus Z is S(Z) by P-Succ {\n  Z plus Z is Z by P-Unknown {}\n}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        let message = result.to_string();
+        assert!(message.contains("unknown rule name: P-Unknown"));
+        assert!(message.contains("at 2:3"));
+    }
 }
