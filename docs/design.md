@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-07
+Last updated: 2026-02-12
 
 ## 1. Purpose
 
@@ -142,3 +142,8 @@ Development style follows TDD (`Red -> Green -> Refactor`).
 - Implement Nat rule validation with precise diagnostics.
 - Decide if CLI parsing should be split per-subcommand module before adding `resolver`.
 - Decide output schema for machine-readable mode (if JSON is introduced later).
+
+## 11. Current Direction Note
+
+- Nat derivations are parsed into a generic tree (`judgment + rule + premises`).
+- Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
