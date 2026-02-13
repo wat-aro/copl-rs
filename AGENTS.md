@@ -75,6 +75,7 @@ Last updated: 2026-02-12
 
 - Use a hand-written recursive-descent parser.
 - Unknown rule names should be reported as `RuleViolation` errors during checker rule resolution.
+- Checker inconsistency errors should include source location (`line:column`) of the failing derivation node.
 - Error output is plain text first (JSON mode can be considered later).
 
 ## Input Specification References

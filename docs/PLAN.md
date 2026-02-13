@@ -88,7 +88,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - 最初に失敗したノードを特定できる診断を返す。
 - 完了条件: 正常系フィクスチャが全通、異常系フィクスチャが期待通り失敗する。
 - 注記（2026-02-12）:
-  - `RuleViolation` には失敗した導出ノードの `line:column`（`SourceSpan`）を付与する。
+  - `RuleViolation` には失敗した導出ノードの `line:column`（`SourceSpan`）を付与する（ADR-0006）。
 
 ### M4: 拡張経路の整備
 - 次ゲーム向けに再利用抽象を整理する。
@@ -112,6 +112,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - モジュール境界は `cli` / `core` / `games` とし、`games/nat` は `syntax` / `parser` / `checker` に分ける。
 - game レジストリは `enum GameKind + match` を採用する。
 - Nat は汎用導出木（`rule + subderivations`）としてパースし、subderivations 個数不一致はパースエラーではなく導出規則違反として checker で扱う（ADR-0005）。
+- checker の不整合エラーには、失敗した導出ノードの `line:column` を必ず付与する（ADR-0006）。
 - 想定形:
   - `copl-rs checker --game nat <file>`
   - （将来）`copl-rs resolver --game nat <file>`

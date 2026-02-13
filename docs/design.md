@@ -150,3 +150,4 @@ Development style follows TDD (`Red -> Green -> Refactor`).
 
 - Nat derivations are parsed into a generic tree (`judgment + raw rule name + subderivations`).
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
+- Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
