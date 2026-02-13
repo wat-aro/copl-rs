@@ -6,18 +6,18 @@ pub enum NatTerm {
     S(Box<NatTerm>),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum NatOperator {
-    Plus,
-    Times,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NatJudgment {
-    pub left: NatTerm,
-    pub operator: NatOperator,
-    pub right: NatTerm,
-    pub result: NatTerm,
+pub enum NatJudgment {
+    PlusIs {
+        left: NatTerm,
+        right: NatTerm,
+        result: NatTerm,
+    },
+    TimesIs {
+        left: NatTerm,
+        right: NatTerm,
+        result: NatTerm,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

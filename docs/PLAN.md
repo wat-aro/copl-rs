@@ -1,6 +1,6 @@
 # Nat Checker 実装計画
 
-最終更新日: 2026-02-12
+最終更新日: 2026-02-13
 このフェーズのスコープ: M3 実装中（Nat checker の規則検証まで着手済み）
 
 ## 目的
@@ -47,9 +47,9 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 
 想定する型表現:
 - `NatTerm`: 再帰 enum（`Z | S(Box<NatTerm>)`）
-- `NatJudgment`: `Plus` と `Times` の和型
+- `NatJudgment`: 判断形式ごとの enum（`PlusIs { left, right, result } | TimesIs { left, right, result }`）（ADR-0007）
 - `NatDerivation`: judgment / raw rule name / subderivations（前提に対応する子導出）を保持する汎用導出木
-- `NatDerivationRule`: checker 側で静的定義する規則仕様（arity と推論関数）
+- `NatDerivationRule`: checker 側で静的定義する規則 ID（規則適用は各規則関数で検証）
 - subderivations 個数など規則ごとの整合性は checker で検証し、違反は `RuleViolation` として扱う
 
 ## 提案アーキテクチャ（将来の game 追加対応）
@@ -89,6 +89,9 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - 完了条件: 正常系フィクスチャが全通、異常系フィクスチャが期待通り失敗する。
 - 注記（2026-02-12）:
   - `RuleViolation` には失敗した導出ノードの `line:column`（`SourceSpan`）を付与する（ADR-0006）。
+- 注記（2026-02-13）:
+  - parser は rule-indexed な導出木を作らず、checker 側で `subderivations` の形と前提判断をパターンマッチで検証する。
+  - `NatJudgment` は `operator` フィールド共有型ではなく、判断形式ごとの enum で表現する（ADR-0007）。
 
 ### M4: 拡張経路の整備
 - 次ゲーム向けに再利用抽象を整理する。
@@ -99,7 +102,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 
 - なし（実装着手可能）。
 
-## 合意済み事項（2026-02-12 更新）
+## 合意済み事項（2026-02-13 更新）
 
 - 実行バイナリ名は `copl-rs` とする。
 - CLI はサブコマンド方式を採用する。
@@ -112,6 +115,8 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - モジュール境界は `cli` / `core` / `games` とし、`games/nat` は `syntax` / `parser` / `checker` に分ける。
 - game レジストリは `enum GameKind + match` を採用する。
 - Nat は汎用導出木（`rule + subderivations`）としてパースし、subderivations 個数不一致はパースエラーではなく導出規則違反として checker で扱う（ADR-0005）。
+- Nat の規則適用検証は checker の規則別パターンマッチで行い、parser では rule-indexed な型付けを行わない。
+- NatJudgment は判断形式ごとの enum（`PlusIs` / `TimesIs`）として保持する（ADR-0007）。
 - checker の不整合エラーには、失敗した導出ノードの `line:column` を必ず付与する（ADR-0006）。
 - 想定形:
   - `copl-rs checker --game nat <file>`

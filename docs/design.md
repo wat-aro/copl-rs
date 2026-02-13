@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-12
+Last updated: 2026-02-13
 
 ## 1. Purpose
 
@@ -101,8 +101,10 @@ Error output is currently plain text.
 Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `syntax.rs` models Nat judgments as an enum with explicit forms (`PlusIs`, `TimesIs`) (ADR-0007).
 - `checker.rs` validates Nat rule constraints (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
 - Rule definitions are fixed and referenced statically from checker-local rule IDs.
+- Rule application checks are written as per-rule pattern matching over `subderivations`, aligned with the upstream checker style (ADR-0007).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`).
@@ -149,5 +151,7 @@ Development style follows TDD (`Red -> Green -> Refactor`).
 ## 11. Current Direction Note
 
 - Nat derivations are parsed into a generic tree (`judgment + raw rule name + subderivations`).
+- Nat parser/checker boundary stays non-rule-indexed; premise shape checks are done in checker rule matching (ADR-0005).
+- Nat judgments are represented by explicit enum forms (`PlusIs` / `TimesIs`) rather than a shared operator field (ADR-0007).
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).

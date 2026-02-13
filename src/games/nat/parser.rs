@@ -1,7 +1,7 @@
 use crate::core::{CheckError, SourceSpan};
 
 use super::lexer::{tokenize, Token, TokenKind};
-use super::syntax::{NatDerivation, NatJudgment, NatOperator, NatTerm};
+use super::syntax::{NatDerivation, NatJudgment, NatTerm};
 
 pub fn parse_source(source: &str) -> Result<NatDerivation, CheckError> {
     if source.trim().is_empty() {
@@ -43,23 +43,24 @@ impl Parser {
 
     fn parse_judgment(&mut self) -> Result<NatJudgment, CheckError> {
         let left = self.parse_term()?;
-        let operator = self.parse_operator()?;
-        let right = self.parse_term()?;
-        self.expect_keyword_is()?;
-        let result = self.parse_term()?;
-        Ok(NatJudgment {
-            left,
-            operator,
-            right,
-            result,
-        })
-    }
-
-    fn parse_operator(&mut self) -> Result<NatOperator, CheckError> {
         if self.consume_plus() {
-            Ok(NatOperator::Plus)
+            let right = self.parse_term()?;
+            self.expect_keyword_is()?;
+            let result = self.parse_term()?;
+            Ok(NatJudgment::PlusIs {
+                left,
+                right,
+                result,
+            })
         } else if self.consume_times() {
-            Ok(NatOperator::Times)
+            let right = self.parse_term()?;
+            self.expect_keyword_is()?;
+            let result = self.parse_term()?;
+            Ok(NatJudgment::TimesIs {
+                left,
+                right,
+                result,
+            })
         } else {
             Err(self.error_here("expected 'plus' or 'times'"))
         }
@@ -250,7 +251,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::parse_source;
-    use crate::games::nat::syntax::{NatOperator, NatTerm};
+    use crate::games::nat::syntax::{NatJudgment, NatTerm};
 
     #[test]
     fn parses_fixture_001() {
@@ -258,10 +259,14 @@ mod tests {
         let parsed = parse_source(source).expect("fixture should parse");
         assert_eq!(parsed.rule_name, "P-Zero");
         assert!(parsed.subderivations.is_empty());
-        assert_eq!(parsed.judgment.operator, NatOperator::Plus);
-        assert_eq!(parsed.judgment.left, NatTerm::Z);
-        assert_eq!(parsed.judgment.right, NatTerm::Z);
-        assert_eq!(parsed.judgment.result, NatTerm::Z);
+        assert_eq!(
+            parsed.judgment,
+            NatJudgment::PlusIs {
+                left: NatTerm::Z,
+                right: NatTerm::Z,
+                result: NatTerm::Z,
+            }
+        );
     }
 
     #[test]

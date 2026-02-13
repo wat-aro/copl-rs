@@ -215,7 +215,7 @@ mod tests {
         .expect_err("run should fail");
 
         let message = result.to_string();
-        assert!(message.contains("unknown rule name: P-Unknown"));
+        assert!(message.contains("No such rule: P-Unknown"));
         assert!(message.contains("at 2:3"));
     }
 }
