@@ -16,7 +16,7 @@ Last updated: 2026-02-14
   - `README.md`
   - `AGENTS.md`
 - Exception:
-  - `docs/PLAN.md` is maintained in Japanese.
+  - `docs/PLAN.md` and files under `docs/plans/` are maintained in Japanese.
 
 ## CLI Policy
 
@@ -62,7 +62,7 @@ Last updated: 2026-02-14
 - When implementation changes architecture, command behavior, or operational policy:
   - Update `docs/design.md` in the same PR/commit set.
   - Update `README.md` if user-facing behavior or setup changes.
-  - Update `docs/PLAN.md` progress when milestone status changes.
+  - Update `docs/PLAN.md` (index) and the active plan under `docs/plans/` when milestone status changes.
 
 ## Pre-Commit Validation
 
@@ -87,18 +87,18 @@ Last updated: 2026-02-14
 
 ## Operations
 
-- Keep progress details updated in `docs/PLAN.md`.
+- Keep progress details updated in `docs/PLAN.md` and the active plan under `docs/plans/`.
 - Keep architecture and design decisions updated in `docs/design.md`.
 - Keep architecture decision records in `docs/adr/`.
-- Codex should refer to `docs/PLAN.md` when checking implementation plans.
+- Codex should refer to `docs/PLAN.md` and follow the linked active plan under `docs/plans/` when checking implementation plans.
 - Codex should refer to `docs/design.md` when discussing design and refactoring decisions.
 - Codex should refer to `docs/adr/` when discussing historical design tradeoffs.
-- If policies change, update both this file and `docs/PLAN.md`.
+- If policies change, update this file, `docs/PLAN.md`, and the active plan under `docs/plans/` when relevant.
 
 ## Definition of Done
 
 - A task is considered done when all applicable items are completed:
   - Code changes are implemented.
   - Tests for the changed behavior are added/updated.
-  - Related docs are updated (`README.md`, `docs/design.md`, `docs/PLAN.md`, ADRs as needed).
+  - Related docs are updated (`README.md`, `docs/design.md`, `docs/PLAN.md`, active file in `docs/plans/`, ADRs as needed).
   - Validation gates pass (`cargo fmt`, `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`).

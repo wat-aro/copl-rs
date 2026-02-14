@@ -92,7 +92,8 @@ src/
       syntax.rs
       parser.rs
       checker.rs
-docs/PLAN.md       # Implementation plan and progress
+docs/PLAN.md       # Plan index (active plan + history links)
+docs/plans/        # Named plan documents
 docs/how-to-add-a-game.md  # Steps to add a new game module
 AGENTS.md          # Agreed project policies
 ```
@@ -100,4 +101,4 @@ AGENTS.md          # Agreed project policies
 ## Development Process
 
 - Follow t-wada style TDD (`Red -> Green -> Refactor`)
-- Keep progress updated in `docs/PLAN.md`
+- Keep progress updated in `docs/PLAN.md` and the active file under `docs/plans/`

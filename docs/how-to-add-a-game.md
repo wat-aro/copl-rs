@@ -67,7 +67,7 @@ Update these files in the same change set:
 
 - `README.md` (if user-facing usage or status changed)
 - `docs/design.md` (module/design snapshot)
-- `docs/PLAN.md` (progress and milestones)
+- `docs/PLAN.md` (plan index) and the active plan under `docs/plans/` (progress and milestones)
 - `docs/adr/` (when a new architecture/process/CLI decision is made)
 
 ## 7. Run validation gates
