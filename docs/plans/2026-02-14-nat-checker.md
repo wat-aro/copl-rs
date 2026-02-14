@@ -1,7 +1,7 @@
 # Nat Checker 実装計画
 
 最終更新日: 2026-02-14
-このフェーズのスコープ: M4 実装中（拡張経路の文書化と retrospect 運用の整備）
+このフェーズのスコープ: M4 実装中（拡張経路の文書化、retrospect 運用整備、CompareNat1 checker 追加）
 
 ## 目的
 
@@ -37,6 +37,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - [x] 異常系テスト（規則不一致、木構造不正、結果項の不一致）を追加する。
 - [x] 新しい game を追加する手順を文書化する（`docs/how-to-add-a-game.md`）。
 - [x] セッションで判明したドキュメント/スキル更新候補を確認して反映する運用を整備する（`retrospect`）。
+- [x] CompareNat1 checker（`L-Succ`, `L-Trans`）を追加し、`copl/009.copl`, `copl/012.copl` で検証する。
 
 ## 規則モデル（Nat）
 
@@ -125,8 +126,10 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - `RuleViolation` 診断には、可能な範囲で expected/actual/fix ヒントを含める。
 - 成功時の checker 出力は reference implementation（`copl-tools`）と同様に root judgment テキストとする（ADR-0008）。
 - セッション中に判明した文書・スキル更新候補は、反映前に確認し、承認済み項目のみ最小差分で反映する（ADR-0009）。
+- CompareNat1（`L-Succ`, `L-Trans`）を `--game comparenat1` で実行できるようにし、成功時は root judgment テキストを返す。
 - 想定形:
   - `copl-rs checker --game nat <file>`
+  - `copl-rs checker --game comparenat1 <file>`
   - （将来）`copl-rs resolver --game nat <file>`
 
 ## 更新ルール

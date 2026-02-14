@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game target: `nat`.
+- Current game targets: `nat`, `comparenat1`.
 
 ### Out of scope now
 
@@ -38,6 +38,8 @@ The project is split into explicit module boundaries:
   - Shared domain contracts (`GameKind`, `Game`, `CheckReport`, `CheckError`).
 - `src/games/mod.rs`:
   - Game registry/dispatch via `enum GameKind + match`.
+- `src/games/compare_nat1/`:
+  - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nat/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 
@@ -97,7 +99,7 @@ Key runtime checks in `lib.rs`:
 Error output is currently plain text.
 On successful check, output is the inferred root judgment text in plain text (ADR-0008).
 
-## 7. Nat Implementation Status
+## 7. Game Implementation Status
 
 Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 
@@ -112,6 +114,16 @@ Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`).
 - `RuleViolation` diagnostics include actionable hints (`expected` / `actual` / `fix`) where available.
 - Successful check result text is the inferred root judgment (`... plus ... is ...` / `... times ... is ...`) (ADR-0008).
+
+Current CompareNat1 checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `syntax.rs` models CompareNat1 judgments in `left is less than right` form.
+- `checker.rs` validates CompareNat1 rule constraints (`L-Succ`, `L-Trans`).
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- Successful check result text is the inferred root judgment (`... is less than ...`).
 
 ## 8. Extension Strategy
 
@@ -163,3 +175,4 @@ When session outcomes imply documentation or skill updates, run a retrospective 
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
 - Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
 - Documentation/skill sync discovered during a session is handled through a confirm-before-edit retrospective workflow (ADR-0009).
+- CompareNat1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

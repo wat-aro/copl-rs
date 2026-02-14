@@ -6,7 +6,7 @@ Last updated: 2026-02-14
 
 ## Scope
 
-- The current implementation target is a CoPL `Nat` checker.
+- The current implementation targets are CoPL `Nat` and `CompareNat1` checkers.
 - `resolver` will be added later (out of scope for now).
 
 ## Language Policy
@@ -25,8 +25,10 @@ Last updated: 2026-02-14
 - For now, only `checker` is implemented.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
-  - `copl-rs checker --game nat <file>`
+  - `copl-rs checker --game Nat <file>`
+  - `copl-rs checker --game CompareNat1 <file>`
   - If `<file>` is omitted, read from `stdin`.
+- Keep lowercase game names accepted for backward compatibility (`nat`, `comparenat1`).
 - On success, checker output should be the inferred root judgment text in plain text.
 
 ## CLI Compatibility
@@ -41,6 +43,7 @@ Last updated: 2026-02-14
 - Keep `src/main.rs` focused on CLI entry; place logic in `src/lib.rs`.
 - Module boundaries: `cli` / `core` / `games`.
 - `games/nat` is split into `syntax` / `parser` / `checker`.
+- `games/compare_nat1` is split into `syntax` / `parser` / `checker`.
 - Use `enum GameKind + match` for game registry/dispatch.
 
 ## Development Process
@@ -83,7 +86,10 @@ Last updated: 2026-02-14
 ## Input Specification References
 
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/Nat.html
-- ASCII examples: `copl/001.copl` to `copl/008.copl`
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat1.html
+- ASCII examples:
+  - Nat: `copl/001.copl` to `copl/008.copl`
+  - CompareNat1: `copl/009.copl`, `copl/012.copl`
 
 ## Operations
 

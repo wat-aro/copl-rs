@@ -4,12 +4,14 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GameKind {
     Nat,
+    CompareNat1,
 }
 
 impl GameKind {
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::Nat => "nat",
+            Self::Nat => "Nat",
+            Self::CompareNat1 => "CompareNat1",
         }
     }
 }
@@ -18,11 +20,14 @@ impl TryFrom<&str> for GameKind {
     type Error = ParseGameKindError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value.to_ascii_lowercase().as_str() {
-            "nat" => Ok(Self::Nat),
-            _ => Err(ParseGameKindError {
+        if value.eq_ignore_ascii_case("Nat") {
+            Ok(Self::Nat)
+        } else if value.eq_ignore_ascii_case("CompareNat1") {
+            Ok(Self::CompareNat1)
+        } else {
+            Err(ParseGameKindError {
                 raw: value.to_string(),
-            }),
+            })
         }
     }
 }
