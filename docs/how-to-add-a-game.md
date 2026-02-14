@@ -61,6 +61,13 @@ At minimum:
 
 Reuse fixture-based tests as done for `Nat`.
 
+For fixture-based success tests, make the fixture selection and expected-output derivation explicit:
+
+1. Find fixture files for the target game from `copl/` by the game header:
+   - `rg 'copl-game: "<GameName>"' copl/*.copl`
+2. Use every matched fixture as a success case.
+3. For each fixture, assert `CheckReport.summary` equals the fixture root judgment text (the judgment before `by` on the top derivation line), not just a partial substring.
+
 ## 6. Sync docs
 
 Update these files in the same change set:
