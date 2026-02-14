@@ -145,7 +145,7 @@ mod tests {
 
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
-        assert!(text.contains("parsed root rule P-Zero"));
+        assert_eq!(text.trim(), "Z plus Z is Z");
     }
 
     #[test]

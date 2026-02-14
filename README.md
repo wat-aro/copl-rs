@@ -13,7 +13,9 @@ The current target is a checker for the `Nat` game.
   - Input size limit (8 MiB) and UTF-8 validation
   - Nat ASCII parser (`judgment + raw rule name + subderivations`)
   - Nat derivation rule validation (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`)
+  - Successful checks print inferred root judgment text (reference-implementation-compatible)
   - Rule-violation diagnostics with source location (`line:column`)
+  - Rule-violation diagnostics include actionable hints (`expected` / `actual` / `fix`) when available
 - Not implemented yet:
   - `resolver` subcommand
   - Machine-readable (JSON) error output mode
@@ -52,6 +54,12 @@ cargo run -- checker --game nat copl/001.copl
 
 ```sh
 cat copl/001.copl | cargo run -- checker --game nat
+```
+
+Expected output format (success):
+
+```text
+Z plus Z is Z
 ```
 
 ### File Names Starting With `-`

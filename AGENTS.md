@@ -2,7 +2,7 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-12
+Last updated: 2026-02-14
 
 ## Scope
 
@@ -27,6 +27,7 @@ Last updated: 2026-02-12
 - Expected command shape:
   - `copl-rs checker --game nat <file>`
   - If `<file>` is omitted, read from `stdin`.
+- On success, checker output should be the inferred root judgment text in plain text.
 
 ## CLI Compatibility
 
@@ -76,6 +77,7 @@ Last updated: 2026-02-12
 - Use a hand-written recursive-descent parser.
 - Unknown rule names should be reported as `RuleViolation` errors during checker rule resolution.
 - Checker inconsistency errors should include source location (`line:column`) of the failing derivation node.
+- `RuleViolation` diagnostics should include actionable hints (`expected` / `actual` / `fix`) where available.
 - Error output is plain text first (JSON mode can be considered later).
 
 ## Input Specification References

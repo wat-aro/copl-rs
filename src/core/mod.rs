@@ -48,7 +48,7 @@ pub struct CheckReport {
 
 impl fmt::Display for CheckReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}] {}", self.game.as_str(), self.summary)
+        write!(f, "{}", self.summary)
     }
 }
 

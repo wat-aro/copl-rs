@@ -92,6 +92,9 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - 注記（2026-02-13）:
   - parser は rule-indexed な導出木を作らず、checker 側で `subderivations` の形と前提判断をパターンマッチで検証する。
   - `NatJudgment` は `operator` フィールド共有型ではなく、判断形式ごとの enum で表現する（ADR-0007）。
+- 注記（2026-02-14）:
+  - 成功時の checker 出力は実装都合の要約ではなく、推論された root judgment のプレーンテキストを返す（ADR-0008）。
+  - `RuleViolation` のエラーには、可能な範囲で expected/actual/fix ヒントを含める。
 
 ### M4: 拡張経路の整備
 - 次ゲーム向けに再利用抽象を整理する。
@@ -102,7 +105,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 
 - なし（実装着手可能）。
 
-## 合意済み事項（2026-02-13 更新）
+## 合意済み事項（2026-02-14 更新）
 
 - 実行バイナリ名は `copl-rs` とする。
 - CLI はサブコマンド方式を採用する。
@@ -118,6 +121,8 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - Nat の規則適用検証は checker の規則別パターンマッチで行い、parser では rule-indexed な型付けを行わない。
 - NatJudgment は判断形式ごとの enum（`PlusIs` / `TimesIs`）として保持する（ADR-0007）。
 - checker の不整合エラーには、失敗した導出ノードの `line:column` を必ず付与する（ADR-0006）。
+- `RuleViolation` 診断には、可能な範囲で expected/actual/fix ヒントを含める。
+- 成功時の checker 出力は reference implementation（`copl-tools`）と同様に root judgment テキストとする（ADR-0008）。
 - 想定形:
   - `copl-rs checker --game nat <file>`
   - （将来）`copl-rs resolver --game nat <file>`

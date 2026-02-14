@@ -29,11 +29,12 @@ In `checker.rs`:
 - Define a game type implementing `core::Game`.
 - Return `GameKind::<NewVariant>` from `kind()`.
 - Parse source text and run rule validation in `check(&self, source: &str)`.
-- Return `CheckReport` on success.
+- Return `CheckReport` on success, with summary as inferred root judgment text.
 - Return `CheckError` with:
   - `CheckErrorKind::Parse` for syntax problems
   - `CheckErrorKind::RuleViolation` for derivation/rule mismatches
   - `CheckErrorKind::Internal` for unexpected internal failures
+- For `RuleViolation` diagnostics, include actionable hints (`expected` / `actual` / `fix`) when possible.
 
 If available, attach `SourceSpan` to checker-side violations.
 
@@ -78,4 +79,3 @@ cargo fmt
 cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 ```
-

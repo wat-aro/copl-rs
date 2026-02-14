@@ -18,6 +18,7 @@ Require checker inconsistencies to carry source location (`SourceSpan`) of the f
 - When checker validation fails, return errors with the corresponding node span.
 - If checker code returns an error without span, attach the current derivation node span before propagating.
 - Keep error kind classification unchanged (`RuleViolation` remains checker-level).
+- For checker-level `RuleViolation` diagnostics, include actionable hints (`expected` / `actual` / `fix`) where practical.
 
 ## Consequences
 
@@ -26,6 +27,7 @@ Require checker inconsistencies to carry source location (`SourceSpan`) of the f
 - Rule-validation failures can be traced directly to `line:column` in user input.
 - Diagnostics become actionable without changing the CLI contract.
 - Future checker rules inherit consistent location behavior by default.
+- Users can understand concrete next edits from a single error message.
 
 ### Negative
 

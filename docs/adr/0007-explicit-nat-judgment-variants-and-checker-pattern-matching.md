@@ -12,7 +12,7 @@ We still needed to choose how to model Nat judgments and organize checker rule v
 - Use explicit judgment variants that encode judgment form directly in the type.
 - Add rule-indexed typed derivation nodes in parser output.
 
-Checker logic should also stay close to upstream CoPL checker behavior, where each rule validates conclusion form, premise count, and premise form in declarative order.
+Checker logic should also stay close to the reference CoPL checker behavior, where each rule validates conclusion form, premise count, and premise form in declarative order.
 
 ## Decision
 
@@ -33,7 +33,7 @@ Adopt explicit Nat judgment variants and keep rule application validation in che
 ### Positive
 
 - Judgment form is explicit in the type, reducing ambiguity in checker branches.
-- Rule functions can be written in a declarative style closer to upstream CoPL checker structure.
+- Rule functions can be written in a declarative style closer to the reference CoPL checker structure.
 - Parser/checker responsibility split remains consistent with ADR-0005.
 
 ### Negative

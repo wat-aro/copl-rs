@@ -6,7 +6,7 @@
 ## Context
 
 `copl-rs` is adding Nat derivation checking incrementally.
-We confirmed that upstream `copl-tools` uses a generic derivation representation (`rule name + list of premises`) and performs most rule-shape validation in generated checker code.
+We confirmed that the reference implementation (`copl-tools`) uses a generic derivation representation (`rule name + list of premises`) and performs most rule-shape validation in generated checker code.
 
 We considered a rule-indexed typed derivation model, but this makes premise arity a parse-time concern.
 For CoPL derivation checking, premise-count mismatches are better classified as derivation rule violations than syntax errors.

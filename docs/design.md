@@ -95,6 +95,7 @@ Key runtime checks in `lib.rs`:
 - Top-level runtime errors are wrapped in `RunError`.
 
 Error output is currently plain text.
+On successful check, output is the inferred root judgment text in plain text (ADR-0008).
 
 ## 7. Nat Implementation Status
 
@@ -102,12 +103,15 @@ Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
 - `syntax.rs` models Nat judgments as an enum with explicit forms (`PlusIs`, `TimesIs`) (ADR-0007).
+- `NatTerm` / `NatJudgment` rendering for CLI output and diagnostics is defined in `syntax.rs` (`Display` impls).
 - `checker.rs` validates Nat rule constraints (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
 - Rule definitions are fixed and referenced statically from checker-local rule IDs.
-- Rule application checks are written as per-rule pattern matching over `subderivations`, aligned with the upstream checker style (ADR-0007).
+- Rule application checks are written as per-rule pattern matching over `subderivations`, aligned with the reference checker style (ADR-0007).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`).
+- `RuleViolation` diagnostics include actionable hints (`expected` / `actual` / `fix`) where available.
+- Successful check result text is the inferred root judgment (`... plus ... is ...` / `... times ... is ...`) (ADR-0008).
 
 ## 8. Extension Strategy
 
@@ -156,3 +160,4 @@ Development style follows TDD (`Red -> Green -> Refactor`).
 - Nat judgments are represented by explicit enum forms (`PlusIs` / `TimesIs`) rather than a shared operator field (ADR-0007).
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
+- Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
