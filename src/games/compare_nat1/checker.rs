@@ -204,23 +204,21 @@ mod tests {
     use super::CompareNat1Game;
 
     #[test]
-    fn accepts_all_ascii_fixtures_009_and_012() {
+    fn reports_root_judgment_text_for_all_compare_nat1_fixtures() {
         let game = CompareNat1Game;
-        for source in [
-            include_str!("../../../copl/009.copl"),
-            include_str!("../../../copl/012.copl"),
+        for (source, expected_summary) in [
+            (
+                include_str!("../../../copl/009.copl"),
+                "S(S(Z)) is less than S(S(S(Z)))",
+            ),
+            (
+                include_str!("../../../copl/012.copl"),
+                "S(S(Z)) is less than S(S(S(S(S(Z)))))",
+            ),
         ] {
             let report = game.check(source).expect("fixture should be valid");
-            assert!(report.summary.contains(" is less than "));
+            assert_eq!(report.summary, expected_summary);
         }
-    }
-
-    #[test]
-    fn reports_root_judgment_text_for_fixture_012() {
-        let report = CompareNat1Game
-            .check(include_str!("../../../copl/012.copl"))
-            .expect("fixture should be valid");
-        assert_eq!(report.summary, "S(S(Z)) is less than S(S(S(S(S(Z)))))");
     }
 
     #[test]
