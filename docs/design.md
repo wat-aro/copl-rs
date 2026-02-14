@@ -145,6 +145,7 @@ Standard pre-commit checks:
 - `cargo clippy --all-targets --all-features -- -D warnings`
 
 Development style follows TDD (`Red -> Green -> Refactor`).
+When session outcomes imply documentation or skill updates, run a retrospective pass: propose candidate updates, confirm with the user, then apply only approved items with minimal diffs (ADR-0009).
 
 ## 10. Open Items
 
@@ -161,3 +162,4 @@ Development style follows TDD (`Red -> Green -> Refactor`).
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
 - Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
+- Documentation/skill sync discovered during a session is handled through a confirm-before-edit retrospective workflow (ADR-0009).

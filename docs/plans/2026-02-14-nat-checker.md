@@ -1,7 +1,7 @@
 # Nat Checker 実装計画
 
 最終更新日: 2026-02-14
-このフェーズのスコープ: M4 実装中（拡張経路の文書化を進行）
+このフェーズのスコープ: M4 実装中（拡張経路の文書化と retrospect 運用の整備）
 
 ## 目的
 
@@ -36,6 +36,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - [x] 正常系フィクスチャ（`001.copl`-`008.copl`）のテストを追加する。
 - [x] 異常系テスト（規則不一致、木構造不正、結果項の不一致）を追加する。
 - [x] 新しい game を追加する手順を文書化する（`docs/how-to-add-a-game.md`）。
+- [x] セッションで判明したドキュメント/スキル更新候補を確認して反映する運用を整備する（`retrospect`）。
 
 ## 規則モデル（Nat）
 
@@ -123,6 +124,7 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - checker の不整合エラーには、失敗した導出ノードの `line:column` を必ず付与する（ADR-0006）。
 - `RuleViolation` 診断には、可能な範囲で expected/actual/fix ヒントを含める。
 - 成功時の checker 出力は reference implementation（`copl-tools`）と同様に root judgment テキストとする（ADR-0008）。
+- セッション中に判明した文書・スキル更新候補は、反映前に確認し、承認済み項目のみ最小差分で反映する（ADR-0009）。
 - 想定形:
   - `copl-rs checker --game nat <file>`
   - （将来）`copl-rs resolver --game nat <file>`

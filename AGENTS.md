@@ -93,6 +93,9 @@ Last updated: 2026-02-14
 - Codex should refer to `docs/PLAN.md` and follow the linked active plan under `docs/plans/` when checking implementation plans.
 - Codex should refer to `docs/design.md` when discussing design and refactoring decisions.
 - Codex should refer to `docs/adr/` when discussing historical design tradeoffs.
+- When a session reveals documentation or skill updates, Codex should propose candidate updates and ask for user confirmation before applying any changes.
+- Use the `retrospect` skill for this workflow.
+- The user can trigger it explicitly with `retrospect` or `$retrospect`.
 - If policies change, update this file, `docs/PLAN.md`, and the active plan under `docs/plans/` when relevant.
 
 ## Definition of Done
