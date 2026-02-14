@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-13
+Last updated: 2026-02-14
 
 ## 1. Purpose
 
@@ -121,6 +121,7 @@ Current extension path is:
 4. Extend `games::run_checker` match dispatch.
 
 This keeps game addition mostly localized to registry points and one module tree.
+Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`.
 
 ### 8.2 Adding `resolver`
 

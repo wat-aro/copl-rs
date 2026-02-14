@@ -5,7 +5,7 @@ The current target is a checker for the `Nat` game.
 
 ## Current Status
 
-- Implementation phase: M3 (Nat checker validation)
+- Implementation phase: M4 (extension path documentation)
 - Implemented:
   - CLI: `copl-rs checker --game nat [file]`
   - `stdin` input when `[file]` is omitted
@@ -85,6 +85,7 @@ src/
       parser.rs
       checker.rs
 docs/PLAN.md       # Implementation plan and progress
+docs/how-to-add-a-game.md  # Steps to add a new game module
 AGENTS.md          # Agreed project policies
 ```
 
