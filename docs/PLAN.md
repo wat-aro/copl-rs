@@ -6,7 +6,7 @@
 ## 現在のアクティブ計画
 
 - `docs/plans/2026-02-14-nat-checker.md`
-- 進捗サマリ: M4 実装中（拡張経路の文書化・retrospect 運用・CompareNat1 checker 追加）
+- 進捗サマリ: M4 実装中（拡張経路の文書化・retrospect 運用・CompareNat1/CompareNat2 checker 追加）
 
 ## 運用ルール
 

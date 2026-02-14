@@ -1,14 +1,14 @@
 # copl-rs
 
 `copl-rs` is a Rust project for implementing CoPL derivation checkers.
-The current targets are checkers for the `Nat` and `CompareNat1` games.
+The current targets are checkers for the `Nat`, `CompareNat1`, and `CompareNat2` games.
 
 ## Current Status
 
 - Implementation phase: M4 (extension path documentation)
 - Implemented:
   - CLI: `copl-rs checker --game <name> [file]`
-  - Supported `--game` values: `Nat`, `CompareNat1` (lowercase forms are also accepted for backward compatibility)
+  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2` (lowercase forms are also accepted for backward compatibility)
   - `stdin` input when `[file]` is omitted
   - Game dispatch via `enum GameKind + match`
   - Input size limit (8 MiB) and UTF-8 validation
@@ -16,6 +16,8 @@ The current targets are checkers for the `Nat` and `CompareNat1` games.
   - Nat derivation rule validation (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`)
   - CompareNat1 ASCII parser (`judgment + raw rule name + subderivations`)
   - CompareNat1 derivation rule validation (`L-Succ`, `L-Trans`)
+  - CompareNat2 ASCII parser (`judgment + raw rule name + subderivations`)
+  - CompareNat2 derivation rule validation (`L-Zero`, `L-SuccSucc`)
   - Successful checks print inferred root judgment text (reference-implementation-compatible)
   - Rule-violation diagnostics with source location (`line:column`)
   - Rule-violation diagnostics include actionable hints (`expected` / `actual` / `fix`) when available
@@ -57,6 +59,10 @@ cargo run -- checker --game Nat copl/001.copl
 cargo run -- checker --game CompareNat1 copl/009.copl
 ```
 
+```sh
+cargo run -- checker --game CompareNat2 copl/010.copl
+```
+
 ### Stdin Input
 
 ```sh
@@ -95,6 +101,11 @@ src/
   games/
     mod.rs         # Game dispatch
     compare_nat1/
+      mod.rs
+      syntax.rs
+      parser.rs
+      checker.rs
+    compare_nat2/
       mod.rs
       syntax.rs
       parser.rs

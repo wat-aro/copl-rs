@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `nat`, `comparenat1`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`.
 
 ### Out of scope now
 
@@ -39,6 +39,8 @@ The project is split into explicit module boundaries:
 - `src/games/mod.rs`:
   - Game registry/dispatch via `enum GameKind + match`.
 - `src/games/compare_nat1/`:
+  - `syntax.rs`, `parser.rs`, `checker.rs`.
+- `src/games/compare_nat2/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nat/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
@@ -125,6 +127,16 @@ Current CompareNat1 checker validates derivation trees parsed from CoPL ASCII in
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... is less than ...`).
 
+Current CompareNat2 checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `syntax.rs` models CompareNat2 judgments in `left is less than right` form.
+- `checker.rs` validates CompareNat2 rule constraints (`L-Zero`, `L-SuccSucc`).
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- Successful check result text is the inferred root judgment (`... is less than ...`).
+
 ## 8. Extension Strategy
 
 ### 8.1 Adding new games
@@ -176,3 +188,4 @@ When session outcomes imply documentation or skill updates, run a retrospective 
 - Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
 - Documentation/skill sync discovered during a session is handled through a confirm-before-edit retrospective workflow (ADR-0009).
 - CompareNat1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- CompareNat2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
