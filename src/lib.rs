@@ -187,6 +187,25 @@ mod tests {
     }
 
     #[test]
+    fn routes_checker_compare_nat2_with_derivation_system_name() {
+        let mut stdin =
+            &b"// -*- copl-game: \"CompareNat2\" -*-\n\nS(S(Z)) is less than S(S(S(Z))) by L-SuccSucc {\n  S(Z) is less than S(S(Z)) by L-SuccSucc {\n    Z is less than S(Z) by L-Zero {}\n  }\n}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "CompareNat2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "S(S(Z)) is less than S(S(S(Z)))");
+    }
+
+    #[test]
     fn rejects_non_utf8_input() {
         let mut stdin = &b"\xFF"[..];
         let mut out = Vec::new();

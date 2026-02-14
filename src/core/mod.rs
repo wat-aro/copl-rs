@@ -5,6 +5,7 @@ use std::fmt;
 pub enum GameKind {
     Nat,
     CompareNat1,
+    CompareNat2,
 }
 
 impl GameKind {
@@ -12,6 +13,7 @@ impl GameKind {
         match self {
             Self::Nat => "Nat",
             Self::CompareNat1 => "CompareNat1",
+            Self::CompareNat2 => "CompareNat2",
         }
     }
 }
@@ -24,6 +26,8 @@ impl TryFrom<&str> for GameKind {
             Ok(Self::Nat)
         } else if value.eq_ignore_ascii_case("CompareNat1") {
             Ok(Self::CompareNat1)
+        } else if value.eq_ignore_ascii_case("CompareNat2") {
+            Ok(Self::CompareNat2)
         } else {
             Err(ParseGameKindError {
                 raw: value.to_string(),
