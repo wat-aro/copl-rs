@@ -6,6 +6,7 @@ pub mod compare_nat3;
 pub mod eval_ml1;
 pub mod eval_ml1_err;
 pub mod eval_ml2;
+pub mod eval_ml3;
 pub mod eval_nat_exp;
 pub mod nat;
 pub mod reduce_nat_exp;
@@ -21,6 +22,7 @@ pub fn run_checker(game: GameKind, source: &str) -> Result<CheckReport, CheckErr
         GameKind::EvalML1 => eval_ml1::EvalML1Game.check(source),
         GameKind::EvalML1Err => eval_ml1_err::EvalML1ErrGame.check(source),
         GameKind::EvalML2 => eval_ml2::EvalML2Game.check(source),
+        GameKind::EvalML3 => eval_ml3::EvalML3Game.check(source),
         GameKind::EvalNatExp => eval_nat_exp::EvalNatExpGame.check(source),
         GameKind::ReduceNatExp => reduce_nat_exp::ReduceNatExpGame.check(source),
     }

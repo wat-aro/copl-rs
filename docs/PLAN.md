@@ -46,11 +46,11 @@
 - [x] EvalML1
 - [x] EvalML1Err
 - [x] EvalML2
+- [x] EvalML3
 - [x] EvalNatExp
 - [x] ReduceNatExp
 
-今後の実装対象（計9件）:
-- [ ] EvalML3
+今後の実装対象（計8件）:
 - [ ] NamelessML3
 - [ ] EvalNamelessML3
 - [ ] EvalML4
@@ -102,7 +102,8 @@
   完了メモ（2026-02-16）: `src/games/nat_arith.rs` を追加し、`Nat` / `EvalNatExp` / `ReduceNatExp` の `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ` の構造チェックを共通ヘルパー化。既存の checker テスト・fixture テスト・clippy を通過。
 - [x] `07b` [P2][Improvement] `ReduceNatExp` の `R-*` / `DR-*` checker 検証ロジックを共通化する（理由: 1-step 関係と deterministic 1-step 関係で同型の検証分岐が重複したため）。  
   完了メモ（2026-02-16）: `ReduceNatExp` checker 内で 1-step 関係（`R-*`）と deterministic 1-step 関係（`DR-*`）の同型検証を共通ヘルパー化し、演算種別（`+` / `*`）と関係種別（`--->` / `-d->`）を切り替える構造へ整理。既存の checker テスト・fixture テスト・clippy を通過。
-- [ ] `08` [P2][Implementation] `EvalML3` checker を実装する（`copl/040.copl` - `copl/053.copl`）。
+- [x] `08` [P2][Implementation] `EvalML3` checker を実装する（`copl/040.copl` - `copl/053.copl`）。  
+  完了メモ（2026-02-16）: `EvalML3` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、`E-LetRec` / `E-Fun` / `E-App` / `E-AppRec` を含む `E-*` / `B-*` の規則検証を実装。`copl/040.copl` - `copl/053.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [ ] `09` [P2][Implementation] `NamelessML3` checker を実装する（`copl/054.copl`, `056.copl`, `058.copl`, `060.copl`, `062.copl`, `064.copl`, `066.copl`, `068.copl`）。
 - [ ] `10` [P2][Implementation] `EvalNamelessML3` checker を実装する（`copl/055.copl`, `057.copl`, `059.copl`, `061.copl`, `063.copl`, `065.copl`, `067.copl`, `069.copl`）。
 - [ ] `11` [P2][Implementation] `EvalML4` checker を実装する（`copl/070.copl` - `copl/077.copl`）。
