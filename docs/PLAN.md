@@ -96,7 +96,8 @@
 - [x] `04` [P2][Implementation] `EvalML1` checker を実装する（`copl/025.copl` - `copl/030.copl`）。
 - [x] `05` [P2][Implementation] `EvalML1Err` checker を実装する（`copl/031.copl` - `copl/033.copl`）。
 - [x] `06` [P2][Implementation] `EvalML2` checker を実装する（`copl/034.copl` - `copl/039.copl`）。
-- [ ] `07` [P2][Improvement] 異常系 fixture（unknown rule / arity mismatch / rule mismatch）を実装済み game 全体で拡張する。
+- [x] `07` [P2][Improvement] 異常系 fixture（unknown rule / arity mismatch / rule mismatch）を実装済み game 全体で拡張する。  
+  完了メモ（2026-02-16）: 実装済み game（Nat / CompareNat1 / CompareNat2 / CompareNat3 / EvalML1 / EvalML1Err / EvalML2 / EvalNatExp / ReduceNatExp）の checker テストに、上記3カテゴリを網羅する異常系ケースが揃っていることを確認。
 - [ ] `07a` [P2][Improvement] Nat 系算術規則（`P-*` / `T-*`）の checker 検証ロジックを共通化する（理由: `Nat` / `EvalNatExp` / `ReduceNatExp` で同等ロジックが重複したため）。
 - [ ] `07b` [P2][Improvement] `ReduceNatExp` の `R-*` / `DR-*` checker 検証ロジックを共通化する（理由: 1-step 関係と deterministic 1-step 関係で同型の検証分岐が重複したため）。
 - [ ] `08` [P2][Implementation] `EvalML3` checker を実装する（`copl/040.copl` - `copl/053.copl`）。
