@@ -335,6 +335,24 @@ mod tests {
     }
 
     #[test]
+    fn routes_checker_eval_cont_ml1_with_derivation_system_name() {
+        let mut stdin = &b"// -*- copl-game: \"EvalContML1\" -*-\n\n3 >> _ evalto 3 by E-Int {\n  3 => _ evalto 3 by C-Ret {}\n}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "EvalContML1"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "3 >> _ evalto 3");
+    }
+
+    #[test]
     fn routes_checker_typing_ml4_with_derivation_system_name() {
         let mut stdin = &b"// -*- copl-game: \"TypingML4\" -*-\n\n|- 1 : int by T-Int {}\n"[..];
         let mut out = Vec::new();
