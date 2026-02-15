@@ -14,7 +14,7 @@
 ### Checker 実装ロードマップ（複数 game）
 
 最終更新日: 2026-02-16
-このフェーズのスコープ: 未実装 checker 2 game の段階的実装計画
+このフェーズのスコープ: 未実装 checker 1 game の段階的実装計画
 
 #### 背景
 
@@ -49,6 +49,7 @@
 - [x] EvalML3
 - [x] EvalML4
 - [x] EvalML5
+- [x] EvalContML1
 - [x] TypingML4
 - [x] PolyTypingML4
 - [x] NamelessML3
@@ -56,8 +57,7 @@
 - [x] EvalNatExp
 - [x] ReduceNatExp
 
-今後の実装対象（計2件）:
-- [ ] EvalContML1
+今後の実装対象（計1件）:
 - [ ] EvalContML4
 
 #### 参照仕様
@@ -116,7 +116,8 @@
   完了メモ（2026-02-16）: `TypingML4` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、型環境（`x : t`）・関数型（`t1 -> t2`）・リスト型（`t list`）・`match` を含む `T-*` 規則検証（`T-Int`, `T-Bool`, `T-Var`, `T-If`, `T-Plus`, `T-Minus`, `T-Times`, `T-Lt`, `T-Let`, `T-Fun`, `T-App`, `T-LetRec`, `T-Nil`, `T-Cons`, `T-Match`）を実装。`copl/080.copl` - `copl/106.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [x] `14` [P2][Implementation] `PolyTypingML4` checker を実装する（`copl/107.copl` - `copl/123.copl`）。  
   完了メモ（2026-02-16）: `PolyTypingML4` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、多相型スキーム（`'a ... . t`）・型変数（`'a`）・`T-Abs` / `T-Mult` を含む `T-*` 規則検証（`T-Int`, `T-Bool`, `T-Var`, `T-If`, `T-Plus`, `T-Minus`, `T-Mult`, `T-Lt`, `T-Let`, `T-Abs`, `T-App`, `T-LetRec`, `T-Nil`, `T-Cons`, `T-Match`）を実装。`T-Var` のインスタンス化判定と `T-Let` / `T-LetRec` の一般化判定を含め、`copl/107.copl` - `copl/123.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
-- [ ] `15` [P2][Implementation] `EvalContML1` checker を実装する（`copl/124.copl` - `copl/129.copl`）。
+- [x] `15` [P2][Implementation] `EvalContML1` checker を実装する（`copl/124.copl` - `copl/129.copl`）。
+  完了メモ（2026-02-16）: `EvalContML1` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、継続コンテキスト（`>>`, `=>`, `_`）と継続フレーム（`{_ op e}`, `{i op _}`, `{if _ then e2 else e3}`）を扱う `E-*` / `C-*` / `B-*` 規則検証（`E-Int`, `E-Bool`, `E-BinOp`, `E-If`, `C-Ret`, `C-EvalR`, `C-Plus`, `C-Minus`, `C-Times`, `C-Lt`, `C-IfT`, `C-IfF`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`）を実装。`copl/124.copl` - `copl/129.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [ ] `16` [P2][Implementation] `EvalContML4` checker を実装する（`copl/130.copl` - `copl/140.copl`）。
 - [ ] `17` [P3][Improvement] `resolver` 着手前に CLI パーサのサブコマンド分割方針を確定し、必要なら分離リファクタを先行する。
 

@@ -13,6 +13,7 @@ pub enum GameKind {
     EvalML3,
     EvalML4,
     EvalML5,
+    EvalContML1,
     TypingML4,
     PolyTypingML4,
     NamelessML3,
@@ -34,6 +35,7 @@ impl GameKind {
             Self::EvalML3 => "EvalML3",
             Self::EvalML4 => "EvalML4",
             Self::EvalML5 => "EvalML5",
+            Self::EvalContML1 => "EvalContML1",
             Self::TypingML4 => "TypingML4",
             Self::PolyTypingML4 => "PolyTypingML4",
             Self::NamelessML3 => "NamelessML3",
@@ -68,6 +70,8 @@ impl TryFrom<&str> for GameKind {
             Ok(Self::EvalML4)
         } else if value.eq_ignore_ascii_case("EvalML5") {
             Ok(Self::EvalML5)
+        } else if value.eq_ignore_ascii_case("EvalContML1") {
+            Ok(Self::EvalContML1)
         } else if value.eq_ignore_ascii_case("TypingML4") {
             Ok(Self::TypingML4)
         } else if value.eq_ignore_ascii_case("PolyTypingML4") {
@@ -332,6 +336,15 @@ mod tests {
 
         let lowercase = GameKind::try_from("evalml5").expect("evalml5 should parse");
         assert_eq!(lowercase.as_str(), "EvalML5");
+    }
+
+    #[test]
+    fn parses_eval_cont_ml1_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("EvalContML1").expect("EvalContML1 should parse");
+        assert_eq!(canonical.as_str(), "EvalContML1");
+
+        let lowercase = GameKind::try_from("evalcontml1").expect("evalcontml1 should parse");
+        assert_eq!(lowercase.as_str(), "EvalContML1");
     }
 
     #[test]

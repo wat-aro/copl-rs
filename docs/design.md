@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `TypingML4`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalContML1`, `TypingML4`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
 
@@ -57,6 +57,8 @@ The project is split into explicit module boundaries:
 - `src/games/eval_ml4/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml5/`:
+  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
+- `src/games/eval_cont_ml1/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/typing_ml4/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
@@ -235,6 +237,16 @@ Current EvalML5 checker validates derivation trees parsed from CoPL ASCII input.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`Gamma |- ... evalto ...`, `p matches v when (...)`, `p doesn't match v`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 
+Current EvalContML1 checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`) and parses continuation judgments (`>>`, `=>`, `_`) and continuation frames (`{_ op e}`, `{i op _}`, `{if _ then e2 else e3}`).
+- `syntax.rs` models EvalML1-style expressions/values extended with continuation structures and continuation-application judgments.
+- `checker.rs` validates continuation evaluation and builtin arithmetic/boolean rules (`E-Int`, `E-Bool`, `E-BinOp`, `E-If`, `C-Ret`, `C-EvalR`, `C-Plus`, `C-Minus`, `C-Times`, `C-Lt`, `C-IfT`, `C-IfF`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`).
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
+- Successful check result text is the inferred root judgment (`... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+
 Current TypingML4 checker validates derivation trees parsed from CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`) and parses type environments (`x : t`), function/list types (`t1 -> t2`, `t list`), and list-match expressions.
@@ -352,6 +364,7 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalML1Err checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- EvalContML1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - TypingML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - PolyTypingML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - NamelessML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
