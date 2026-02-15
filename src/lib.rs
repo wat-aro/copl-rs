@@ -317,6 +317,24 @@ mod tests {
     }
 
     #[test]
+    fn routes_checker_eval_ml5_with_derivation_system_name() {
+        let mut stdin = &b"// -*- copl-game: \"EvalML5\" -*-\n\n|- [] evalto [] by E-Nil {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML5"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- [] evalto []");
+    }
+
+    #[test]
     fn routes_checker_nameless_ml3_with_derivation_system_name() {
         let mut stdin = &b"// -*- copl-game: \"NamelessML3\" -*-\n\n|- 1 ==> 1 by Tr-Int {}\n"[..];
         let mut out = Vec::new();

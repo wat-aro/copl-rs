@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
 
@@ -55,6 +55,8 @@ The project is split into explicit module boundaries:
 - `src/games/eval_ml3/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml4/`:
+  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
+- `src/games/eval_ml5/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nameless_ml3/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
@@ -218,6 +220,16 @@ Current EvalML4 checker validates derivation trees parsed from CoPL ASCII input.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+
+Current EvalML5 checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`) and parses multi-clause pattern matching (`match e with p1 -> e1 | p2 -> e2 | ...`), including wildcard/cons patterns and pattern-matching judgments.
+- `syntax.rs` models EvalML5 expressions/values, list patterns, match clauses, and pattern judgments (`matches`, `doesn't match`).
+- `checker.rs` validates EvalML5, pattern matching rules, and builtin arithmetic/boolean rules (`E-*`, `M-*`, `NM-*`, `B-*`), including `E-MatchM1`, `E-MatchM2`, and `E-MatchN`.
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
+- Successful check result text is the inferred root judgment (`Gamma |- ... evalto ...`, `p matches v when (...)`, `p doesn't match v`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 
 Current NamelessML3 checker validates derivation trees parsed from CoPL ASCII input.
 
