@@ -91,7 +91,7 @@
 
 - [x] `01` [P1][Implementation] `EvalNatExp` checker を実装する（`copl/015.copl` - `copl/020.copl`）。
 - [x] `02` [P1][Implementation] `ReduceNatExp` checker を実装する（`copl/021.copl` - `copl/024.copl`）。
-- [ ] `03` [P1][Improvement] `RuleViolation` 診断で failing premise path（どの前提で失敗したか）を明示する。
+- [x] `03` [P1][Improvement] `RuleViolation` 診断で failing premise path（どの前提で失敗したか）を明示する。
 - [ ] `04` [P2][Implementation] `EvalML1` checker を実装する（`copl/025.copl` - `copl/030.copl`）。
 - [ ] `05` [P2][Implementation] `EvalML1Err` checker を実装する（`copl/031.copl` - `copl/033.copl`）。
 - [ ] `06` [P2][Implementation] `EvalML2` checker を実装する（`copl/034.copl` - `copl/039.copl`）。
