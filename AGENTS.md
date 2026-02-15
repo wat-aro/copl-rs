@@ -4,10 +4,11 @@ This file records the agreed development policies for this repository.
 
 Last updated: 2026-02-16
 
-## Scope
+## Scope Ownership
 
-- The current implementation targets are CoPL `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalNatExp`, and `ReduceNatExp` checkers.
-- `resolver` will be added later (out of scope for now).
+- Active implementation scope (target games, order, pending decisions) is managed only in `docs/PLAN.md`.
+- `AGENTS.md` defines repository-wide policies and must not duplicate active task scope lists.
+- `resolver` remains out of scope until it is added to `docs/PLAN.md`.
 
 ## Language Policy
 
