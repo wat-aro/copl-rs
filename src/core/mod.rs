@@ -8,6 +8,7 @@ pub enum GameKind {
     CompareNat2,
     CompareNat3,
     EvalNatExp,
+    ReduceNatExp,
 }
 
 impl GameKind {
@@ -18,6 +19,7 @@ impl GameKind {
             Self::CompareNat2 => "CompareNat2",
             Self::CompareNat3 => "CompareNat3",
             Self::EvalNatExp => "EvalNatExp",
+            Self::ReduceNatExp => "ReduceNatExp",
         }
     }
 }
@@ -36,6 +38,8 @@ impl TryFrom<&str> for GameKind {
             Ok(Self::CompareNat3)
         } else if value.eq_ignore_ascii_case("EvalNatExp") {
             Ok(Self::EvalNatExp)
+        } else if value.eq_ignore_ascii_case("ReduceNatExp") {
+            Ok(Self::ReduceNatExp)
         } else {
             Err(ParseGameKindError {
                 raw: value.to_string(),
@@ -175,5 +179,14 @@ mod tests {
 
         let lowercase = GameKind::try_from("evalnatexp").expect("evalnatexp should parse");
         assert_eq!(lowercase.as_str(), "EvalNatExp");
+    }
+
+    #[test]
+    fn parses_reduce_nat_exp_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("ReduceNatExp").expect("ReduceNatExp should parse");
+        assert_eq!(canonical.as_str(), "ReduceNatExp");
+
+        let lowercase = GameKind::try_from("reducenatexp").expect("reducenatexp should parse");
+        assert_eq!(lowercase.as_str(), "ReduceNatExp");
     }
 }

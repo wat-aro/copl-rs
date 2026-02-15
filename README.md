@@ -1,14 +1,14 @@
 # copl-rs
 
 `copl-rs` is a Rust project for implementing CoPL derivation checkers.
-The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, and `EvalNatExp` games.
+The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`, and `ReduceNatExp` games.
 
 ## Current Status
 
 - Implementation priorities are managed in the unified backlog in `docs/PLAN.md`.
 - Implemented:
   - CLI: `copl-rs checker --game <name> [file]`
-  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp` (lowercase forms are also accepted for backward compatibility)
+  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`, `ReduceNatExp` (lowercase forms are also accepted for backward compatibility)
   - `stdin` input when `[file]` is omitted
   - Game dispatch via `enum GameKind + match`
   - Input size limit (8 MiB) and UTF-8 validation
@@ -22,6 +22,8 @@ The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `C
   - CompareNat3 derivation rule validation (`L-Succ`, `L-SuccR`)
   - EvalNatExp ASCII parser (`judgment + raw rule name + subderivations`)
   - EvalNatExp derivation rule validation (`E-Const`, `E-Plus`, `E-Times`, `P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`)
+  - ReduceNatExp ASCII parser (`judgment + raw rule name + subderivations`)
+  - ReduceNatExp derivation rule validation (`R-*`, `DR-*`, `MR-*`, `P-*`, `T-*`)
   - Successful checks print inferred root judgment text (reference-implementation-compatible)
   - Rule-violation diagnostics with source location (`line:column`)
   - Rule-violation diagnostics include actionable hints (`expected` / `actual` / `fix`) when available
@@ -73,6 +75,10 @@ cargo run -- checker --game CompareNat3 copl/011.copl
 
 ```sh
 cargo run -- checker --game EvalNatExp copl/015.copl
+```
+
+```sh
+cargo run -- checker --game ReduceNatExp copl/021.copl
 ```
 
 ### Stdin Input
@@ -128,6 +134,11 @@ src/
       parser.rs
       checker.rs
     eval_nat_exp/
+      mod.rs
+      syntax.rs
+      parser.rs
+      checker.rs
+    reduce_nat_exp/
       mod.rs
       syntax.rs
       parser.rs

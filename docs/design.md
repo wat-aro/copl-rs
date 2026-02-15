@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
 
@@ -45,6 +45,8 @@ The project is split into explicit module boundaries:
 - `src/games/compare_nat3/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_nat_exp/`:
+  - `syntax.rs`, `parser.rs`, `checker.rs`.
+- `src/games/reduce_nat_exp/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nat/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
@@ -161,6 +163,16 @@ Current EvalNatExp checker validates derivation trees parsed from CoPL ASCII inp
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... evalto ...`, `... plus ... is ...`, `... times ... is ...`).
 
+Current ReduceNatExp checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `syntax.rs` models expressions (`n`, `e + e`, `e * e`), Nat terms, and judgments (`--->`, `-d->`, `-*->`, `plus is`, `times is`).
+- `checker.rs` validates ReduceNatExp and embedded Nat rules (`R-*`, `DR-*`, `MR-*`, `P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- Successful check result text is the inferred root judgment (`... ---> ...`, `... -d-> ...`, `... -*-> ...`, `... plus ... is ...`, `... times ... is ...`).
+
 ## 8. Extension Strategy
 
 ### 8.1 Adding new games
@@ -213,3 +225,4 @@ Completed or frozen plans are archived under `docs/plans/`.
 - CompareNat2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- ReduceNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

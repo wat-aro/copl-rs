@@ -243,6 +243,24 @@ mod tests {
     }
 
     #[test]
+    fn routes_checker_reduce_nat_exp_with_derivation_system_name() {
+        let mut stdin = &b"// -*- copl-game: \"ReduceNatExp\" -*-\n\nZ + S(S(Z)) -*-> S(S(Z)) by MR-One {\n  Z + S(S(Z)) ---> S(S(Z)) by R-Plus {\n    Z plus S(S(Z)) is S(S(Z)) by P-Zero {}\n  }\n}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "ReduceNatExp"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "Z + S(S(Z)) -*-> S(S(Z))");
+    }
+
+    #[test]
     fn rejects_non_utf8_input() {
         let mut stdin = &b"\xFF"[..];
         let mut out = Vec::new();

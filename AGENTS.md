@@ -6,7 +6,7 @@ Last updated: 2026-02-16
 
 ## Scope
 
-- The current implementation targets are CoPL `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, and `EvalNatExp` checkers.
+- The current implementation targets are CoPL `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`, and `ReduceNatExp` checkers.
 - `resolver` will be added later (out of scope for now).
 
 ## Language Policy
@@ -30,6 +30,7 @@ Last updated: 2026-02-16
   - `copl-rs checker --game CompareNat2 <file>`
   - `copl-rs checker --game CompareNat3 <file>`
   - `copl-rs checker --game EvalNatExp <file>`
+  - `copl-rs checker --game ReduceNatExp <file>`
   - If `<file>` is omitted, read from `stdin`.
 - Keep game-name input case-insensitive for backward compatibility.
 - On success, checker output should be the inferred root judgment text in plain text.
@@ -50,6 +51,7 @@ Last updated: 2026-02-16
 - `games/compare_nat2` is split into `syntax` / `parser` / `checker`.
 - `games/compare_nat3` is split into `syntax` / `parser` / `checker`.
 - `games/eval_nat_exp` is split into `syntax` / `parser` / `checker`.
+- `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker`.
 - Use `enum GameKind + match` for game registry/dispatch.
 
 ## Development Process
@@ -98,12 +100,14 @@ Last updated: 2026-02-16
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat2.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalNatExp.html
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/ReduceNatExp.html
 - ASCII examples:
   - Nat: `copl/001.copl` to `copl/008.copl`
   - CompareNat1: `copl/009.copl`, `copl/012.copl`
   - CompareNat2: `copl/010.copl`, `copl/013.copl`
   - CompareNat3: `copl/011.copl`, `copl/014.copl`
   - EvalNatExp: `copl/015.copl` to `copl/020.copl`
+  - ReduceNatExp: `copl/021.copl` to `copl/024.copl`
 
 ## Operations
 
