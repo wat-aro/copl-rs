@@ -59,6 +59,7 @@ Last updated: 2026-02-16
 - Follow t-wada style TDD.
 - Base cycle: `Red -> Green -> Refactor`.
 - Start from the smallest failing test, implement the minimum to pass, then refactor.
+- Create a commit each time one task is completed.
 
 ## ADR Policy
 
