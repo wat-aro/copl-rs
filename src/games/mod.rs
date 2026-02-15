@@ -4,6 +4,7 @@ pub mod compare_nat1;
 pub mod compare_nat2;
 pub mod compare_nat3;
 pub mod eval_cont_ml1;
+pub mod eval_cont_ml4;
 pub mod eval_ml1;
 pub mod eval_ml1_err;
 pub mod eval_ml2;
@@ -33,6 +34,7 @@ pub fn run_checker(game: GameKind, source: &str) -> Result<CheckReport, CheckErr
         GameKind::EvalML4 => eval_ml4::EvalML4Game.check(source),
         GameKind::EvalML5 => eval_ml5::EvalML5Game.check(source),
         GameKind::EvalContML1 => eval_cont_ml1::EvalContML1Game.check(source),
+        GameKind::EvalContML4 => eval_cont_ml4::EvalContML4Game.check(source),
         GameKind::TypingML4 => typing_ml4::TypingML4Game.check(source),
         GameKind::PolyTypingML4 => poly_typing_ml4::PolyTypingML4Game.check(source),
         GameKind::NamelessML3 => nameless_ml3::NamelessML3Game.check(source),
