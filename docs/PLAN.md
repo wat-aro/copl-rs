@@ -14,7 +14,7 @@
 ### Checker 実装ロードマップ（複数 game）
 
 最終更新日: 2026-02-16
-このフェーズのスコープ: 未実装 checker 11 game の段階的実装計画
+このフェーズのスコープ: 未実装 checker 9 game の段階的実装計画
 
 #### 背景
 
@@ -45,11 +45,11 @@
 - [x] CompareNat3
 - [x] EvalML1
 - [x] EvalML1Err
+- [x] EvalML2
 - [x] EvalNatExp
 - [x] ReduceNatExp
 
-今後の実装対象（計10件）:
-- [ ] EvalML2
+今後の実装対象（計9件）:
 - [ ] EvalML3
 - [ ] NamelessML3
 - [ ] EvalNamelessML3
@@ -95,7 +95,7 @@
 - [x] `03` [P1][Improvement] `RuleViolation` 診断で failing premise path（どの前提で失敗したか）を明示する。
 - [x] `04` [P2][Implementation] `EvalML1` checker を実装する（`copl/025.copl` - `copl/030.copl`）。
 - [x] `05` [P2][Implementation] `EvalML1Err` checker を実装する（`copl/031.copl` - `copl/033.copl`）。
-- [ ] `06` [P2][Implementation] `EvalML2` checker を実装する（`copl/034.copl` - `copl/039.copl`）。
+- [x] `06` [P2][Implementation] `EvalML2` checker を実装する（`copl/034.copl` - `copl/039.copl`）。
 - [ ] `07` [P2][Improvement] 異常系 fixture（unknown rule / arity mismatch / rule mismatch）を実装済み game 全体で拡張する。
 - [ ] `07a` [P2][Improvement] Nat 系算術規則（`P-*` / `T-*`）の checker 検証ロジックを共通化する（理由: `Nat` / `EvalNatExp` / `ReduceNatExp` で同等ロジックが重複したため）。
 - [ ] `07b` [P2][Improvement] `ReduceNatExp` の `R-*` / `DR-*` checker 検証ロジックを共通化する（理由: 1-step 関係と deterministic 1-step 関係で同型の検証分岐が重複したため）。
