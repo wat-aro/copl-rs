@@ -65,6 +65,12 @@ Last updated: 2026-02-16
 - When principles conflict, resolve in this order:
   - `YAGNI` -> `KISS` -> `SOLID` (incremental application).
 
+## Task Intake Gate
+
+- Before starting an implementation task, evaluate whether the task is justified under `YAGNI` / `KISS` / `SOLID`.
+- If the task is not justified, mark it as `pending`, do not execute implementation, and close that task attempt.
+- A `pending` decision should be explicit and concise so the next task can start without ambiguity.
+
 ## Development Process
 
 - Follow t-wada style TDD.

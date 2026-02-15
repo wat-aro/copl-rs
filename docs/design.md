@@ -205,6 +205,7 @@ Standard pre-commit checks:
 - `cargo clippy --all-targets --all-features -- -D warnings`
 
 Development style follows TDD (`Red -> Green -> Refactor`).
+Before executing a task, evaluate its validity against `YAGNI` / `KISS` / `SOLID`; if invalid, close it as `pending` without implementation.
 Project planning is managed in a single prioritized backlog in `docs/PLAN.md`, where implementation and improvement tasks are ordered explicitly for execution.
 Completed or frozen plans are archived under `docs/plans/`.
 
