@@ -14,7 +14,7 @@
 ### Checker 実装ロードマップ（複数 game）
 
 最終更新日: 2026-02-16
-このフェーズのスコープ: 未実装 checker 7 game の段階的実装計画
+このフェーズのスコープ: 未実装 checker 6 game の段階的実装計画
 
 #### 背景
 
@@ -48,11 +48,11 @@
 - [x] EvalML2
 - [x] EvalML3
 - [x] NamelessML3
+- [x] EvalNamelessML3
 - [x] EvalNatExp
 - [x] ReduceNatExp
 
-今後の実装対象（計7件）:
-- [ ] EvalNamelessML3
+今後の実装対象（計6件）:
 - [ ] EvalML4
 - [ ] EvalML5
 - [ ] EvalContML1
@@ -106,7 +106,8 @@
   完了メモ（2026-02-16）: `EvalML3` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、`E-LetRec` / `E-Fun` / `E-App` / `E-AppRec` を含む `E-*` / `B-*` の規則検証を実装。`copl/040.copl` - `copl/053.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [x] `09` [P2][Implementation] `NamelessML3` checker を実装する（`copl/054.copl`, `056.copl`, `058.copl`, `060.copl`, `062.copl`, `064.copl`, `066.copl`, `068.copl`）。  
   完了メモ（2026-02-16）: `NamelessML3` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、`Tr-Int` / `Tr-Bool` / `Tr-Var1` / `Tr-Var2` / `Tr-If` / `Tr-Plus` / `Tr-Minus` / `Tr-Times` / `Tr-Lt` / `Tr-Let` / `Tr-Fun` / `Tr-App` / `Tr-LetRec` の規則検証を実装。`copl/054.copl`, `056.copl`, `058.copl`, `060.copl`, `062.copl`, `064.copl`, `066.copl`, `068.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
-- [ ] `10` [P2][Implementation] `EvalNamelessML3` checker を実装する（`copl/055.copl`, `057.copl`, `059.copl`, `061.copl`, `063.copl`, `065.copl`, `067.copl`, `069.copl`）。
+- [x] `10` [P2][Implementation] `EvalNamelessML3` checker を実装する（`copl/055.copl`, `057.copl`, `059.copl`, `061.copl`, `063.copl`, `065.copl`, `067.copl`, `069.copl`）。  
+  完了メモ（2026-02-16）: `EvalNamelessML3` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、de Bruijn index（`#n`）と nameless closure（`fun . -> ...` / `rec . = fun . -> ...`）を扱う `E-*` / `B-*` 規則検証（`E-Var`, `E-AppRec`, `E-LetRec` を含む）を実装。`copl/055.copl`, `057.copl`, `059.copl`, `061.copl`, `063.copl`, `065.copl`, `067.copl`, `069.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [ ] `11` [P2][Implementation] `EvalML4` checker を実装する（`copl/070.copl` - `copl/077.copl`）。
 - [ ] `12` [P2][Implementation] `EvalML5` checker を実装する（`copl/078.copl`, `copl/079.copl`）。
 - [ ] `13` [P2][Implementation] `TypingML4` checker を実装する（`copl/080.copl` - `copl/106.copl`）。

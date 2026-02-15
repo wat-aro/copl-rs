@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `NamelessML3`, `EvalNatExp`, `ReduceNatExp`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
 
@@ -55,6 +55,8 @@ The project is split into explicit module boundaries:
 - `src/games/eval_ml3/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nameless_ml3/`:
+  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
+- `src/games/eval_nameless_ml3/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_nat_exp/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
@@ -215,6 +217,16 @@ Current NamelessML3 checker validates derivation trees parsed from CoPL ASCII in
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`Gamma |- e ==> e'`).
 
+Current EvalNamelessML3 checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`) and parses nameless-evaluation judgments (`Gamma |- e evalto v`) with de Bruijn indices (`#n`).
+- `syntax.rs` models nameless expressions (`let . =`, `fun . ->`, `let rec . = fun . ->`, application) and closure values (`(Gamma)[fun . -> e]`, `(Gamma)[rec . = fun . -> e]`).
+- `checker.rs` validates EvalNamelessML3 and builtin arithmetic/boolean rules (`E-Int`, `E-Bool`, `E-Var`, `E-IfT`, `E-IfF`, `E-Let`, `E-LetRec`, `E-Fun`, `E-App`, `E-AppRec`, `E-Plus`, `E-Minus`, `E-Times`, `E-Lt`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`).
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
+- Successful check result text is the inferred root judgment (`Gamma |- e evalto v`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+
 Current EvalNatExp checker validates derivation trees parsed from CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
@@ -291,6 +303,7 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalML2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - NamelessML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- EvalNamelessML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - ReduceNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - ReduceNatExp checker centralizes shared validation paths for `R-*` and `DR-*` rules by switching relation kind (`--->` / `-d->`) and operator kind (`+` / `*`) in common helper functions.

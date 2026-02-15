@@ -317,6 +317,25 @@ mod tests {
     }
 
     #[test]
+    fn routes_checker_eval_nameless_ml3_with_derivation_system_name() {
+        let mut stdin =
+            &b"// -*- copl-game: \"EvalNamelessML3\" -*-\n\n|- 1 evalto 1 by E-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "EvalNamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- 1 evalto 1");
+    }
+
+    #[test]
     fn routes_checker_eval_nat_exp_with_derivation_system_name() {
         let mut stdin = &b"// -*- copl-game: \"EvalNatExp\" -*-\n\nZ + S(S(Z)) evalto S(S(Z)) by E-Plus {\n  Z evalto Z by E-Const {};\n  S(S(Z)) evalto S(S(Z)) by E-Const {};\n  Z plus S(S(Z)) is S(S(Z)) by P-Zero {}\n}\n"[..];
         let mut out = Vec::new();
