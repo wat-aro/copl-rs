@@ -181,13 +181,12 @@ Standard pre-commit checks:
 - `cargo clippy --all-targets --all-features -- -D warnings`
 
 Development style follows TDD (`Red -> Green -> Refactor`).
-When session outcomes imply documentation or skill updates, apply required updates in the same change set by default, then report what was updated (ADR-0010).
+Project planning is managed in a single prioritized backlog in `docs/PLAN.md`, where implementation and improvement tasks are ordered explicitly for execution.
+Completed or frozen plans are archived under `docs/plans/`.
 
 ## 10. Open Items
 
-- Improve diagnostics to pinpoint failing premise paths more explicitly.
-- Expand invalid-case fixtures for broader rule-violation coverage.
-- Decide if CLI parsing should be split per-subcommand module before adding `resolver`.
+- Prioritized implementation/improvement work is managed in `docs/PLAN.md` unified backlog.
 - Decide output schema for machine-readable mode (if JSON is introduced later).
 
 ## 11. Current Direction Note
@@ -198,7 +197,6 @@ When session outcomes imply documentation or skill updates, apply required updat
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
 - Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
-- Documentation/skill sync discovered during a session is handled by default as auto-apply with minimal diffs, and then reported (ADR-0010).
 - CompareNat1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

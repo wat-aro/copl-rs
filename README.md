@@ -5,7 +5,7 @@ The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, an
 
 ## Current Status
 
-- Implementation phase: M4 (extension path documentation)
+- Implementation priorities are managed in the unified backlog in `docs/PLAN.md`.
 - Implemented:
   - CLI: `copl-rs checker --game <name> [file]`
   - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3` (lowercase forms are also accepted for backward compatibility)
@@ -126,8 +126,8 @@ src/
       syntax.rs
       parser.rs
       checker.rs
-docs/PLAN.md       # Plan index (active plan + history links)
-docs/plans/        # Named plan documents
+docs/PLAN.md       # Current prioritized plan
+docs/plans/        # Archived plan history
 docs/how-to-add-a-game.md  # Steps to add a new game module
 AGENTS.md          # Agreed project policies
 ```
@@ -135,4 +135,5 @@ AGENTS.md          # Agreed project policies
 ## Development Process
 
 - Follow t-wada style TDD (`Red -> Green -> Refactor`)
-- Keep progress updated in `docs/PLAN.md` and the active file under `docs/plans/`
+- Keep progress updated in `docs/PLAN.md`
+- Archive completed or frozen plans under `docs/plans/`

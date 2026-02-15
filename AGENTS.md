@@ -61,15 +61,17 @@ Last updated: 2026-02-15
 - Create or update an ADR under `docs/adr/` when any of the following changes:
   - Public CLI contract (command shape, options, compatibility rules)
   - Module boundaries or ownership of major components
-  - Development process and quality gates that affect team workflow
+  - Application development process and quality gates (build/test/lint) that affect project delivery
 - Include `Context`, `Decision`, and `Consequences` in each ADR.
+- Do not record Codex/agent operation behavior in `docs/adr/`.
 
 ## Documentation Sync Policy
 
 - When implementation changes architecture, command behavior, or operational policy:
   - Update `docs/design.md` in the same PR/commit set.
   - Update `README.md` if user-facing behavior or setup changes.
-  - Update `docs/PLAN.md` (index) and the active plan under `docs/plans/` when milestone status changes.
+  - Update `docs/PLAN.md` when milestone status changes.
+  - Move completed or frozen plans to `docs/plans/`.
 
 ## Pre-Commit Validation
 
@@ -101,21 +103,18 @@ Last updated: 2026-02-15
 
 ## Operations
 
-- Keep progress details updated in `docs/PLAN.md` and the active plan under `docs/plans/`.
+- Keep progress details updated in `docs/PLAN.md`.
+- Manage implementation tasks and improvement tasks in one prioritized backlog in `docs/PLAN.md`, with explicit top-to-bottom start order.
+- Keep historical plans under `docs/plans/` and avoid mixing archived details into the current-plan section of `docs/PLAN.md`.
 - Keep architecture and design decisions updated in `docs/design.md`.
 - Keep architecture decision records in `docs/adr/`.
-- Codex should refer to `docs/PLAN.md` and follow the linked active plan under `docs/plans/` when checking implementation plans.
-- Codex should refer to `docs/design.md` when discussing design and refactoring decisions.
-- Codex should refer to `docs/adr/` when discussing historical design tradeoffs.
-- When a session reveals documentation or skill updates, Codex should apply required updates in the same change set by default, then report what changed.
-- Use the `retrospect` skill for this workflow as a synchronization checklist, not a confirmation gate.
-- The user can trigger it explicitly with `retrospect` or `$retrospect`.
-- If policies change, update this file, `docs/PLAN.md`, and the active plan under `docs/plans/` when relevant.
+- Do not duplicate procedure-level workflow instructions in repository documents.
+- If policies change, update this file and `docs/PLAN.md` when relevant.
 
 ## Definition of Done
 
 - A task is considered done when all applicable items are completed:
   - Code changes are implemented.
   - Tests for the changed behavior are added/updated.
-  - Related docs are updated (`README.md`, `docs/design.md`, `docs/PLAN.md`, active file in `docs/plans/`, ADRs as needed).
+  - Related docs are updated (`README.md`, `docs/design.md`, `docs/PLAN.md`, ADRs as needed).
   - Validation gates pass (`cargo fmt`, `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`).
