@@ -1,14 +1,14 @@
 # copl-rs
 
 `copl-rs` is a Rust project for implementing CoPL derivation checkers.
-The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`, and `ReduceNatExp` games.
+The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalNatExp`, and `ReduceNatExp` games.
 
 ## Current Status
 
 - Implementation priorities are managed in the unified backlog in `docs/PLAN.md`.
 - Implemented:
   - CLI: `copl-rs checker --game <name> [file]`
-  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalNatExp`, `ReduceNatExp` (lowercase forms are also accepted for backward compatibility)
+  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalNatExp`, `ReduceNatExp` (lowercase forms are also accepted for backward compatibility)
   - `stdin` input when `[file]` is omitted
   - Game dispatch via `enum GameKind + match`
   - Input size limit (8 MiB) and UTF-8 validation
@@ -20,6 +20,8 @@ The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `C
   - CompareNat2 derivation rule validation (`L-Zero`, `L-SuccSucc`)
   - CompareNat3 ASCII parser (`judgment + raw rule name + subderivations`)
   - CompareNat3 derivation rule validation (`L-Succ`, `L-SuccR`)
+  - EvalML1 ASCII parser (`judgment + raw rule name + subderivations`)
+  - EvalML1 derivation rule validation (`E-*`, `B-*`)
   - EvalNatExp ASCII parser (`judgment + raw rule name + subderivations`)
   - EvalNatExp derivation rule validation (`E-Const`, `E-Plus`, `E-Times`, `P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`)
   - ReduceNatExp ASCII parser (`judgment + raw rule name + subderivations`)
@@ -71,6 +73,10 @@ cargo run -- checker --game CompareNat2 copl/010.copl
 
 ```sh
 cargo run -- checker --game CompareNat3 copl/011.copl
+```
+
+```sh
+cargo run -- checker --game EvalML1 copl/025.copl
 ```
 
 ```sh
@@ -134,6 +140,11 @@ src/
       parser.rs
       checker.rs
     eval_nat_exp/
+      mod.rs
+      syntax.rs
+      parser.rs
+      checker.rs
+    eval_ml1/
       mod.rs
       syntax.rs
       parser.rs
