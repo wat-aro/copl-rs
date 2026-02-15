@@ -1,9 +1,26 @@
 use crate::core::{
     annotate_rule_violation_with_premise_path, CheckError, CheckReport, Game, GameKind,
 };
+use crate::games::nat_arith::{
+    is_p_zero_conclusion, is_t_zero_conclusion, p_succ_conclusion, p_succ_premise_matches,
+    t_succ_conclusion, t_succ_premises_match, NatTermLike,
+};
 
 use super::parser::parse_source;
 use super::syntax::{NatTerm, ReduceNatExpDerivation, ReduceNatExpExpr, ReduceNatExpJudgment};
+
+impl NatTermLike for NatTerm {
+    fn is_zero(&self) -> bool {
+        matches!(self, Self::Z)
+    }
+
+    fn succ_inner(&self) -> Option<&Self> {
+        let Self::S(inner) = self else {
+            return None;
+        };
+        Some(inner.as_ref())
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 enum ReduceNatExpDerivationRule {
@@ -266,648 +283,462 @@ fn wrong_rule_application_message(
     )
 }
 
-fn check_r_plus(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::RPlus;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::ReducesTo {
-            from: ReduceNatExpExpr::Plus(e1, e2),
-            to: ReduceNatExpExpr::Nat(n3),
-        } => {
-            let (Some(n1), Some(n2)) = (as_nat_expr(e1), as_nat_expr(e2)) else {
-                return fail_after_checking_subderivations(
+#[derive(Debug, Clone, Copy)]
+enum OneStepKind {
+    Reduces,
+    Deterministic,
+}
+
+impl OneStepKind {
+    fn as_one_step_judgment(
+        self,
+        judgment: &ReduceNatExpJudgment,
+    ) -> Option<(&ReduceNatExpExpr, &ReduceNatExpExpr)> {
+        match self {
+            Self::Reduces => as_reduces_to(judgment),
+            Self::Deterministic => as_deterministic_reduces_to(judgment),
+        }
+    }
+
+    fn make_judgment(self, from: ReduceNatExpExpr, to: ReduceNatExpExpr) -> ReduceNatExpJudgment {
+        match self {
+            Self::Reduces => ReduceNatExpJudgment::ReducesTo { from, to },
+            Self::Deterministic => ReduceNatExpJudgment::DeterministicReducesTo { from, to },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum BinaryOpKind {
+    Plus,
+    Times,
+}
+
+impl BinaryOpKind {
+    fn split_expr(self, expr: &ReduceNatExpExpr) -> Option<(&ReduceNatExpExpr, &ReduceNatExpExpr)> {
+        match (self, expr) {
+            (Self::Plus, ReduceNatExpExpr::Plus(left, right)) => {
+                Some((left.as_ref(), right.as_ref()))
+            }
+            (Self::Times, ReduceNatExpExpr::Times(left, right)) => {
+                Some((left.as_ref(), right.as_ref()))
+            }
+            _ => None,
+        }
+    }
+
+    fn nat_premise_form(self) -> &'static str {
+        match self {
+            Self::Plus => "n1 plus n2 is n3",
+            Self::Times => "n1 times n2 is n3",
+        }
+    }
+
+    fn as_nat_premise_judgment(
+        self,
+        judgment: &ReduceNatExpJudgment,
+    ) -> Option<(&NatTerm, &NatTerm, &NatTerm)> {
+        match (self, judgment) {
+            (
+                Self::Plus,
+                ReduceNatExpJudgment::PlusIs {
+                    left,
+                    right,
+                    result,
+                },
+            ) => Some((left, right, result)),
+            (
+                Self::Times,
+                ReduceNatExpJudgment::TimesIs {
+                    left,
+                    right,
+                    result,
+                },
+            ) => Some((left, right, result)),
+            _ => None,
+        }
+    }
+
+    fn make_nat_premise_judgment(
+        self,
+        left: NatTerm,
+        right: NatTerm,
+        result: NatTerm,
+    ) -> ReduceNatExpJudgment {
+        match self {
+            Self::Plus => ReduceNatExpJudgment::PlusIs {
+                left,
+                right,
+                result,
+            },
+            Self::Times => ReduceNatExpJudgment::TimesIs {
+                left,
+                right,
+                result,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+enum RightStepLeftConstraint {
+    AnyExpr,
+    NatOnly,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct RightStepSpec {
+    left_constraint: RightStepLeftConstraint,
+    expected_conclusion: &'static str,
+    expected_premise: &'static str,
+    fix: &'static str,
+}
+
+fn check_binary_value_step(
+    derivation: &ReduceNatExpDerivation,
+    rule: ReduceNatExpDerivationRule,
+    one_step: OneStepKind,
+    op: BinaryOpKind,
+    expected_conclusion: &'static str,
+) -> Result<ReduceNatExpJudgment, CheckError> {
+    let Some((from, to)) = one_step.as_one_step_judgment(&derivation.judgment) else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, expected_conclusion),
+        );
+    };
+    let Some((left_expr, right_expr)) = op.split_expr(from) else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, expected_conclusion),
+        );
+    };
+    let Some(result) = as_nat_expr(to) else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, expected_conclusion),
+        );
+    };
+    let (Some(left_nat), Some(right_nat)) = (as_nat_expr(left_expr), as_nat_expr(right_expr))
+    else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, expected_conclusion),
+        );
+    };
+
+    match derivation.subderivations.as_slice() {
+        [d1] => {
+            let first = infer_judgment(d1)?;
+            let Some((premise_left, premise_right, premise_result)) =
+                op.as_nat_premise_judgment(&first)
+            else {
+                return Err(rule_violation(
                     derivation,
-                    wrong_conclusion_form_message(rule, "n1 + n2 ---> n3"),
-                );
+                    wrong_premise_form_message(rule, "first", op.nat_premise_form(), &first),
+                ));
             };
 
-            match derivation.subderivations.as_slice() {
-                [d1] => {
-                    let first = infer_judgment(d1)?;
-                    match &first {
-                        ReduceNatExpJudgment::PlusIs {
-                            left,
-                            right,
-                            result,
-                        } => {
-                            if left == n1 && right == n2 && result == n3 {
-                                Ok(derivation.judgment.clone())
-                            } else {
-                                Err(rule_violation(
-                                    derivation,
-                                    wrong_rule_application_message(
-                                        rule,
-                                        &[ReduceNatExpJudgment::PlusIs {
-                                            left: n1.clone(),
-                                            right: n2.clone(),
-                                            result: n3.clone(),
-                                        }],
-                                        &[&first],
-                                        "make n1/n2/n3 links consistent across conclusion and premise",
-                                    ),
-                                ))
-                            }
-                        }
-                        actual => Err(rule_violation(
-                            derivation,
-                            wrong_premise_form_message(rule, "first", "n1 plus n2 is n3", actual),
-                        )),
-                    }
-                }
-                _ => fail_after_checking_subderivations(
+            if premise_left == left_nat && premise_right == right_nat && premise_result == result {
+                Ok(derivation.judgment.clone())
+            } else {
+                Err(rule_violation(
                     derivation,
-                    wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-                ),
+                    wrong_rule_application_message(
+                        rule,
+                        &[op.make_nat_premise_judgment(
+                            left_nat.clone(),
+                            right_nat.clone(),
+                            result.clone(),
+                        )],
+                        &[&first],
+                        "make n1/n2/n3 links consistent across conclusion and premise",
+                    ),
+                ))
             }
         }
         _ => fail_after_checking_subderivations(
             derivation,
-            wrong_conclusion_form_message(rule, "n1 + n2 ---> n3"),
+            wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
         ),
     }
+}
+
+fn check_binary_left_step(
+    derivation: &ReduceNatExpDerivation,
+    rule: ReduceNatExpDerivationRule,
+    one_step: OneStepKind,
+    op: BinaryOpKind,
+    expected_conclusion: &'static str,
+    expected_premise: &'static str,
+) -> Result<ReduceNatExpJudgment, CheckError> {
+    let Some((from, to)) = one_step.as_one_step_judgment(&derivation.judgment) else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, expected_conclusion),
+        );
+    };
+    let (Some((from_left, from_right)), Some((to_left, to_right))) =
+        (op.split_expr(from), op.split_expr(to))
+    else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, expected_conclusion),
+        );
+    };
+
+    match derivation.subderivations.as_slice() {
+        [d1] => {
+            let first = infer_judgment(d1)?;
+            let Some((premise_from, premise_to)) = one_step.as_one_step_judgment(&first) else {
+                return Err(rule_violation(
+                    derivation,
+                    wrong_premise_form_message(rule, "first", expected_premise, &first),
+                ));
+            };
+
+            if premise_from == from_left && premise_to == to_left && to_right == from_right {
+                Ok(derivation.judgment.clone())
+            } else {
+                Err(rule_violation(
+                    derivation,
+                    wrong_rule_application_message(
+                        rule,
+                        &[one_step.make_judgment(from_left.clone(), to_left.clone())],
+                        &[&first],
+                        "make e1/e1'/e2 links consistent across conclusion and premise",
+                    ),
+                ))
+            }
+        }
+        _ => fail_after_checking_subderivations(
+            derivation,
+            wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
+        ),
+    }
+}
+
+fn check_binary_right_step(
+    derivation: &ReduceNatExpDerivation,
+    rule: ReduceNatExpDerivationRule,
+    one_step: OneStepKind,
+    op: BinaryOpKind,
+    spec: RightStepSpec,
+) -> Result<ReduceNatExpJudgment, CheckError> {
+    let Some((from, to)) = one_step.as_one_step_judgment(&derivation.judgment) else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, spec.expected_conclusion),
+        );
+    };
+    let (Some((from_left, from_right)), Some((to_left, to_right))) =
+        (op.split_expr(from), op.split_expr(to))
+    else {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, spec.expected_conclusion),
+        );
+    };
+
+    if matches!(spec.left_constraint, RightStepLeftConstraint::NatOnly)
+        && (as_nat_expr(from_left).is_none() || as_nat_expr(to_left).is_none())
+    {
+        return fail_after_checking_subderivations(
+            derivation,
+            wrong_conclusion_form_message(rule, spec.expected_conclusion),
+        );
+    }
+
+    match derivation.subderivations.as_slice() {
+        [d1] => {
+            let first = infer_judgment(d1)?;
+            let Some((premise_from, premise_to)) = one_step.as_one_step_judgment(&first) else {
+                return Err(rule_violation(
+                    derivation,
+                    wrong_premise_form_message(rule, "first", spec.expected_premise, &first),
+                ));
+            };
+
+            let left_matches = match spec.left_constraint {
+                RightStepLeftConstraint::AnyExpr => from_left == to_left,
+                RightStepLeftConstraint::NatOnly => as_nat_expr(from_left) == as_nat_expr(to_left),
+            };
+
+            if left_matches && premise_from == from_right && premise_to == to_right {
+                Ok(derivation.judgment.clone())
+            } else {
+                Err(rule_violation(
+                    derivation,
+                    wrong_rule_application_message(
+                        rule,
+                        &[one_step.make_judgment(from_right.clone(), to_right.clone())],
+                        &[&first],
+                        spec.fix,
+                    ),
+                ))
+            }
+        }
+        _ => fail_after_checking_subderivations(
+            derivation,
+            wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
+        ),
+    }
+}
+
+fn check_r_plus(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
+    check_binary_value_step(
+        derivation,
+        ReduceNatExpDerivationRule::RPlus,
+        OneStepKind::Reduces,
+        BinaryOpKind::Plus,
+        "n1 + n2 ---> n3",
+    )
 }
 
 fn check_r_times(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::RTimes;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::ReducesTo {
-            from: ReduceNatExpExpr::Times(e1, e2),
-            to: ReduceNatExpExpr::Nat(n3),
-        } => {
-            let (Some(n1), Some(n2)) = (as_nat_expr(e1), as_nat_expr(e2)) else {
-                return fail_after_checking_subderivations(
-                    derivation,
-                    wrong_conclusion_form_message(rule, "n1 * n2 ---> n3"),
-                );
-            };
-
-            match derivation.subderivations.as_slice() {
-                [d1] => {
-                    let first = infer_judgment(d1)?;
-                    match &first {
-                        ReduceNatExpJudgment::TimesIs {
-                            left,
-                            right,
-                            result,
-                        } => {
-                            if left == n1 && right == n2 && result == n3 {
-                                Ok(derivation.judgment.clone())
-                            } else {
-                                Err(rule_violation(
-                                    derivation,
-                                    wrong_rule_application_message(
-                                        rule,
-                                        &[ReduceNatExpJudgment::TimesIs {
-                                            left: n1.clone(),
-                                            right: n2.clone(),
-                                            result: n3.clone(),
-                                        }],
-                                        &[&first],
-                                        "make n1/n2/n3 links consistent across conclusion and premise",
-                                    ),
-                                ))
-                            }
-                        }
-                        actual => Err(rule_violation(
-                            derivation,
-                            wrong_premise_form_message(rule, "first", "n1 times n2 is n3", actual),
-                        )),
-                    }
-                }
-                _ => fail_after_checking_subderivations(
-                    derivation,
-                    wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-                ),
-            }
-        }
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "n1 * n2 ---> n3"),
-        ),
-    }
+    check_binary_value_step(
+        derivation,
+        ReduceNatExpDerivationRule::RTimes,
+        OneStepKind::Reduces,
+        BinaryOpKind::Times,
+        "n1 * n2 ---> n3",
+    )
 }
 
 fn check_r_plus_l(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::RPlusL;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::ReducesTo {
-            from: ReduceNatExpExpr::Plus(e1, e2),
-            to: ReduceNatExpExpr::Plus(e1_prime, e2_prime),
-        } => match derivation.subderivations.as_slice() {
-            [d1] => {
-                let first = infer_judgment(d1)?;
-                let Some((premise_from, premise_to)) = as_reduces_to(&first) else {
-                    return Err(rule_violation(
-                        derivation,
-                        wrong_premise_form_message(rule, "first", "e1 ---> e1'", &first),
-                    ));
-                };
-
-                if premise_from == e1.as_ref() && premise_to == e1_prime.as_ref() && e2_prime == e2
-                {
-                    Ok(derivation.judgment.clone())
-                } else {
-                    Err(rule_violation(
-                        derivation,
-                        wrong_rule_application_message(
-                            rule,
-                            &[ReduceNatExpJudgment::ReducesTo {
-                                from: e1.as_ref().clone(),
-                                to: e1_prime.as_ref().clone(),
-                            }],
-                            &[&first],
-                            "make e1/e1'/e2 links consistent across conclusion and premise",
-                        ),
-                    ))
-                }
-            }
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-            ),
-        },
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "e1 + e2 ---> e1' + e2"),
-        ),
-    }
+    check_binary_left_step(
+        derivation,
+        ReduceNatExpDerivationRule::RPlusL,
+        OneStepKind::Reduces,
+        BinaryOpKind::Plus,
+        "e1 + e2 ---> e1' + e2",
+        "e1 ---> e1'",
+    )
 }
 
 fn check_r_plus_r(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::RPlusR;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::ReducesTo {
-            from: ReduceNatExpExpr::Plus(e1, e2),
-            to: ReduceNatExpExpr::Plus(e1_prime, e2_prime),
-        } => match derivation.subderivations.as_slice() {
-            [d1] => {
-                let first = infer_judgment(d1)?;
-                let Some((premise_from, premise_to)) = as_reduces_to(&first) else {
-                    return Err(rule_violation(
-                        derivation,
-                        wrong_premise_form_message(rule, "first", "e2 ---> e2'", &first),
-                    ));
-                };
-
-                if e1 == e1_prime && premise_from == e2.as_ref() && premise_to == e2_prime.as_ref()
-                {
-                    Ok(derivation.judgment.clone())
-                } else {
-                    Err(rule_violation(
-                        derivation,
-                        wrong_rule_application_message(
-                            rule,
-                            &[ReduceNatExpJudgment::ReducesTo {
-                                from: e2.as_ref().clone(),
-                                to: e2_prime.as_ref().clone(),
-                            }],
-                            &[&first],
-                            "keep the left expression fixed and make e2/e2' links consistent",
-                        ),
-                    ))
-                }
-            }
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-            ),
+    check_binary_right_step(
+        derivation,
+        ReduceNatExpDerivationRule::RPlusR,
+        OneStepKind::Reduces,
+        BinaryOpKind::Plus,
+        RightStepSpec {
+            left_constraint: RightStepLeftConstraint::AnyExpr,
+            expected_conclusion: "e1 + e2 ---> e1 + e2'",
+            expected_premise: "e2 ---> e2'",
+            fix: "keep the left expression fixed and make e2/e2' links consistent",
         },
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "e1 + e2 ---> e1 + e2'"),
-        ),
-    }
+    )
 }
 
 fn check_r_times_l(
     derivation: &ReduceNatExpDerivation,
 ) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::RTimesL;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::ReducesTo {
-            from: ReduceNatExpExpr::Times(e1, e2),
-            to: ReduceNatExpExpr::Times(e1_prime, e2_prime),
-        } => match derivation.subderivations.as_slice() {
-            [d1] => {
-                let first = infer_judgment(d1)?;
-                let Some((premise_from, premise_to)) = as_reduces_to(&first) else {
-                    return Err(rule_violation(
-                        derivation,
-                        wrong_premise_form_message(rule, "first", "e1 ---> e1'", &first),
-                    ));
-                };
-
-                if premise_from == e1.as_ref() && premise_to == e1_prime.as_ref() && e2_prime == e2
-                {
-                    Ok(derivation.judgment.clone())
-                } else {
-                    Err(rule_violation(
-                        derivation,
-                        wrong_rule_application_message(
-                            rule,
-                            &[ReduceNatExpJudgment::ReducesTo {
-                                from: e1.as_ref().clone(),
-                                to: e1_prime.as_ref().clone(),
-                            }],
-                            &[&first],
-                            "make e1/e1'/e2 links consistent across conclusion and premise",
-                        ),
-                    ))
-                }
-            }
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-            ),
-        },
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "e1 * e2 ---> e1' * e2"),
-        ),
-    }
+    check_binary_left_step(
+        derivation,
+        ReduceNatExpDerivationRule::RTimesL,
+        OneStepKind::Reduces,
+        BinaryOpKind::Times,
+        "e1 * e2 ---> e1' * e2",
+        "e1 ---> e1'",
+    )
 }
 
 fn check_r_times_r(
     derivation: &ReduceNatExpDerivation,
 ) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::RTimesR;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::ReducesTo {
-            from: ReduceNatExpExpr::Times(e1, e2),
-            to: ReduceNatExpExpr::Times(e1_prime, e2_prime),
-        } => match derivation.subderivations.as_slice() {
-            [d1] => {
-                let first = infer_judgment(d1)?;
-                let Some((premise_from, premise_to)) = as_reduces_to(&first) else {
-                    return Err(rule_violation(
-                        derivation,
-                        wrong_premise_form_message(rule, "first", "e2 ---> e2'", &first),
-                    ));
-                };
-
-                if e1 == e1_prime && premise_from == e2.as_ref() && premise_to == e2_prime.as_ref()
-                {
-                    Ok(derivation.judgment.clone())
-                } else {
-                    Err(rule_violation(
-                        derivation,
-                        wrong_rule_application_message(
-                            rule,
-                            &[ReduceNatExpJudgment::ReducesTo {
-                                from: e2.as_ref().clone(),
-                                to: e2_prime.as_ref().clone(),
-                            }],
-                            &[&first],
-                            "keep the left expression fixed and make e2/e2' links consistent",
-                        ),
-                    ))
-                }
-            }
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-            ),
+    check_binary_right_step(
+        derivation,
+        ReduceNatExpDerivationRule::RTimesR,
+        OneStepKind::Reduces,
+        BinaryOpKind::Times,
+        RightStepSpec {
+            left_constraint: RightStepLeftConstraint::AnyExpr,
+            expected_conclusion: "e1 * e2 ---> e1 * e2'",
+            expected_premise: "e2 ---> e2'",
+            fix: "keep the left expression fixed and make e2/e2' links consistent",
         },
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "e1 * e2 ---> e1 * e2'"),
-        ),
-    }
+    )
 }
 
 fn check_dr_plus(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::DRPlus;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::DeterministicReducesTo {
-            from: ReduceNatExpExpr::Plus(e1, e2),
-            to: ReduceNatExpExpr::Nat(n3),
-        } => {
-            let (Some(n1), Some(n2)) = (as_nat_expr(e1), as_nat_expr(e2)) else {
-                return fail_after_checking_subderivations(
-                    derivation,
-                    wrong_conclusion_form_message(rule, "n1 + n2 -d-> n3"),
-                );
-            };
-
-            match derivation.subderivations.as_slice() {
-                [d1] => {
-                    let first = infer_judgment(d1)?;
-                    match &first {
-                        ReduceNatExpJudgment::PlusIs {
-                            left,
-                            right,
-                            result,
-                        } => {
-                            if left == n1 && right == n2 && result == n3 {
-                                Ok(derivation.judgment.clone())
-                            } else {
-                                Err(rule_violation(
-                                    derivation,
-                                    wrong_rule_application_message(
-                                        rule,
-                                        &[ReduceNatExpJudgment::PlusIs {
-                                            left: n1.clone(),
-                                            right: n2.clone(),
-                                            result: n3.clone(),
-                                        }],
-                                        &[&first],
-                                        "make n1/n2/n3 links consistent across conclusion and premise",
-                                    ),
-                                ))
-                            }
-                        }
-                        actual => Err(rule_violation(
-                            derivation,
-                            wrong_premise_form_message(rule, "first", "n1 plus n2 is n3", actual),
-                        )),
-                    }
-                }
-                _ => fail_after_checking_subderivations(
-                    derivation,
-                    wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-                ),
-            }
-        }
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "n1 + n2 -d-> n3"),
-        ),
-    }
+    check_binary_value_step(
+        derivation,
+        ReduceNatExpDerivationRule::DRPlus,
+        OneStepKind::Deterministic,
+        BinaryOpKind::Plus,
+        "n1 + n2 -d-> n3",
+    )
 }
 
 fn check_dr_times(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::DRTimes;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::DeterministicReducesTo {
-            from: ReduceNatExpExpr::Times(e1, e2),
-            to: ReduceNatExpExpr::Nat(n3),
-        } => {
-            let (Some(n1), Some(n2)) = (as_nat_expr(e1), as_nat_expr(e2)) else {
-                return fail_after_checking_subderivations(
-                    derivation,
-                    wrong_conclusion_form_message(rule, "n1 * n2 -d-> n3"),
-                );
-            };
-
-            match derivation.subderivations.as_slice() {
-                [d1] => {
-                    let first = infer_judgment(d1)?;
-                    match &first {
-                        ReduceNatExpJudgment::TimesIs {
-                            left,
-                            right,
-                            result,
-                        } => {
-                            if left == n1 && right == n2 && result == n3 {
-                                Ok(derivation.judgment.clone())
-                            } else {
-                                Err(rule_violation(
-                                    derivation,
-                                    wrong_rule_application_message(
-                                        rule,
-                                        &[ReduceNatExpJudgment::TimesIs {
-                                            left: n1.clone(),
-                                            right: n2.clone(),
-                                            result: n3.clone(),
-                                        }],
-                                        &[&first],
-                                        "make n1/n2/n3 links consistent across conclusion and premise",
-                                    ),
-                                ))
-                            }
-                        }
-                        actual => Err(rule_violation(
-                            derivation,
-                            wrong_premise_form_message(rule, "first", "n1 times n2 is n3", actual),
-                        )),
-                    }
-                }
-                _ => fail_after_checking_subderivations(
-                    derivation,
-                    wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-                ),
-            }
-        }
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "n1 * n2 -d-> n3"),
-        ),
-    }
+    check_binary_value_step(
+        derivation,
+        ReduceNatExpDerivationRule::DRTimes,
+        OneStepKind::Deterministic,
+        BinaryOpKind::Times,
+        "n1 * n2 -d-> n3",
+    )
 }
 
 fn check_dr_plus_l(
     derivation: &ReduceNatExpDerivation,
 ) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::DRPlusL;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::DeterministicReducesTo {
-            from: ReduceNatExpExpr::Plus(e1, e2),
-            to: ReduceNatExpExpr::Plus(e1_prime, e2_prime),
-        } => match derivation.subderivations.as_slice() {
-            [d1] => {
-                let first = infer_judgment(d1)?;
-                let Some((premise_from, premise_to)) = as_deterministic_reduces_to(&first) else {
-                    return Err(rule_violation(
-                        derivation,
-                        wrong_premise_form_message(rule, "first", "e1 -d-> e1'", &first),
-                    ));
-                };
-
-                if premise_from == e1.as_ref() && premise_to == e1_prime.as_ref() && e2_prime == e2
-                {
-                    Ok(derivation.judgment.clone())
-                } else {
-                    Err(rule_violation(
-                        derivation,
-                        wrong_rule_application_message(
-                            rule,
-                            &[ReduceNatExpJudgment::DeterministicReducesTo {
-                                from: e1.as_ref().clone(),
-                                to: e1_prime.as_ref().clone(),
-                            }],
-                            &[&first],
-                            "make e1/e1'/e2 links consistent across conclusion and premise",
-                        ),
-                    ))
-                }
-            }
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-            ),
-        },
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "e1 + e2 -d-> e1' + e2"),
-        ),
-    }
+    check_binary_left_step(
+        derivation,
+        ReduceNatExpDerivationRule::DRPlusL,
+        OneStepKind::Deterministic,
+        BinaryOpKind::Plus,
+        "e1 + e2 -d-> e1' + e2",
+        "e1 -d-> e1'",
+    )
 }
 
 fn check_dr_plus_r(
     derivation: &ReduceNatExpDerivation,
 ) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::DRPlusR;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::DeterministicReducesTo {
-            from: ReduceNatExpExpr::Plus(e1, e2),
-            to: ReduceNatExpExpr::Plus(e1_prime, e2_prime),
-        } => {
-            let (Some(n1), Some(n1_prime)) = (as_nat_expr(e1), as_nat_expr(e1_prime)) else {
-                return fail_after_checking_subderivations(
-                    derivation,
-                    wrong_conclusion_form_message(rule, "n1 + e2 -d-> n1 + e2'"),
-                );
-            };
-
-            match derivation.subderivations.as_slice() {
-                [d1] => {
-                    let first = infer_judgment(d1)?;
-                    let Some((premise_from, premise_to)) = as_deterministic_reduces_to(&first)
-                    else {
-                        return Err(rule_violation(
-                            derivation,
-                            wrong_premise_form_message(rule, "first", "e2 -d-> e2'", &first),
-                        ));
-                    };
-
-                    if n1 == n1_prime
-                        && premise_from == e2.as_ref()
-                        && premise_to == e2_prime.as_ref()
-                    {
-                        Ok(derivation.judgment.clone())
-                    } else {
-                        Err(rule_violation(
-                            derivation,
-                            wrong_rule_application_message(
-                                rule,
-                                &[ReduceNatExpJudgment::DeterministicReducesTo {
-                                    from: e2.as_ref().clone(),
-                                    to: e2_prime.as_ref().clone(),
-                                }],
-                                &[&first],
-                                "keep the left Nat fixed and make e2/e2' links consistent",
-                            ),
-                        ))
-                    }
-                }
-                _ => fail_after_checking_subderivations(
-                    derivation,
-                    wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-                ),
-            }
-        }
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "n1 + e2 -d-> n1 + e2'"),
-        ),
-    }
+    check_binary_right_step(
+        derivation,
+        ReduceNatExpDerivationRule::DRPlusR,
+        OneStepKind::Deterministic,
+        BinaryOpKind::Plus,
+        RightStepSpec {
+            left_constraint: RightStepLeftConstraint::NatOnly,
+            expected_conclusion: "n1 + e2 -d-> n1 + e2'",
+            expected_premise: "e2 -d-> e2'",
+            fix: "keep the left Nat fixed and make e2/e2' links consistent",
+        },
+    )
 }
 
 fn check_dr_times_l(
     derivation: &ReduceNatExpDerivation,
 ) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::DRTimesL;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::DeterministicReducesTo {
-            from: ReduceNatExpExpr::Times(e1, e2),
-            to: ReduceNatExpExpr::Times(e1_prime, e2_prime),
-        } => match derivation.subderivations.as_slice() {
-            [d1] => {
-                let first = infer_judgment(d1)?;
-                let Some((premise_from, premise_to)) = as_deterministic_reduces_to(&first) else {
-                    return Err(rule_violation(
-                        derivation,
-                        wrong_premise_form_message(rule, "first", "e1 -d-> e1'", &first),
-                    ));
-                };
-
-                if premise_from == e1.as_ref() && premise_to == e1_prime.as_ref() && e2_prime == e2
-                {
-                    Ok(derivation.judgment.clone())
-                } else {
-                    Err(rule_violation(
-                        derivation,
-                        wrong_rule_application_message(
-                            rule,
-                            &[ReduceNatExpJudgment::DeterministicReducesTo {
-                                from: e1.as_ref().clone(),
-                                to: e1_prime.as_ref().clone(),
-                            }],
-                            &[&first],
-                            "make e1/e1'/e2 links consistent across conclusion and premise",
-                        ),
-                    ))
-                }
-            }
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-            ),
-        },
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "e1 * e2 -d-> e1' * e2"),
-        ),
-    }
+    check_binary_left_step(
+        derivation,
+        ReduceNatExpDerivationRule::DRTimesL,
+        OneStepKind::Deterministic,
+        BinaryOpKind::Times,
+        "e1 * e2 -d-> e1' * e2",
+        "e1 -d-> e1'",
+    )
 }
 
 fn check_dr_times_r(
     derivation: &ReduceNatExpDerivation,
 ) -> Result<ReduceNatExpJudgment, CheckError> {
-    let rule = ReduceNatExpDerivationRule::DRTimesR;
-    match &derivation.judgment {
-        ReduceNatExpJudgment::DeterministicReducesTo {
-            from: ReduceNatExpExpr::Times(e1, e2),
-            to: ReduceNatExpExpr::Times(e1_prime, e2_prime),
-        } => {
-            let (Some(n1), Some(n1_prime)) = (as_nat_expr(e1), as_nat_expr(e1_prime)) else {
-                return fail_after_checking_subderivations(
-                    derivation,
-                    wrong_conclusion_form_message(rule, "n1 * e2 -d-> n1 * e2'"),
-                );
-            };
-
-            match derivation.subderivations.as_slice() {
-                [d1] => {
-                    let first = infer_judgment(d1)?;
-                    let Some((premise_from, premise_to)) = as_deterministic_reduces_to(&first)
-                    else {
-                        return Err(rule_violation(
-                            derivation,
-                            wrong_premise_form_message(rule, "first", "e2 -d-> e2'", &first),
-                        ));
-                    };
-
-                    if n1 == n1_prime
-                        && premise_from == e2.as_ref()
-                        && premise_to == e2_prime.as_ref()
-                    {
-                        Ok(derivation.judgment.clone())
-                    } else {
-                        Err(rule_violation(
-                            derivation,
-                            wrong_rule_application_message(
-                                rule,
-                                &[ReduceNatExpJudgment::DeterministicReducesTo {
-                                    from: e2.as_ref().clone(),
-                                    to: e2_prime.as_ref().clone(),
-                                }],
-                                &[&first],
-                                "keep the left Nat fixed and make e2/e2' links consistent",
-                            ),
-                        ))
-                    }
-                }
-                _ => fail_after_checking_subderivations(
-                    derivation,
-                    wrong_premise_count_message(rule, 1, derivation.subderivations.len()),
-                ),
-            }
-        }
-        _ => fail_after_checking_subderivations(
-            derivation,
-            wrong_conclusion_form_message(rule, "n1 * e2 -d-> n1 * e2'"),
-        ),
-    }
+    check_binary_right_step(
+        derivation,
+        ReduceNatExpDerivationRule::DRTimesR,
+        OneStepKind::Deterministic,
+        BinaryOpKind::Times,
+        RightStepSpec {
+            left_constraint: RightStepLeftConstraint::NatOnly,
+            expected_conclusion: "n1 * e2 -d-> n1 * e2'",
+            expected_premise: "e2 -d-> e2'",
+            fix: "keep the left Nat fixed and make e2/e2' links consistent",
+        },
+    )
 }
 
 fn check_mr_zero(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgment, CheckError> {
@@ -1035,16 +866,18 @@ fn check_p_zero(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
     let rule = ReduceNatExpDerivationRule::PZero;
     match &derivation.judgment {
         ReduceNatExpJudgment::PlusIs {
-            left: NatTerm::Z,
+            left,
             right,
             result,
-        } if right == result => match derivation.subderivations.as_slice() {
-            [] => Ok(derivation.judgment.clone()),
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
-            ),
-        },
+        } if is_p_zero_conclusion(left, right, result) => {
+            match derivation.subderivations.as_slice() {
+                [] => Ok(derivation.judgment.clone()),
+                _ => fail_after_checking_subderivations(
+                    derivation,
+                    wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
+                ),
+            }
+        }
         _ => fail_after_checking_subderivations(
             derivation,
             wrong_conclusion_form_message(rule, "Z plus n is n"),
@@ -1056,11 +889,17 @@ fn check_p_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
     let rule = ReduceNatExpDerivationRule::PSucc;
     match &derivation.judgment {
         ReduceNatExpJudgment::PlusIs {
-            left: NatTerm::S(n1),
+            left,
             right: n2,
-            result: NatTerm::S(n3),
+            result,
         } => match derivation.subderivations.as_slice() {
             [d1] => {
+                let Some(conclusion) = p_succ_conclusion(left, n2, result) else {
+                    return fail_after_checking_subderivations(
+                        derivation,
+                        wrong_conclusion_form_message(rule, "S(n1) plus n2 is S(n)"),
+                    );
+                };
                 let first = infer_judgment(d1)?;
                 match &first {
                     ReduceNatExpJudgment::PlusIs {
@@ -1068,7 +907,7 @@ fn check_p_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
                         right,
                         result,
                     } => {
-                        if left == n1.as_ref() && right == n2 && result == n3.as_ref() {
+                        if p_succ_premise_matches(&conclusion, left, right, result) {
                             Ok(derivation.judgment.clone())
                         } else {
                             Err(rule_violation(
@@ -1076,9 +915,9 @@ fn check_p_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
                                 wrong_rule_application_message(
                                     rule,
                                     &[ReduceNatExpJudgment::PlusIs {
-                                        left: n1.as_ref().clone(),
-                                        right: n2.clone(),
-                                        result: n3.as_ref().clone(),
+                                        left: conclusion.n1.clone(),
+                                        right: conclusion.n2.clone(),
+                                        result: conclusion.n.clone(),
                                     }],
                                     &[&first],
                                     "make n1/n2/n links consistent across conclusion and premise",
@@ -1108,14 +947,18 @@ fn check_t_zero(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
     let rule = ReduceNatExpDerivationRule::TZero;
     match &derivation.judgment {
         ReduceNatExpJudgment::TimesIs {
-            left: NatTerm::Z,
-            result: NatTerm::Z,
-            ..
+            left,
+            right: _,
+            result,
         } => match derivation.subderivations.as_slice() {
-            [] => Ok(derivation.judgment.clone()),
+            [] if is_t_zero_conclusion(left, result) => Ok(derivation.judgment.clone()),
             _ => fail_after_checking_subderivations(
                 derivation,
-                wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
+                if !is_t_zero_conclusion(left, result) {
+                    wrong_conclusion_form_message(rule, "Z times n is Z")
+                } else {
+                    wrong_premise_count_message(rule, 0, derivation.subderivations.len())
+                },
             ),
         },
         _ => fail_after_checking_subderivations(
@@ -1129,15 +972,21 @@ fn check_t_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
     let rule = ReduceNatExpDerivationRule::TSucc;
     match &derivation.judgment {
         ReduceNatExpJudgment::TimesIs {
-            left: NatTerm::S(n1),
+            left,
             right: n2,
             result: n4,
         } => match derivation.subderivations.as_slice() {
             [d1, d2] => {
+                let Some(conclusion) = t_succ_conclusion(left, n2, n4) else {
+                    return fail_after_checking_subderivations(
+                        derivation,
+                        wrong_conclusion_form_message(rule, "S(n1) times n2 is n4"),
+                    );
+                };
                 let first = infer_judgment(d1)?;
                 let second = infer_judgment(d2)?;
 
-                let (left, right, n3) = match &first {
+                let (first_left, first_right, first_n3) = match &first {
                     ReduceNatExpJudgment::TimesIs {
                         left,
                         right,
@@ -1150,7 +999,7 @@ fn check_t_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
                         ));
                     }
                 };
-                let (plus_left, plus_right, plus_result) = match &second {
+                let (second_left, second_right, second_result) = match &second {
                     ReduceNatExpJudgment::PlusIs {
                         left,
                         right,
@@ -1164,12 +1013,15 @@ fn check_t_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
                     }
                 };
 
-                if left == n1.as_ref()
-                    && right == n2
-                    && plus_left == n2
-                    && plus_right == n3
-                    && plus_result == n4
-                {
+                if t_succ_premises_match(
+                    &conclusion,
+                    first_left,
+                    first_right,
+                    first_n3,
+                    second_left,
+                    second_right,
+                    second_result,
+                ) {
                     Ok(derivation.judgment.clone())
                 } else {
                     Err(rule_violation(
@@ -1178,14 +1030,14 @@ fn check_t_succ(derivation: &ReduceNatExpDerivation) -> Result<ReduceNatExpJudgm
                             rule,
                             &[
                                 ReduceNatExpJudgment::TimesIs {
-                                    left: n1.as_ref().clone(),
-                                    right: n2.clone(),
-                                    result: plus_right.clone(),
+                                    left: conclusion.n1.clone(),
+                                    right: conclusion.n2.clone(),
+                                    result: first_n3.clone(),
                                 },
                                 ReduceNatExpJudgment::PlusIs {
-                                    left: n2.clone(),
-                                    right: plus_right.clone(),
-                                    result: n4.clone(),
+                                    left: conclusion.n2.clone(),
+                                    right: first_n3.clone(),
+                                    result: conclusion.n4.clone(),
                                 },
                             ],
                             &[&first, &second],

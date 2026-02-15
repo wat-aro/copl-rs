@@ -1,3 +1,5 @@
+mod nat_arith;
+
 pub mod compare_nat1;
 pub mod compare_nat2;
 pub mod compare_nat3;

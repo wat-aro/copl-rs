@@ -1,9 +1,26 @@
 use crate::core::{
     annotate_rule_violation_with_premise_path, CheckError, CheckReport, Game, GameKind,
 };
+use crate::games::nat_arith::{
+    is_p_zero_conclusion, is_t_zero_conclusion, p_succ_conclusion, p_succ_premise_matches,
+    t_succ_conclusion, t_succ_premises_match, NatTermLike,
+};
 
 use super::parser::parse_source;
 use super::syntax::{EvalNatExpDerivation, EvalNatExpExpr, EvalNatExpJudgment, NatTerm};
+
+impl NatTermLike for NatTerm {
+    fn is_zero(&self) -> bool {
+        matches!(self, Self::Z)
+    }
+
+    fn succ_inner(&self) -> Option<&Self> {
+        let Self::S(inner) = self else {
+            return None;
+        };
+        Some(inner.as_ref())
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 enum EvalNatExpDerivationRule {
@@ -374,16 +391,18 @@ fn check_p_zero(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
     let rule = EvalNatExpDerivationRule::PZero;
     match &derivation.judgment {
         EvalNatExpJudgment::PlusIs {
-            left: NatTerm::Z,
-            right: n,
-            result: inferred_n,
-        } if n == inferred_n => match derivation.subderivations.as_slice() {
-            [] => Ok(derivation.judgment.clone()),
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
-            ),
-        },
+            left,
+            right,
+            result,
+        } if is_p_zero_conclusion(left, right, result) => {
+            match derivation.subderivations.as_slice() {
+                [] => Ok(derivation.judgment.clone()),
+                _ => fail_after_checking_subderivations(
+                    derivation,
+                    wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
+                ),
+            }
+        }
         _ => fail_after_checking_subderivations(
             derivation,
             wrong_conclusion_form_message(rule, "Z plus n is n"),
@@ -395,11 +414,17 @@ fn check_p_succ(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
     let rule = EvalNatExpDerivationRule::PSucc;
     match &derivation.judgment {
         EvalNatExpJudgment::PlusIs {
-            left: NatTerm::S(n1),
+            left,
             right: n2,
-            result: NatTerm::S(result_inner),
+            result,
         } => match derivation.subderivations.as_slice() {
             [d1] => {
+                let Some(conclusion) = p_succ_conclusion(left, n2, result) else {
+                    return fail_after_checking_subderivations(
+                        derivation,
+                        wrong_conclusion_form_message(rule, "S(n1) plus n2 is S(n)"),
+                    );
+                };
                 let premise = infer_judgment(d1)?;
                 match premise {
                     EvalNatExpJudgment::PlusIs {
@@ -407,9 +432,7 @@ fn check_p_succ(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
                         right: premise_n2,
                         result: premise_n,
                     } => {
-                        if premise_n1 == *n1.as_ref()
-                            && premise_n2 == *n2
-                            && premise_n == *result_inner.as_ref()
+                        if p_succ_premise_matches(&conclusion, &premise_n1, &premise_n2, &premise_n)
                         {
                             Ok(derivation.judgment.clone())
                         } else {
@@ -417,9 +440,9 @@ fn check_p_succ(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
                                 derivation,
                                 format!(
                                     "Wrong rule application: P-Succ (expected premise: {} plus {} is {}, actual premise: {}; fix: make premise terms consistent with conclusion S(n1) plus n2 is S(n))",
-                                    n1.as_ref(),
-                                    n2,
-                                    result_inner.as_ref(),
+                                    conclusion.n1,
+                                    conclusion.n2,
+                                    conclusion.n,
                                     EvalNatExpJudgment::PlusIs {
                                         left: premise_n1,
                                         right: premise_n2,
@@ -451,14 +474,18 @@ fn check_t_zero(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
     let rule = EvalNatExpDerivationRule::TZero;
     match &derivation.judgment {
         EvalNatExpJudgment::TimesIs {
-            left: NatTerm::Z,
-            right: _n,
-            result: NatTerm::Z,
+            left,
+            right: _,
+            result,
         } => match derivation.subderivations.as_slice() {
-            [] => Ok(derivation.judgment.clone()),
+            [] if is_t_zero_conclusion(left, result) => Ok(derivation.judgment.clone()),
             _ => fail_after_checking_subderivations(
                 derivation,
-                wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
+                if !is_t_zero_conclusion(left, result) {
+                    wrong_conclusion_form_message(rule, "Z times n is Z")
+                } else {
+                    wrong_premise_count_message(rule, 0, derivation.subderivations.len())
+                },
             ),
         },
         _ => fail_after_checking_subderivations(
@@ -472,11 +499,17 @@ fn check_t_succ(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
     let rule = EvalNatExpDerivationRule::TSucc;
     match &derivation.judgment {
         EvalNatExpJudgment::TimesIs {
-            left: NatTerm::S(n1),
+            left,
             right: n2,
             result: n4,
         } => match derivation.subderivations.as_slice() {
             [d1, d2] => {
+                let Some(conclusion) = t_succ_conclusion(left, n2, n4) else {
+                    return fail_after_checking_subderivations(
+                        derivation,
+                        wrong_conclusion_form_message(rule, "S(n1) times n2 is n4"),
+                    );
+                };
                 let first_premise = infer_judgment(d1)?;
                 let second_premise = infer_judgment(d2)?;
                 match first_premise {
@@ -490,22 +523,25 @@ fn check_t_succ(derivation: &EvalNatExpDerivation) -> Result<EvalNatExpJudgment,
                             right: second_n3,
                             result: second_n4,
                         } => {
-                            if first_n1 == *n1.as_ref()
-                                && second_n2 == first_n2
-                                && second_n2 == *n2
-                                && second_n3 == first_n3
-                                && second_n4 == *n4
-                            {
+                            if t_succ_premises_match(
+                                &conclusion,
+                                &first_n1,
+                                &first_n2,
+                                &first_n3,
+                                &second_n2,
+                                &second_n3,
+                                &second_n4,
+                            ) {
                                 Ok(derivation.judgment.clone())
                             } else {
                                 Err(rule_violation(
                                     derivation,
                                     format!(
                                         "Wrong rule application: T-Succ (expected links: first premise {} times {} is n3, second premise {} plus n3 is {}; actual premises: [{}] and [{}]; fix: make shared terms n2/n3/n4 consistent across conclusion and both premises)",
-                                        n1.as_ref(),
-                                        n2,
-                                        n2,
-                                        n4,
+                                        conclusion.n1,
+                                        conclusion.n2,
+                                        conclusion.n2,
+                                        conclusion.n4,
                                         EvalNatExpJudgment::TimesIs {
                                             left: first_n1,
                                             right: first_n2,

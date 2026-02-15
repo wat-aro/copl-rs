@@ -1,9 +1,26 @@
 use crate::core::{
     annotate_rule_violation_with_premise_path, CheckError, CheckReport, Game, GameKind,
 };
+use crate::games::nat_arith::{
+    is_p_zero_conclusion, is_t_zero_conclusion, p_succ_conclusion, p_succ_premise_matches,
+    t_succ_conclusion, t_succ_premises_match, NatTermLike,
+};
 
 use super::parser::parse_source;
 use super::syntax::{NatDerivation, NatJudgment, NatTerm};
+
+impl NatTermLike for NatTerm {
+    fn is_zero(&self) -> bool {
+        matches!(self, Self::Z)
+    }
+
+    fn succ_inner(&self) -> Option<&Self> {
+        let Self::S(inner) = self else {
+            return None;
+        };
+        Some(inner.as_ref())
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 enum NatDerivationRule {
@@ -167,16 +184,18 @@ fn check_p_zero(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
     let rule = NatDerivationRule::PZero;
     match &derivation.judgment {
         NatJudgment::PlusIs {
-            left: NatTerm::Z,
+            left,
             right: n,
             result: inferred_n,
-        } if n == inferred_n => match derivation.subderivations.as_slice() {
-            [] => Ok(derivation.judgment.clone()),
-            _ => fail_after_checking_subderivations(
-                derivation,
-                wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
-            ),
-        },
+        } if is_p_zero_conclusion(left, n, inferred_n) => {
+            match derivation.subderivations.as_slice() {
+                [] => Ok(derivation.judgment.clone()),
+                _ => fail_after_checking_subderivations(
+                    derivation,
+                    wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
+                ),
+            }
+        }
         _ => fail_after_checking_subderivations(
             derivation,
             wrong_conclusion_form_message(rule, "Z plus n is n"),
@@ -188,11 +207,17 @@ fn check_p_succ(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
     let rule = NatDerivationRule::PSucc;
     match &derivation.judgment {
         NatJudgment::PlusIs {
-            left: NatTerm::S(n1),
+            left,
             right: n2,
-            result: NatTerm::S(result_inner),
+            result,
         } => match derivation.subderivations.as_slice() {
             [d1] => {
+                let Some(conclusion) = p_succ_conclusion(left, n2, result) else {
+                    return fail_after_checking_subderivations(
+                        derivation,
+                        wrong_conclusion_form_message(rule, "S(n1) plus n2 is S(n)"),
+                    );
+                };
                 let premise = infer_judgment(d1)?;
                 match premise {
                     NatJudgment::PlusIs {
@@ -200,18 +225,16 @@ fn check_p_succ(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
                         right: premise_n2,
                         result: premise_n,
                     } => {
-                        if premise_n1 == *n1.as_ref()
-                            && premise_n2 == *n2
-                            && premise_n == *result_inner.as_ref()
+                        if p_succ_premise_matches(&conclusion, &premise_n1, &premise_n2, &premise_n)
                         {
                             Ok(derivation.judgment.clone())
                         } else {
                             Err(rule_violation(
                                 derivation,
                                 wrong_rule_application_message_p_succ(
-                                    n1.as_ref(),
-                                    n2,
-                                    result_inner.as_ref(),
+                                    conclusion.n1,
+                                    conclusion.n2,
+                                    conclusion.n,
                                     &NatJudgment::PlusIs {
                                         left: premise_n1,
                                         right: premise_n2,
@@ -243,14 +266,18 @@ fn check_t_zero(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
     let rule = NatDerivationRule::TZero;
     match &derivation.judgment {
         NatJudgment::TimesIs {
-            left: NatTerm::Z,
+            left,
             right: _n,
-            result: NatTerm::Z,
+            result,
         } => match derivation.subderivations.as_slice() {
-            [] => Ok(derivation.judgment.clone()),
+            [] if is_t_zero_conclusion(left, result) => Ok(derivation.judgment.clone()),
             _ => fail_after_checking_subderivations(
                 derivation,
-                wrong_premise_count_message(rule, 0, derivation.subderivations.len()),
+                if !is_t_zero_conclusion(left, result) {
+                    wrong_conclusion_form_message(rule, "Z times n is Z")
+                } else {
+                    wrong_premise_count_message(rule, 0, derivation.subderivations.len())
+                },
             ),
         },
         _ => fail_after_checking_subderivations(
@@ -264,11 +291,17 @@ fn check_t_succ(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
     let rule = NatDerivationRule::TSucc;
     match &derivation.judgment {
         NatJudgment::TimesIs {
-            left: NatTerm::S(n1),
+            left,
             right: n2,
             result: n4,
         } => match derivation.subderivations.as_slice() {
             [d1, d2] => {
+                let Some(conclusion) = t_succ_conclusion(left, n2, n4) else {
+                    return fail_after_checking_subderivations(
+                        derivation,
+                        wrong_conclusion_form_message(rule, "S(n1) times n2 is n4"),
+                    );
+                };
                 let first_premise = infer_judgment(d1)?;
                 let second_premise = infer_judgment(d2)?;
                 match first_premise {
@@ -282,20 +315,23 @@ fn check_t_succ(derivation: &NatDerivation) -> Result<NatJudgment, CheckError> {
                             right: second_n3,
                             result: second_n4,
                         } => {
-                            if first_n1 == *n1.as_ref()
-                                && second_n2 == first_n2
-                                && second_n2 == *n2
-                                && second_n3 == first_n3
-                                && second_n4 == *n4
-                            {
+                            if t_succ_premises_match(
+                                &conclusion,
+                                &first_n1,
+                                &first_n2,
+                                &first_n3,
+                                &second_n2,
+                                &second_n3,
+                                &second_n4,
+                            ) {
                                 Ok(derivation.judgment.clone())
                             } else {
                                 Err(rule_violation(
                                     derivation,
                                     wrong_rule_application_message_t_succ(
-                                        n1.as_ref(),
-                                        n2,
-                                        n4,
+                                        conclusion.n1,
+                                        conclusion.n2,
+                                        conclusion.n4,
                                         &NatJudgment::TimesIs {
                                             left: first_n1,
                                             right: first_n2,
