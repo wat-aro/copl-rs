@@ -1,4 +1,6 @@
-use crate::core::{CheckError, CheckReport, Game, GameKind};
+use crate::core::{
+    annotate_rule_violation_with_premise_path, CheckError, CheckReport, Game, GameKind,
+};
 
 use super::parser::parse_source;
 use super::syntax::{CompareNat3Derivation, CompareNat3Judgment, CompareNat3Term};
@@ -36,7 +38,14 @@ impl Game for CompareNat3Game {
 
     fn check(&self, source: &str) -> Result<CheckReport, CheckError> {
         let parsed = parse_source(source)?;
-        let inferred = infer_judgment(&parsed)?;
+        let inferred = infer_judgment(&parsed).map_err(|err| {
+            annotate_rule_violation_with_premise_path(
+                err,
+                &parsed,
+                |derivation| &derivation.span,
+                |derivation| derivation.subderivations.as_slice(),
+            )
+        })?;
         Ok(CheckReport {
             game: self.kind(),
             summary: inferred.to_string(),
@@ -227,6 +236,7 @@ mod tests {
             .message()
             .contains("The number of premises is wrong: L-Succ"));
         assert!(err.message().contains("expected: 0, actual: 1"));
+        assert!(err.message().contains("premise path: root"));
         let span = err
             .span()
             .expect("checker inconsistency should have source span");
@@ -295,6 +305,7 @@ Z is less than S(S(Z)) by L-SuccR {
             .check(source)
             .expect_err("check should fail");
         assert_eq!(err.kind(), CheckErrorKind::RuleViolation);
+        assert!(err.message().contains("premise path: 1"));
         let span = err.span().expect("rule violation should have source span");
         assert_eq!(span.line, 3);
         assert_eq!(span.column, 3);

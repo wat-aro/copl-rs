@@ -129,6 +129,11 @@ impl CheckError {
         self
     }
 
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = message.into();
+        self
+    }
+
     pub fn kind(&self) -> CheckErrorKind {
         self.kind
     }
@@ -139,6 +144,69 @@ impl CheckError {
 
     pub fn span(&self) -> Option<&SourceSpan> {
         self.span.as_ref()
+    }
+}
+
+pub fn annotate_rule_violation_with_premise_path<T, FSpan, FChildren>(
+    err: CheckError,
+    root: &T,
+    span_of: FSpan,
+    children_of: FChildren,
+) -> CheckError
+where
+    FSpan: Fn(&T) -> &SourceSpan + Copy,
+    FChildren: Fn(&T) -> &[T] + Copy,
+{
+    if err.kind() != CheckErrorKind::RuleViolation {
+        return err;
+    }
+
+    let Some(span) = err.span() else {
+        return err;
+    };
+    let Some(path) = find_premise_path(root, span, span_of, children_of) else {
+        return err;
+    };
+
+    let message = err.message().to_string();
+    err.with_message(format!(
+        "{message} (premise path: {})",
+        format_premise_path(&path)
+    ))
+}
+
+fn find_premise_path<T, FSpan, FChildren>(
+    node: &T,
+    target: &SourceSpan,
+    span_of: FSpan,
+    children_of: FChildren,
+) -> Option<Vec<usize>>
+where
+    FSpan: Fn(&T) -> &SourceSpan + Copy,
+    FChildren: Fn(&T) -> &[T] + Copy,
+{
+    if span_of(node) == target {
+        return Some(Vec::new());
+    }
+
+    for (index, child) in children_of(node).iter().enumerate() {
+        if let Some(mut path) = find_premise_path(child, target, span_of, children_of) {
+            path.insert(0, index + 1);
+            return Some(path);
+        }
+    }
+
+    None
+}
+
+fn format_premise_path(path: &[usize]) -> String {
+    if path.is_empty() {
+        "root".to_string()
+    } else {
+        path.iter()
+            .map(|index| index.to_string())
+            .collect::<Vec<_>>()
+            .join(".")
     }
 }
 

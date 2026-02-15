@@ -119,7 +119,7 @@ Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 - Rule application checks are written as per-rule pattern matching over `subderivations`, aligned with the reference checker style (ADR-0007).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
-- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`).
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and failing premise path (`root`, `1`, `1.2`, ...).
 - `RuleViolation` diagnostics include actionable hints (`expected` / `actual` / `fix`) where available.
 - Successful check result text is the inferred root judgment (`... plus ... is ...` / `... times ... is ...`) (ADR-0008).
 
@@ -130,7 +130,7 @@ Current CompareNat1 checker validates derivation trees parsed from CoPL ASCII in
 - `checker.rs` validates CompareNat1 rule constraints (`L-Succ`, `L-Trans`).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
-- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... is less than ...`).
 
 Current CompareNat2 checker validates derivation trees parsed from CoPL ASCII input.
@@ -140,7 +140,7 @@ Current CompareNat2 checker validates derivation trees parsed from CoPL ASCII in
 - `checker.rs` validates CompareNat2 rule constraints (`L-Zero`, `L-SuccSucc`).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
-- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... is less than ...`).
 
 Current CompareNat3 checker validates derivation trees parsed from CoPL ASCII input.
@@ -150,7 +150,7 @@ Current CompareNat3 checker validates derivation trees parsed from CoPL ASCII in
 - `checker.rs` validates CompareNat3 rule constraints (`L-Succ`, `L-SuccR`).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
-- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... is less than ...`).
 
 Current EvalNatExp checker validates derivation trees parsed from CoPL ASCII input.
@@ -160,7 +160,7 @@ Current EvalNatExp checker validates derivation trees parsed from CoPL ASCII inp
 - `checker.rs` validates EvalNatExp and embedded Nat rules (`E-Const`, `E-Plus`, `E-Times`, `P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
-- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... evalto ...`, `... plus ... is ...`, `... times ... is ...`).
 
 Current ReduceNatExp checker validates derivation trees parsed from CoPL ASCII input.
@@ -170,7 +170,7 @@ Current ReduceNatExp checker validates derivation trees parsed from CoPL ASCII i
 - `checker.rs` validates ReduceNatExp and embedded Nat rules (`R-*`, `DR-*`, `MR-*`, `P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
-- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... ---> ...`, `... -d-> ...`, `... -*-> ...`, `... plus ... is ...`, `... times ... is ...`).
 
 ## 8. Extension Strategy
