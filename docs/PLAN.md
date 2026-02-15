@@ -98,8 +98,10 @@
 - [x] `06` [P2][Implementation] `EvalML2` checker を実装する（`copl/034.copl` - `copl/039.copl`）。
 - [x] `07` [P2][Improvement] 異常系 fixture（unknown rule / arity mismatch / rule mismatch）を実装済み game 全体で拡張する。  
   完了メモ（2026-02-16）: 実装済み game（Nat / CompareNat1 / CompareNat2 / CompareNat3 / EvalML1 / EvalML1Err / EvalML2 / EvalNatExp / ReduceNatExp）の checker テストに、上記3カテゴリを網羅する異常系ケースが揃っていることを確認。
-- [ ] `07a` [P2][Improvement] Nat 系算術規則（`P-*` / `T-*`）の checker 検証ロジックを共通化する（理由: `Nat` / `EvalNatExp` / `ReduceNatExp` で同等ロジックが重複したため）。
-- [ ] `07b` [P2][Improvement] `ReduceNatExp` の `R-*` / `DR-*` checker 検証ロジックを共通化する（理由: 1-step 関係と deterministic 1-step 関係で同型の検証分岐が重複したため）。
+- [x] `07a` [P2][Improvement] Nat 系算術規則（`P-*` / `T-*`）の checker 検証ロジックを共通化する（理由: `Nat` / `EvalNatExp` / `ReduceNatExp` で同等ロジックが重複したため）。  
+  完了メモ（2026-02-16）: `src/games/nat_arith.rs` を追加し、`Nat` / `EvalNatExp` / `ReduceNatExp` の `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ` の構造チェックを共通ヘルパー化。既存の checker テスト・fixture テスト・clippy を通過。
+- [x] `07b` [P2][Improvement] `ReduceNatExp` の `R-*` / `DR-*` checker 検証ロジックを共通化する（理由: 1-step 関係と deterministic 1-step 関係で同型の検証分岐が重複したため）。  
+  完了メモ（2026-02-16）: `ReduceNatExp` checker 内で 1-step 関係（`R-*`）と deterministic 1-step 関係（`DR-*`）の同型検証を共通ヘルパー化し、演算種別（`+` / `*`）と関係種別（`--->` / `-d->`）を切り替える構造へ整理。既存の checker テスト・fixture テスト・clippy を通過。
 - [ ] `08` [P2][Implementation] `EvalML3` checker を実装する（`copl/040.copl` - `copl/053.copl`）。
 - [ ] `09` [P2][Implementation] `NamelessML3` checker を実装する（`copl/054.copl`, `056.copl`, `058.copl`, `060.copl`, `062.copl`, `064.copl`, `066.copl`, `068.copl`）。
 - [ ] `10` [P2][Implementation] `EvalNamelessML3` checker を実装する（`copl/055.copl`, `057.copl`, `059.copl`, `061.copl`, `063.copl`, `065.copl`, `067.copl`, `069.copl`）。

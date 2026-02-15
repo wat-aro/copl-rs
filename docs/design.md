@@ -38,6 +38,8 @@ The project is split into explicit module boundaries:
   - Shared domain contracts (`GameKind`, `Game`, `CheckReport`, `CheckError`).
 - `src/games/mod.rs`:
   - Game registry/dispatch via `enum GameKind + match`.
+- `src/games/nat_arith.rs`:
+  - Shared structural validators for Nat arithmetic rules (`P-*`, `T-*`) used by `Nat`, `EvalNatExp`, and `ReduceNatExp` checkers.
 - `src/games/compare_nat1/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/compare_nat2/`:
@@ -265,3 +267,5 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalML2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - ReduceNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- ReduceNatExp checker centralizes shared validation paths for `R-*` and `DR-*` rules by switching relation kind (`--->` / `-d->`) and operator kind (`+` / `*`) in common helper functions.
+- Nat arithmetic rule-shape checks (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`) are centralized in `src/games/nat_arith.rs` and reused by `Nat`, `EvalNatExp`, and `ReduceNatExp`.
