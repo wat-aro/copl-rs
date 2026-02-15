@@ -14,7 +14,7 @@
 ### Checker 実装ロードマップ（複数 game）
 
 最終更新日: 2026-02-16
-このフェーズのスコープ: 未実装 checker 4 game の段階的実装計画
+このフェーズのスコープ: 未実装 checker 3 game の段階的実装計画
 
 #### 背景
 
@@ -49,15 +49,15 @@
 - [x] EvalML3
 - [x] EvalML4
 - [x] EvalML5
+- [x] TypingML4
 - [x] NamelessML3
 - [x] EvalNamelessML3
 - [x] EvalNatExp
 - [x] ReduceNatExp
 
-今後の実装対象（計4件）:
+今後の実装対象（計3件）:
 - [ ] EvalContML1
 - [ ] EvalContML4
-- [ ] TypingML4
 - [ ] PolyTypingML4
 
 #### 参照仕様
@@ -112,7 +112,8 @@
   完了メモ（2026-02-16）: `EvalML4` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、リスト値（`[]`, `::`）とパターンマッチ（`match ... with [] -> ... | x :: y -> ...`）を含む `E-*` / `B-*` 規則検証（`E-Var`, `E-Nil`, `E-Cons`, `E-MatchNil`, `E-MatchCons` を含む）を実装。`copl/070.copl` - `copl/077.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [x] `12` [P2][Implementation] `EvalML5` checker を実装する（`copl/078.copl`, `copl/079.copl`）。  
   完了メモ（2026-02-16）: `EvalML5` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、パターンマッチ節（複数節 `match ... with p1 -> e1 | ...`）、パターン（`_`, `[]`, `::`, 括弧付きパターン）、およびパターン照合判断（`matches` / `doesn't match`）を含む `E-*` / `M-*` / `NM-*` / `B-*` 規則検証を実装。`copl/078.copl`, `copl/079.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
-- [ ] `13` [P2][Implementation] `TypingML4` checker を実装する（`copl/080.copl` - `copl/106.copl`）。
+- [x] `13` [P2][Implementation] `TypingML4` checker を実装する（`copl/080.copl` - `copl/106.copl`）。  
+  完了メモ（2026-02-16）: `TypingML4` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、型環境（`x : t`）・関数型（`t1 -> t2`）・リスト型（`t list`）・`match` を含む `T-*` 規則検証（`T-Int`, `T-Bool`, `T-Var`, `T-If`, `T-Plus`, `T-Minus`, `T-Times`, `T-Lt`, `T-Let`, `T-Fun`, `T-App`, `T-LetRec`, `T-Nil`, `T-Cons`, `T-Match`）を実装。`copl/080.copl` - `copl/106.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [ ] `14` [P2][Implementation] `PolyTypingML4` checker を実装する（`copl/107.copl` - `copl/123.copl`）。
 - [ ] `15` [P2][Implementation] `EvalContML1` checker を実装する（`copl/124.copl` - `copl/129.copl`）。
 - [ ] `16` [P2][Implementation] `EvalContML4` checker を実装する（`copl/130.copl` - `copl/140.copl`）。
