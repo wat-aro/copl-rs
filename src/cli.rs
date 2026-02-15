@@ -570,6 +570,24 @@ mod tests {
     }
 
     #[test]
+    fn parses_checker_with_derivation_system_name_nameless_ml3() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "NamelessML3"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command;
+        assert_eq!(cmd.game.as_str(), "NamelessML3");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn keeps_backward_compatibility_for_lowercase_nameless_ml3() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "namelessml3"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command;
+        assert_eq!(cmd.game.as_str(), "NamelessML3");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
     fn parses_checker_with_derivation_system_name_eval_nat_exp() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalNatExp"])
             .expect("cli should parse");
