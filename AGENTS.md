@@ -54,6 +54,17 @@ Last updated: 2026-02-16
 - `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker`.
 - Use `enum GameKind + match` for game registry/dispatch.
 
+## Design Principles
+
+- Prioritize `YAGNI`:
+  - Do not introduce features, extension points, or abstractions before a current task requires them.
+- Prioritize `KISS`:
+  - Prefer the simplest design that satisfies current requirements and keeps behavior easy to reason about.
+- Apply `SOLID` pragmatically:
+  - Use SOLID to reduce coupling and improve maintainability, but avoid speculative abstractions.
+- When principles conflict, resolve in this order:
+  - `YAGNI` -> `KISS` -> `SOLID` (incremental application).
+
 ## Development Process
 
 - Follow t-wada style TDD.
