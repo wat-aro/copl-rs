@@ -1,7 +1,7 @@
 # Nat Checker 実装計画
 
-最終更新日: 2026-02-14
-このフェーズのスコープ: M4 実装中（拡張経路の文書化、retrospect 運用整備、CompareNat1/CompareNat2 checker 追加）
+最終更新日: 2026-02-15
+このフェーズのスコープ: M4 実装中（拡張経路の文書化、retrospect 運用更新、CompareNat1/CompareNat2/CompareNat3 checker 追加）
 
 ## 目的
 
@@ -36,9 +36,11 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - [x] 正常系フィクスチャ（`001.copl`-`008.copl`）のテストを追加する。
 - [x] 異常系テスト（規則不一致、木構造不正、結果項の不一致）を追加する。
 - [x] 新しい game を追加する手順を文書化する（`docs/how-to-add-a-game.md`）。
-- [x] セッションで判明したドキュメント/スキル更新候補を確認して反映する運用を整備する（`retrospect`）。
+- [x] セッションで判明したドキュメント/スキル更新候補を反映する運用を整備する（`retrospect`）。
 - [x] CompareNat1 checker（`L-Succ`, `L-Trans`）を追加し、`copl/009.copl`, `copl/012.copl` で検証する。
 - [x] CompareNat2 checker（`L-Zero`, `L-SuccSucc`）を追加し、`copl/010.copl`, `copl/013.copl` で検証する。
+- [x] CompareNat3 checker（`L-Succ`, `L-SuccR`）を追加し、`copl/011.copl`, `copl/014.copl` で検証する。
+- [x] 文書/スキル同期は確認待ちを挟まず同一変更セットで反映する方針へ更新する（ADR-0010）。
 
 ## 規則モデル（Nat）
 
@@ -103,12 +105,14 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - 次ゲーム向けに再利用抽象を整理する。
 - 新しい game モジュール追加手順を短いガイドにまとめる。
 - 完了条件: 次ゲーム追加時に必要な変更が最小で、文書化されている。
+- 注記（2026-02-15）:
+  - 文書/スキル同期は confirm-before-edit ではなく、同一変更セットでの自動反映を既定とする（ADR-0010）。
 
 ## 次の議論で決める項目
 
 - なし（実装着手可能）。
 
-## 合意済み事項（2026-02-14 更新）
+## 合意済み事項（2026-02-15 更新）
 
 - 実行バイナリ名は `copl-rs` とする。
 - CLI はサブコマンド方式を採用する。
@@ -126,13 +130,15 @@ CoPL の `Nat` game 用 checker を Rust で実装する。
 - checker の不整合エラーには、失敗した導出ノードの `line:column` を必ず付与する（ADR-0006）。
 - `RuleViolation` 診断には、可能な範囲で expected/actual/fix ヒントを含める。
 - 成功時の checker 出力は reference implementation（`copl-tools`）と同様に root judgment テキストとする（ADR-0008）。
-- セッション中に判明した文書・スキル更新候補は、反映前に確認し、承認済み項目のみ最小差分で反映する（ADR-0009）。
+- セッション中に判明した文書・スキル更新は、同一変更セットで既定で反映し、反映内容を事後報告する（ADR-0010）。
 - CompareNat1（`L-Succ`, `L-Trans`）を `--game CompareNat1` で実行できるようにし、成功時は root judgment テキストを返す。
 - CompareNat2（`L-Zero`, `L-SuccSucc`）を `--game CompareNat2` で実行できるようにし、成功時は root judgment テキストを返す。
+- CompareNat3（`L-Succ`, `L-SuccR`）を `--game CompareNat3` で実行できるようにし、成功時は root judgment テキストを返す。
 - 想定形:
   - `copl-rs checker --game Nat <file>`
   - `copl-rs checker --game CompareNat1 <file>`
   - `copl-rs checker --game CompareNat2 <file>`
+  - `copl-rs checker --game CompareNat3 <file>`
   - （将来）`copl-rs resolver --game Nat <file>`
 
 ## 更新ルール

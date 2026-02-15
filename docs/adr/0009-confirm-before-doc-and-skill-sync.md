@@ -1,6 +1,6 @@
 # ADR-0009: Confirm-Before-Edit Retrospective for Docs and Skills
 
-- Status: Accepted
+- Status: Superseded by ADR-0010
 - Date: 2026-02-14
 
 ## Context

@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-14
+Last updated: 2026-02-15
 
 ## 1. Purpose
 
@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`.
 
 ### Out of scope now
 
@@ -41,6 +41,8 @@ The project is split into explicit module boundaries:
 - `src/games/compare_nat1/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/compare_nat2/`:
+  - `syntax.rs`, `parser.rs`, `checker.rs`.
+- `src/games/compare_nat3/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nat/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
@@ -137,6 +139,16 @@ Current CompareNat2 checker validates derivation trees parsed from CoPL ASCII in
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... is less than ...`).
 
+Current CompareNat3 checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `syntax.rs` models CompareNat3 judgments in `left is less than right` form.
+- `checker.rs` validates CompareNat3 rule constraints (`L-Succ`, `L-SuccR`).
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`) and actionable hints where available.
+- Successful check result text is the inferred root judgment (`... is less than ...`).
+
 ## 8. Extension Strategy
 
 ### 8.1 Adding new games
@@ -169,7 +181,7 @@ Standard pre-commit checks:
 - `cargo clippy --all-targets --all-features -- -D warnings`
 
 Development style follows TDD (`Red -> Green -> Refactor`).
-When session outcomes imply documentation or skill updates, run a retrospective pass: propose candidate updates, confirm with the user, then apply only approved items with minimal diffs (ADR-0009).
+When session outcomes imply documentation or skill updates, apply required updates in the same change set by default, then report what was updated (ADR-0010).
 
 ## 10. Open Items
 
@@ -186,6 +198,7 @@ When session outcomes imply documentation or skill updates, run a retrospective 
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
 - Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
-- Documentation/skill sync discovered during a session is handled through a confirm-before-edit retrospective workflow (ADR-0009).
+- Documentation/skill sync discovered during a session is handled by default as auto-apply with minimal diffs, and then reported (ADR-0010).
 - CompareNat1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- CompareNat3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

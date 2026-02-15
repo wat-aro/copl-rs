@@ -1,5 +1,6 @@
 pub mod compare_nat1;
 pub mod compare_nat2;
+pub mod compare_nat3;
 pub mod nat;
 
 use crate::core::{CheckError, CheckReport, Game, GameKind};
@@ -9,5 +10,6 @@ pub fn run_checker(game: GameKind, source: &str) -> Result<CheckReport, CheckErr
         GameKind::Nat => nat::NatGame.check(source),
         GameKind::CompareNat1 => compare_nat1::CompareNat1Game.check(source),
         GameKind::CompareNat2 => compare_nat2::CompareNat2Game.check(source),
+        GameKind::CompareNat3 => compare_nat3::CompareNat3Game.check(source),
     }
 }

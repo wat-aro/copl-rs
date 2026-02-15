@@ -1,14 +1,14 @@
 # copl-rs
 
 `copl-rs` is a Rust project for implementing CoPL derivation checkers.
-The current targets are checkers for the `Nat`, `CompareNat1`, and `CompareNat2` games.
+The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, and `CompareNat3` games.
 
 ## Current Status
 
 - Implementation phase: M4 (extension path documentation)
 - Implemented:
   - CLI: `copl-rs checker --game <name> [file]`
-  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2` (lowercase forms are also accepted for backward compatibility)
+  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3` (lowercase forms are also accepted for backward compatibility)
   - `stdin` input when `[file]` is omitted
   - Game dispatch via `enum GameKind + match`
   - Input size limit (8 MiB) and UTF-8 validation
@@ -18,6 +18,8 @@ The current targets are checkers for the `Nat`, `CompareNat1`, and `CompareNat2`
   - CompareNat1 derivation rule validation (`L-Succ`, `L-Trans`)
   - CompareNat2 ASCII parser (`judgment + raw rule name + subderivations`)
   - CompareNat2 derivation rule validation (`L-Zero`, `L-SuccSucc`)
+  - CompareNat3 ASCII parser (`judgment + raw rule name + subderivations`)
+  - CompareNat3 derivation rule validation (`L-Succ`, `L-SuccR`)
   - Successful checks print inferred root judgment text (reference-implementation-compatible)
   - Rule-violation diagnostics with source location (`line:column`)
   - Rule-violation diagnostics include actionable hints (`expected` / `actual` / `fix`) when available
@@ -63,6 +65,10 @@ cargo run -- checker --game CompareNat1 copl/009.copl
 cargo run -- checker --game CompareNat2 copl/010.copl
 ```
 
+```sh
+cargo run -- checker --game CompareNat3 copl/011.copl
+```
+
 ### Stdin Input
 
 ```sh
@@ -106,6 +112,11 @@ src/
       parser.rs
       checker.rs
     compare_nat2/
+      mod.rs
+      syntax.rs
+      parser.rs
+      checker.rs
+    compare_nat3/
       mod.rs
       syntax.rs
       parser.rs

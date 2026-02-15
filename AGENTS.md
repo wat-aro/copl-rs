@@ -2,11 +2,11 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-14
+Last updated: 2026-02-15
 
 ## Scope
 
-- The current implementation targets are CoPL `Nat`, `CompareNat1`, and `CompareNat2` checkers.
+- The current implementation targets are CoPL `Nat`, `CompareNat1`, `CompareNat2`, and `CompareNat3` checkers.
 - `resolver` will be added later (out of scope for now).
 
 ## Language Policy
@@ -28,6 +28,7 @@ Last updated: 2026-02-14
   - `copl-rs checker --game Nat <file>`
   - `copl-rs checker --game CompareNat1 <file>`
   - `copl-rs checker --game CompareNat2 <file>`
+  - `copl-rs checker --game CompareNat3 <file>`
   - If `<file>` is omitted, read from `stdin`.
 - Keep game-name input case-insensitive for backward compatibility.
 - On success, checker output should be the inferred root judgment text in plain text.
@@ -46,6 +47,7 @@ Last updated: 2026-02-14
 - `games/nat` is split into `syntax` / `parser` / `checker`.
 - `games/compare_nat1` is split into `syntax` / `parser` / `checker`.
 - `games/compare_nat2` is split into `syntax` / `parser` / `checker`.
+- `games/compare_nat3` is split into `syntax` / `parser` / `checker`.
 - Use `enum GameKind + match` for game registry/dispatch.
 
 ## Development Process
@@ -90,10 +92,12 @@ Last updated: 2026-02-14
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/Nat.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat1.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat2.html
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat3.html
 - ASCII examples:
   - Nat: `copl/001.copl` to `copl/008.copl`
   - CompareNat1: `copl/009.copl`, `copl/012.copl`
   - CompareNat2: `copl/010.copl`, `copl/013.copl`
+  - CompareNat3: `copl/011.copl`, `copl/014.copl`
 
 ## Operations
 
@@ -103,8 +107,8 @@ Last updated: 2026-02-14
 - Codex should refer to `docs/PLAN.md` and follow the linked active plan under `docs/plans/` when checking implementation plans.
 - Codex should refer to `docs/design.md` when discussing design and refactoring decisions.
 - Codex should refer to `docs/adr/` when discussing historical design tradeoffs.
-- When a session reveals documentation or skill updates, Codex should propose candidate updates and ask for user confirmation before applying any changes.
-- Use the `retrospect` skill for this workflow.
+- When a session reveals documentation or skill updates, Codex should apply required updates in the same change set by default, then report what changed.
+- Use the `retrospect` skill for this workflow as a synchronization checklist, not a confirmation gate.
 - The user can trigger it explicitly with `retrospect` or `$retrospect`.
 - If policies change, update this file, `docs/PLAN.md`, and the active plan under `docs/plans/` when relevant.
 
