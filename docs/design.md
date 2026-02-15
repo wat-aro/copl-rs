@@ -15,7 +15,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalNatExp`, `ReduceNatExp`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
 
@@ -45,6 +45,8 @@ The project is split into explicit module boundaries:
 - `src/games/compare_nat3/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml1/`:
+  - `syntax.rs`, `parser.rs`, `checker.rs`.
+- `src/games/eval_ml1_err/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_nat_exp/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
@@ -165,6 +167,16 @@ Current EvalML1 checker validates derivation trees parsed from CoPL ASCII input.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 
+Current EvalML1Err checker validates derivation trees parsed from CoPL ASCII input.
+
+- `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `syntax.rs` extends EvalML1 value forms with `error` and keeps expression/judgment modeling aligned with EvalML1.
+- `checker.rs` validates EvalML1Err and builtin arithmetic/boolean rules (`E-*`, `B-*`), including error-propagation and type-error rules.
+- Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
+- Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
+- `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
+- Successful check result text is the inferred root judgment (`... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+
 Current EvalNatExp checker validates derivation trees parsed from CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
@@ -237,5 +249,6 @@ Completed or frozen plans are archived under `docs/plans/`.
 - CompareNat2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- EvalML1Err checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - ReduceNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
