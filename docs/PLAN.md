@@ -1,6 +1,6 @@
 # PLAN
 
-最終更新日: 2026-02-15
+最終更新日: 2026-02-16
 このファイルは現在計画の単一ソースです。
 
 ## 運用ルール
@@ -12,8 +12,8 @@
 
 ### Checker 実装ロードマップ（複数 game）
 
-最終更新日: 2026-02-15
-このフェーズのスコープ: 未実装 checker 14 game の段階的実装計画
+最終更新日: 2026-02-16
+このフェーズのスコープ: 未実装 checker 13 game の段階的実装計画
 
 #### 背景
 
@@ -42,9 +42,9 @@
 - [x] CompareNat1
 - [x] CompareNat2
 - [x] CompareNat3
+- [x] EvalNatExp
 
-今後の実装対象（計14件）:
-- [ ] EvalNatExp
+今後の実装対象（計13件）:
 - [ ] ReduceNatExp
 - [ ] EvalML1
 - [ ] EvalML1Err
@@ -89,13 +89,14 @@
   - 優先度は `P1`（最優先）/ `P2`（中優先）/ `P3`（低優先）で表記する。
   - 順序を入れ替える場合は、この節に理由を追記する。
 
-- [ ] `01` [P1][Implementation] `EvalNatExp` checker を実装する（`copl/015.copl` - `copl/020.copl`）。
+- [x] `01` [P1][Implementation] `EvalNatExp` checker を実装する（`copl/015.copl` - `copl/020.copl`）。
 - [ ] `02` [P1][Implementation] `ReduceNatExp` checker を実装する（`copl/021.copl` - `copl/024.copl`）。
 - [ ] `03` [P1][Improvement] `RuleViolation` 診断で failing premise path（どの前提で失敗したか）を明示する。
 - [ ] `04` [P2][Implementation] `EvalML1` checker を実装する（`copl/025.copl` - `copl/030.copl`）。
 - [ ] `05` [P2][Implementation] `EvalML1Err` checker を実装する（`copl/031.copl` - `copl/033.copl`）。
 - [ ] `06` [P2][Implementation] `EvalML2` checker を実装する（`copl/034.copl` - `copl/039.copl`）。
 - [ ] `07` [P2][Improvement] 異常系 fixture（unknown rule / arity mismatch / rule mismatch）を実装済み game 全体で拡張する。
+- [ ] `07a` [P2][Improvement] Nat 系算術規則（`P-*` / `T-*`）の checker 検証ロジックを共通化する（理由: `Nat` と `EvalNatExp` で同等ロジックが重複したため）。
 - [ ] `08` [P2][Implementation] `EvalML3` checker を実装する（`copl/040.copl` - `copl/053.copl`）。
 - [ ] `09` [P2][Implementation] `NamelessML3` checker を実装する（`copl/054.copl`, `056.copl`, `058.copl`, `060.copl`, `062.copl`, `064.copl`, `066.copl`, `068.copl`）。
 - [ ] `10` [P2][Implementation] `EvalNamelessML3` checker を実装する（`copl/055.copl`, `057.copl`, `059.copl`, `061.copl`, `063.copl`, `065.copl`, `067.copl`, `069.copl`）。

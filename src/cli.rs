@@ -498,6 +498,24 @@ mod tests {
     }
 
     #[test]
+    fn parses_checker_with_derivation_system_name_eval_nat_exp() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalNatExp"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command;
+        assert_eq!(cmd.game.as_str(), "EvalNatExp");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn keeps_backward_compatibility_for_lowercase_eval_nat_exp() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalnatexp"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command;
+        assert_eq!(cmd.game.as_str(), "EvalNatExp");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
     fn parses_checker_with_file() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game=nat", "001.copl"])
             .expect("cli should parse");
