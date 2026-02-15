@@ -624,6 +624,24 @@ mod tests {
     }
 
     #[test]
+    fn parses_checker_with_derivation_system_name_poly_typing_ml4() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "PolyTypingML4"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command;
+        assert_eq!(cmd.game.as_str(), "PolyTypingML4");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn keeps_backward_compatibility_for_lowercase_poly_typing_ml4() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "polytypingml4"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command;
+        assert_eq!(cmd.game.as_str(), "PolyTypingML4");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
     fn parses_checker_with_derivation_system_name_nameless_ml3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "NamelessML3"])
             .expect("cli should parse");

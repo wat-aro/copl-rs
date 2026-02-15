@@ -353,6 +353,25 @@ mod tests {
     }
 
     #[test]
+    fn routes_checker_poly_typing_ml4_with_derivation_system_name() {
+        let mut stdin =
+            &b"// -*- copl-game: \"PolyTypingML4\" -*-\n\n|- fun x -> x : 'a -> 'a by T-Abs {\n  x : 'a |- x : 'a by T-Var {}\n}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "PolyTypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- fun x -> x : 'a -> 'a");
+    }
+
+    #[test]
     fn routes_checker_nameless_ml3_with_derivation_system_name() {
         let mut stdin = &b"// -*- copl-game: \"NamelessML3\" -*-\n\n|- 1 ==> 1 by Tr-Int {}\n"[..];
         let mut out = Vec::new();

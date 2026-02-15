@@ -1,14 +1,14 @@
 # copl-rs
 
 `copl-rs` is a Rust project for implementing CoPL derivation checkers.
-The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `TypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, and `ReduceNatExp` games.
+The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `TypingML4`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, and `ReduceNatExp` games.
 
 ## Current Status
 
 - Implementation priorities are managed in the unified backlog in `docs/PLAN.md`.
 - Implemented:
   - CLI: `copl-rs checker --game <name> [file]`
-  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `TypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp` (lowercase forms are also accepted for backward compatibility)
+  - Supported `--game` values: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `TypingML4`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp` (lowercase forms are also accepted for backward compatibility)
   - `stdin` input when `[file]` is omitted
   - Game dispatch via `enum GameKind + match`
   - Input size limit (8 MiB) and UTF-8 validation
@@ -34,6 +34,8 @@ The current targets are checkers for the `Nat`, `CompareNat1`, `CompareNat2`, `C
   - EvalML5 derivation rule validation (`E-*`, `M-*`, `NM-*`, `B-*`, including multi-clause pattern matching)
   - TypingML4 ASCII parser (`judgment + raw rule name + subderivations`)
   - TypingML4 derivation rule validation (`T-*`, including function/list types and list pattern matching)
+  - PolyTypingML4 ASCII parser (`judgment + raw rule name + subderivations`)
+  - PolyTypingML4 derivation rule validation (`T-*`, including polymorphic type schemes (`'a ... . t`), instantiation, and let-generalization)
   - NamelessML3 ASCII parser (`judgment + raw rule name + subderivations`)
   - NamelessML3 derivation rule validation (`Tr-*` for named-to-nameless translation)
   - EvalNamelessML3 ASCII parser (`judgment + raw rule name + subderivations`)
@@ -117,6 +119,10 @@ cargo run -- checker --game EvalML5 copl/078.copl
 
 ```sh
 cargo run -- checker --game TypingML4 copl/080.copl
+```
+
+```sh
+cargo run -- checker --game PolyTypingML4 copl/107.copl
 ```
 
 ```sh
@@ -226,6 +232,12 @@ src/
       parser.rs
       checker.rs
     typing_ml4/
+      mod.rs
+      syntax.rs
+      lexer.rs
+      parser.rs
+      checker.rs
+    poly_typing_ml4/
       mod.rs
       syntax.rs
       lexer.rs
