@@ -1,9 +1,10 @@
 use std::error::Error;
 use std::fmt;
-use std::marker::PhantomData;
 use std::path::PathBuf;
 
 use crate::core::GameKind;
+
+pub(crate) mod checker;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cli {
@@ -56,233 +57,10 @@ impl fmt::Display for InputSource {
 }
 
 fn parse_checker(program: String, args: Vec<String>) -> Result<Cli, CliError> {
-    let state = args
-        .iter()
-        .enumerate()
-        .try_fold(CheckerParseState::default(), |state, (index, token)| {
-            state.consume(&program, &args, index, token)
-        })?;
-    state.finish(program)
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct CheckerStateCore {
-    game: Option<GameKind>,
-    input: Option<InputSource>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct ModeOptions;
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct ModePositional;
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct ExpectAny;
-
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct ExpectGameValue;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct CheckerParser<M, E> {
-    core: CheckerStateCore,
-    _marker: PhantomData<(M, E)>,
-}
-
-impl CheckerParser<ModeOptions, ExpectAny> {
-    fn default_state() -> Self {
-        Self {
-            core: CheckerStateCore::default(),
-            _marker: PhantomData,
-        }
-    }
-
-    fn consume(
-        self,
-        program: &str,
-        args: &[String],
-        index: usize,
-        token: &str,
-    ) -> Result<CheckerParseState, CliError> {
-        match classify_options_event(token) {
-            OptionsEvent::EndOfOptions => Ok(CheckerParseState::PositionalAny(CheckerParser::new(
-                self.core,
-            ))),
-            OptionsEvent::GameOption => {
-                if self.core.game.is_some() {
-                    return Err(CliError::duplicate_option(
-                        program.to_owned(),
-                        "--game".to_string(),
-                    ));
-                }
-                Ok(CheckerParseState::OptionsGameValue(CheckerParser::new(
-                    self.core,
-                )))
-            }
-            OptionsEvent::GameInlineValue(value) => {
-                if self.core.game.is_some() {
-                    return Err(CliError::duplicate_option(
-                        program.to_owned(),
-                        "--game".to_string(),
-                    ));
-                }
-                let game = parse_game_kind(program, value)?;
-                Ok(CheckerParseState::OptionsAny(CheckerParser::new(
-                    self.core.with_game(game),
-                )))
-            }
-            OptionsEvent::UnexpectedOption(option) => Err(CliError::unexpected_option(
-                program.to_owned(),
-                option.to_string(),
-            )),
-            OptionsEvent::PositionalInput(path) => Ok(CheckerParseState::OptionsAny(
-                CheckerParser::new(self.core.with_input(program, args, index, path)?),
-            )),
-        }
-    }
-}
-
-impl<M> CheckerParser<M, ExpectAny> {
-    fn finish(self, program: String) -> Result<Cli, CliError> {
-        self.core.finish(program)
-    }
-}
-
-impl CheckerParser<ModeOptions, ExpectGameValue> {
-    fn consume(self, program: &str, token: &str) -> Result<CheckerParseState, CliError> {
-        let game = parse_game_kind(program, token)?;
-        Ok(CheckerParseState::OptionsAny(CheckerParser::new(
-            self.core.with_game(game),
-        )))
-    }
-}
-
-impl CheckerParser<ModePositional, ExpectAny> {
-    fn consume(
-        self,
-        program: &str,
-        args: &[String],
-        index: usize,
-        token: &str,
-    ) -> Result<CheckerParseState, CliError> {
-        let core = self.core.with_input(program, args, index, token)?;
-        Ok(CheckerParseState::PositionalAny(CheckerParser::new(core)))
-    }
-}
-
-impl<M, E> CheckerParser<M, E> {
-    fn new(core: CheckerStateCore) -> Self {
-        Self {
-            core,
-            _marker: PhantomData,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum CheckerParseState {
-    OptionsAny(CheckerParser<ModeOptions, ExpectAny>),
-    OptionsGameValue(CheckerParser<ModeOptions, ExpectGameValue>),
-    PositionalAny(CheckerParser<ModePositional, ExpectAny>),
-}
-
-impl Default for CheckerParseState {
-    fn default() -> Self {
-        Self::OptionsAny(CheckerParser::default_state())
-    }
-}
-
-impl CheckerParseState {
-    fn consume(
-        self,
-        program: &str,
-        args: &[String],
-        index: usize,
-        token: &str,
-    ) -> Result<Self, CliError> {
-        match self {
-            Self::OptionsAny(state) => state.consume(program, args, index, token),
-            Self::OptionsGameValue(state) => state.consume(program, token),
-            Self::PositionalAny(state) => state.consume(program, args, index, token),
-        }
-    }
-
-    fn finish(self, program: String) -> Result<Cli, CliError> {
-        match self {
-            Self::OptionsAny(state) => state.finish(program),
-            Self::PositionalAny(state) => state.finish(program),
-            Self::OptionsGameValue(_) => Err(CliError::missing_game_value(program)),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum OptionsEvent<'a> {
-    EndOfOptions,
-    GameOption,
-    GameInlineValue(&'a str),
-    UnexpectedOption(&'a str),
-    PositionalInput(&'a str),
-}
-
-impl CheckerStateCore {
-    fn with_game(self, game: GameKind) -> Self {
-        Self {
-            game: Some(game),
-            ..self
-        }
-    }
-
-    fn with_input(
-        self,
-        program: &str,
-        args: &[String],
-        index: usize,
-        path: &str,
-    ) -> Result<Self, CliError> {
-        if self.input.is_some() {
-            return Err(CliError::too_many_inputs(
-                program.to_owned(),
-                args[index..].to_vec(),
-            ));
-        }
-        Ok(Self {
-            input: Some(InputSource::File(PathBuf::from(path))),
-            ..self
-        })
-    }
-
-    fn finish(self, program: String) -> Result<Cli, CliError> {
-        let game = self
-            .game
-            .ok_or_else(|| CliError::missing_game(program.clone()))?;
-        Ok(Cli {
-            command: Command::Checker(CheckerCommand {
-                game,
-                input: self.input.unwrap_or(InputSource::Stdin),
-            }),
-        })
-    }
-}
-
-fn parse_game_kind(program: &str, token: &str) -> Result<GameKind, CliError> {
-    GameKind::try_from(token).map_err(|e| CliError::invalid_game(program.to_owned(), e))
-}
-
-fn classify_options_event(token: &str) -> OptionsEvent<'_> {
-    match token {
-        "--" => OptionsEvent::EndOfOptions,
-        "--game" => OptionsEvent::GameOption,
-        _ => {
-            if let Some(value) = token.strip_prefix("--game=") {
-                OptionsEvent::GameInlineValue(value)
-            } else if token.starts_with('-') {
-                OptionsEvent::UnexpectedOption(token)
-            } else {
-                OptionsEvent::PositionalInput(token)
-            }
-        }
-    }
+    let command = checker::parse_checker_command(&program, &args)?;
+    Ok(Cli {
+        command: Command::Checker(command),
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -306,42 +84,42 @@ impl CliError {
         }
     }
 
-    fn missing_game(program: String) -> Self {
+    pub(super) fn missing_game(program: String) -> Self {
         Self {
             usage: usage_for(&program),
             kind: CliErrorKind::MissingGame,
         }
     }
 
-    fn missing_game_value(program: String) -> Self {
+    pub(super) fn missing_game_value(program: String) -> Self {
         Self {
             usage: usage_for(&program),
             kind: CliErrorKind::MissingGameValue,
         }
     }
 
-    fn invalid_game(program: String, source: crate::core::ParseGameKindError) -> Self {
+    pub(super) fn invalid_game(program: String, source: crate::core::ParseGameKindError) -> Self {
         Self {
             usage: usage_for(&program),
             kind: CliErrorKind::InvalidGame { source },
         }
     }
 
-    fn unexpected_option(program: String, option: String) -> Self {
+    pub(super) fn unexpected_option(program: String, option: String) -> Self {
         Self {
             usage: usage_for(&program),
             kind: CliErrorKind::UnexpectedOption { option },
         }
     }
 
-    fn duplicate_option(program: String, option: String) -> Self {
+    pub(super) fn duplicate_option(program: String, option: String) -> Self {
         Self {
             usage: usage_for(&program),
             kind: CliErrorKind::DuplicateOption { option },
         }
     }
 
-    fn too_many_inputs(program: String, inputs: Vec<String>) -> Self {
+    pub(super) fn too_many_inputs(program: String, inputs: Vec<String>) -> Self {
         Self {
             usage: usage_for(&program),
             kind: CliErrorKind::TooManyInputs { inputs },
@@ -424,6 +202,15 @@ fn usage_for(program: &str) -> String {
 mod tests {
     use super::{Cli, Command, InputSource};
     use crate::core::GameKind;
+
+    #[test]
+    fn parses_checker_with_split_subcommand_parser() {
+        let args = vec!["--game".to_string(), "nat".to_string()];
+        let command = super::checker::parse_checker_command("copl-rs", &args)
+            .expect("checker parser should parse");
+        assert_eq!(command.game, GameKind::Nat);
+        assert_eq!(command.input, InputSource::Stdin);
+    }
 
     #[test]
     fn parses_checker_with_stdin() {

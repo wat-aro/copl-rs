@@ -186,7 +186,9 @@ cargo clippy --all-targets --all-features -- -D warnings
 src/
   main.rs          # CLI entry point
   lib.rs           # Application flow
-  cli.rs           # Argument parsing
+  cli.rs           # CLI model and subcommand dispatch
+  cli/
+    checker.rs     # checker subcommand argument parsing
   core/            # Shared types (GameKind, Game trait, Error/Report)
   games/
     mod.rs         # Game dispatch

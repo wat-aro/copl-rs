@@ -33,7 +33,9 @@ The project is split into explicit module boundaries:
   - Application orchestration.
   - Input reading, UTF-8 validation, size limits, checker execution.
 - `src/cli.rs`:
-  - CLI domain model and argument parsing.
+  - CLI domain model and subcommand dispatch.
+- `src/cli/checker.rs`:
+  - `checker` subcommand parser implementation (typed state machine).
 - `src/core/mod.rs`:
   - Shared domain contracts (`GameKind`, `Game`, `CheckReport`, `CheckError`).
 - `src/games/mod.rs`:
@@ -92,13 +94,15 @@ This structure is intended to localize game-specific logic under `games/<game>/`
 
 ### 4.2 Parsing approach
 
-Checker argument parsing is implemented as a typed state machine.
+CLI parsing is split by subcommand module.
 
-- Internal parser state uses typestate-like markers:
-  - mode-like markers: `ModeOptions`, `ModePositional`
-  - expectation markers: `ExpectAny`, `ExpectGameValue`
-- Token classification in option mode is separated by `classify_options_event(...)`.
-- Input processing uses `try_fold` over argument tokens.
+- `Cli::parse` resolves the subcommand name and delegates to the corresponding parser module.
+- Checker parsing (`src/cli/checker.rs`) is implemented as a typed state machine:
+  - Internal parser state uses typestate-like markers:
+    - mode-like markers: `ModeOptions`, `ModePositional`
+    - expectation markers: `ExpectAny`, `ExpectGameValue`
+  - Token classification in option mode is separated by `classify_options_event(...)`.
+  - Input processing uses `try_fold` over argument tokens.
 
 This avoids index-mutation style loops and keeps transitions explicit.
 
