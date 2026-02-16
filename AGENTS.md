@@ -74,6 +74,7 @@ Last updated: 2026-02-16
 - Base cycle: `Red -> Green -> Refactor`.
 - Start from the smallest failing test, implement the minimum to pass, then refactor.
 - After implementation is complete, repeat a `review -> improve` loop 5 times.
+- In each review loop, review code against the design principles (`YAGNI`, `KISS`, `SOLID` in this priority order).
 - Create a commit each time one task is completed.
 
 ## ADR Policy
@@ -132,6 +133,7 @@ Last updated: 2026-02-16
 - Keep progress details updated in `docs/PLAN.md`.
 - Manage implementation tasks and improvement tasks in one prioritized backlog in `docs/PLAN.md`, with explicit top-to-bottom start order.
 - When improvements outside the current task scope are discovered during task execution, add them to the backlog in `docs/PLAN.md` and insert them at an appropriate position after considering priority and dependencies.
+- Run the `retrospect` skill at each task completion for documentation sync and retrospective review.
 - Keep historical plans under `docs/plans/` and avoid mixing archived details into the current-plan section of `docs/PLAN.md`.
 - Keep architecture and design decisions updated in `docs/design.md`.
 - Keep architecture decision records in `docs/adr/`.
