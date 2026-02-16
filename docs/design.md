@@ -19,7 +19,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- `resolver` command implementation.
+- `prover` command implementation.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -339,12 +339,12 @@ Current extension path is:
 This keeps game addition mostly localized to registry points and one module tree.
 Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`.
 
-### 8.2 Adding `resolver`
+### 8.2 Adding `prover`
 
 Planned direction:
 
 - Add a new subcommand variant under `Command`.
-- Add resolver route in `Cli::parse`.
+- Add prover route in `Cli::parse`.
 - Implement execution path in `lib::execute`.
 - Reuse `--game <name>` convention for consistency.
 

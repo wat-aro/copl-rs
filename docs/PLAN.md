@@ -121,7 +121,7 @@
   完了メモ（2026-02-16）: `EvalContML1` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、継続コンテキスト（`>>`, `=>`, `_`）と継続フレーム（`{_ op e}`, `{i op _}`, `{if _ then e2 else e3}`）を扱う `E-*` / `C-*` / `B-*` 規則検証（`E-Int`, `E-Bool`, `E-BinOp`, `E-If`, `C-Ret`, `C-EvalR`, `C-Plus`, `C-Minus`, `C-Times`, `C-Lt`, `C-IfT`, `C-IfF`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`）を実装。`copl/124.copl` - `copl/129.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
 - [x] `16` [P2][Implementation] `EvalContML4` checker を実装する（`copl/130.copl` - `copl/140.copl`）。
   完了メモ（2026-02-16）: `EvalContML4` 用モジュール（`syntax` / `lexer` / `parser` / `checker`）を追加し、継続コンテキスト（`>>`, `=>`, `_`）・`letcc`・関数/再帰関数・リスト/`match` を含む `E-*` / `C-*` / `B-*` 規則検証（`E-LetCc`, `C-EvalFun`, `C-EvalFunR`, `C-EvalFunC`, `C-EvalConsR`, `C-Cons`, `C-MatchCons` を含む）を実装。`copl/130.copl` - `copl/140.copl` の fixture 通過と、unknown rule / arity mismatch / rule mismatch の異常系テストを追加して検証済み。
-- [x] `17` [P3][Improvement] `resolver` 着手前に CLI パーサのサブコマンド分割方針を確定し、必要なら分離リファクタを先行する。  
+- [x] `17` [P3][Improvement] `prover` 着手前に CLI パーサのサブコマンド分割方針を確定し、必要なら分離リファクタを先行する。  
   完了メモ（2026-02-16）: ADR `0009` で「サブコマンド単位で CLI パーサを分離する」方針を確定し、先行リファクタとして `checker` パーサ実装を `src/cli/checker.rs` へ分離。`src/cli.rs` は CLI モデルとサブコマンド dispatch に責務を限定し、既存 CLI 互換性（`checker --game <name> [file]`、`stdin`、`--`）を維持したままテスト通過を確認。
 
 #### 共通完了条件（Implementation タスク）

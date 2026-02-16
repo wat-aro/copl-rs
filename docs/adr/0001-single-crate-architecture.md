@@ -6,7 +6,7 @@
 ## Context
 
 The project is in an early stage and currently targets a Nat checker.
-We need fast iteration while keeping boundaries clear enough for future additions (new games, resolver command).
+We need fast iteration while keeping boundaries clear enough for future additions (new games, prover command).
 
 ## Decision
 
@@ -31,5 +31,5 @@ Use one Rust crate for now.
 ### Negative
 
 - If components grow independently, crate-level isolation may eventually be needed.
-- We may revisit this decision when `resolver` and additional games are implemented.
+- We may revisit this decision when `prover` and additional games are implemented.
 
