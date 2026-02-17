@@ -98,7 +98,45 @@
   - 実装完了後は `AGENTS.md` の Design Principles にある判断基準（高凝集・低結合 / `YAGNI` / `KISS`）で 5 回レビューし、各回の改善内容（または指摘なし）を完了メモに記録する。
   - レビュー指摘は、範囲内なら当該タスク内で修正し、範囲外ならバックログに追加して優先度順へ挿入する。
 
-- [ ] `01` [P1][Decision] prover の CLI 契約を確定する（`checker` 互換で `--game <name> [file]` / `stdin` / `--` を採用するかを明文化し、必要なら ADR を更新）。
+- [x] `01` [P1][Decision] prover の CLI 契約を確定する（`checker` 互換で `--game <name> [file]` / `stdin` / `--` を採用するかを明文化し、必要なら ADR を更新）。  
+  完了メモ（2026-02-17）:
+  - 実装:
+    - `prover` の CLI 契約を `checker` 互換（`--game <name> [file]` / `stdin` / `--` / case-insensitive game name）で確定した。
+  - テスト:
+    - 追加/更新なし（Decision タスクのためコード変更なし）。
+  - ドキュメント:
+    - `docs/adr/0002-subcommand-cli-and-unified-game-option.md` を更新し、`prover` の契約を planned から確定仕様へ更新した。
+    - `docs/design.md` を更新し、CLI 互換条件と `prover` 追加方針に確定契約を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: `docs/adr/0002` の `prover` 予定コマンドが `<file>` 必須として記載され、`checker` 互換要件と不一致だった。
+    - Action: `copl-rs prover --game <name> [file]` に修正し、`stdin` / `--` / case-insensitive を明記した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: `docs/design.md` の互換性節が `checker` のみを対象に書かれていた。
+    - Action: 互換性節に `prover` 契約（実装時適用）を追記した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `02` [P1][Implementation] `prover` サブコマンドの CLI 解析・実行経路を追加する（`src/cli/prover.rs` と `lib::execute` の経路追加）。
 - [ ] `03` [P1][Implementation] Nat prover 入力（judgment 単体）パーサを実装する。
 - [ ] `04` [P1][Implementation] Nat prover 本体（`P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`）を実装し、導出木 AST を構築する。

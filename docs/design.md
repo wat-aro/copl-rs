@@ -15,6 +15,8 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
+- `prover` CLI contract is fixed (implementation is still pending):
+  - `copl-rs prover --game <name> [file]`
 - Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalContML1`, `EvalContML4`, `TypingML4`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
@@ -110,9 +112,12 @@ This avoids index-mutation style loops and keeps transitions explicit.
 
 Current compatibility rules:
 
-- Keep `copl-rs checker --game <name> [file]` behavior stable.
+- Keep subcommand contracts stable:
+  - `copl-rs checker --game <name> [file]`
+  - `copl-rs prover --game <name> [file]` (when implemented)
 - If `[file]` is omitted, read from `stdin`.
 - Support `--` to treat following `-`-prefixed tokens as positional file names.
+- Keep game-name parsing case-insensitive.
 
 ## 5. Runtime Flow
 
@@ -341,12 +346,15 @@ Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`
 
 ### 8.2 Adding `prover`
 
-Planned direction:
+Planned implementation direction:
 
 - Add a new subcommand variant under `Command`.
 - Add prover route in `Cli::parse`.
 - Implement execution path in `lib::execute`.
-- Reuse `--game <name>` convention for consistency.
+- Follow the fixed CLI contract from ADR-0002:
+  - `copl-rs prover --game <name> [file]`
+  - omitted `[file]` means `stdin`
+  - support `--` delimiter for `-`-prefixed file names
 
 ## 9. Quality Gates
 
