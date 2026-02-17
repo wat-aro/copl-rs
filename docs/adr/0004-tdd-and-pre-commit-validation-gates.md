@@ -7,6 +7,7 @@
 
 The project is expected to grow incrementally while preserving correctness.
 To keep iteration safe, we need a repeatable development loop and objective quality gates.
+As the codebase grows, we also need an explicit post-implementation review loop to control design drift.
 
 ## Decision
 
@@ -16,6 +17,12 @@ Use t-wada style TDD as the default development process.
 - Start from the smallest failing test.
 - Implement the minimum change to pass.
 - Refactor only while tests remain green.
+- After implementation is complete, run a `review -> improve` loop 5 times.
+- In each review, use explicit questions focused on:
+  - high cohesion / low coupling,
+  - `YAGNI`,
+  - `KISS`.
+- Record each review iteration (`R1` to `R5`) and include "no finding" when nothing is raised.
 
 Run the following validation commands before commit by default:
 
@@ -32,9 +39,10 @@ If any gate is intentionally skipped, record the reason in the commit message.
 - Reduces regression risk during incremental changes.
 - Improves confidence in refactoring-heavy work.
 - Keeps code quality decisions explicit and auditable.
+- Makes design tradeoffs and follow-up improvements more traceable task by task.
 
 ### Negative
 
 - Adds process overhead for very small changes.
 - Requires discipline to keep cycles small and focused.
-
+- Requires consistent review logging to avoid becoming a nominal checklist.

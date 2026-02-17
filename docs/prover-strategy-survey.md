@@ -39,7 +39,7 @@ This is a proof-search problem: find a derivation `D` such that `checker(D)` suc
 - Completeness (scope-bounded): for supported games/modes, find a proof if one exists.
 - Termination: avoid infinite search.
 - Determinism of output: stable canonical proof for the same input.
-- Implementation cost: start small (YAGNI/KISS), then generalize.
+- Implementation cost: start small (YAGNI/KISS) while keeping high cohesion/low coupling, then generalize.
 - Extensibility: can be reused for future games without full rewrite.
 
 ## 3. Candidate Approaches
@@ -115,7 +115,7 @@ Implement a minimal Nat prover with structural recursion, no generic engine.
 
 Why:
 
-- Matches current repository policy (`YAGNI -> KISS -> SOLID`).
+- Matches current repository policy (`high cohesion/low coupling -> YAGNI -> KISS`).
 - Nat rules are small and mostly deterministic.
 - Fastest path to ship a useful `prover` command.
 

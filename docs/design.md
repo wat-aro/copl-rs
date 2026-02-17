@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-16
+Last updated: 2026-02-17
 
 ## 1. Purpose
 
@@ -356,13 +356,14 @@ Standard pre-commit checks:
 - `cargo test`
 - `cargo clippy --all-targets --all-features -- -D warnings`
 
-Development style follows TDD (`Red -> Green -> Refactor`).
+Development style follows TDD (`Red -> Green -> Refactor`), then a 5-iteration `review -> improve` loop after implementation.
+Review criteria are aligned with `AGENTS.md` Design Principles (`high cohesion/low coupling`, `YAGNI`, `KISS`).
 Project planning is managed in a single prioritized backlog in `docs/PLAN.md`, where implementation and improvement tasks are ordered explicitly for execution.
 Completed or frozen plans are archived under `docs/plans/`.
 
 ## 10. Open Items
 
-- Prioritized implementation/improvement work is managed in `docs/PLAN.md` unified backlog.
+- Prioritized implementation/improvement work is managed in `docs/PLAN.md` backlog.
 - Decide output schema for machine-readable mode (if JSON is introduced later).
 
 ## 11. Current Direction Note

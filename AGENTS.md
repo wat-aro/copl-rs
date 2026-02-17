@@ -2,7 +2,7 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-16
+Last updated: 2026-02-17
 
 ## Scope Ownership
 
@@ -59,14 +59,26 @@ Last updated: 2026-02-16
 
 ## Design Principles
 
+- Prioritize high cohesion and low coupling:
+  - Keep responsibilities focused within modules and minimize unnecessary cross-module dependencies.
 - Prioritize `YAGNI`:
   - Do not introduce features, extension points, or abstractions before a current task requires them.
 - Prioritize `KISS`:
   - Prefer the simplest design that satisfies current requirements and keeps behavior easy to reason about.
-- Apply `SOLID` pragmatically:
-  - Use SOLID to reduce coupling and improve maintainability, but avoid speculative abstractions.
 - When principles conflict, resolve in this order:
-  - `YAGNI` -> `KISS` -> `SOLID` (incremental application).
+  - High cohesion/low coupling -> `YAGNI` -> `KISS` (incremental application).
+- Use the following design/review questions:
+  - High cohesion / low coupling:
+    - Does this module handle only one concept?
+    - How far does the impact of change propagate?
+  - `YAGNI`:
+    - Is this extension used by current requirements?
+    - Is this abstraction for uncertain future requirements?
+    - Can we explain what would break if we remove this now?
+  - `KISS`:
+    - Is there a simpler implementation?
+    - Can we remove one layer or abstraction?
+    - Does reading this require avoidable prerequisite knowledge?
 
 ## Development Process
 
@@ -74,7 +86,7 @@ Last updated: 2026-02-16
 - Base cycle: `Red -> Green -> Refactor`.
 - Start from the smallest failing test, implement the minimum to pass, then refactor.
 - After implementation is complete, repeat a `review -> improve` loop 5 times.
-- In each review loop, review code against the design principles (`YAGNI`, `KISS`, `SOLID` in this priority order).
+- In each review loop, review code using the design/review questions in the Design Principles section.
 - Create a commit each time one task is completed.
 
 ## ADR Policy
