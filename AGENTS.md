@@ -87,6 +87,9 @@ Last updated: 2026-02-17
 - Start from the smallest failing test, implement the minimum to pass, then refactor.
 - After implementation is complete, repeat a `review -> improve` loop 5 times.
 - In each review loop, review code using the design/review questions in the Design Principles section.
+- Findings raised in review loops must be handled as follows:
+  - If a finding is within the current task scope, fix it before completing the task.
+  - If a finding is outside the current task scope, add it to the backlog in `docs/PLAN.md` with an appropriate priority/order.
 - Create a commit each time one task is completed.
 
 ## ADR Policy
@@ -158,4 +161,6 @@ Last updated: 2026-02-17
   - Code changes are implemented.
   - Tests for the changed behavior are added/updated.
   - Related docs are updated (`README.md`, `docs/design.md`, `docs/PLAN.md`, ADRs as needed).
+  - Review log is completed for `R1` to `R5` (`review -> improve`), including explicit `no finding` entries when applicable.
+  - Review findings are fully handled: in-scope findings are fixed, and out-of-scope findings are added to the backlog.
   - Validation gates pass (`cargo fmt`, `cargo test`, `cargo clippy --all-targets --all-features -- -D warnings`).
