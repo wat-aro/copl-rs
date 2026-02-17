@@ -1,6 +1,6 @@
 # copl-rs
 
-`copl-rs` is a command-line checker for CoPL derivations.
+`copl-rs` is a command-line tool for CoPL derivations.
 
 ## Requirements
 
@@ -21,11 +21,13 @@ Command shape:
 
 ```sh
 cargo run -- checker --game <name> [file]
+cargo run -- prover --game <name> [file]
 ```
 
 - If `[file]` is omitted, input is read from `stdin`.
 - Game names are case-insensitive (`Nat` and `nat` are both accepted).
 - Use `--` before a file name that starts with `-`.
+- `prover` CLI routing is available, but proof generation is not implemented yet (it currently returns an error).
 
 Examples:
 

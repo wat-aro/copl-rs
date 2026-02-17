@@ -5,6 +5,8 @@ use std::path::PathBuf;
 use crate::core::GameKind;
 
 pub(crate) mod checker;
+mod game_command;
+pub(crate) mod prover;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cli {
@@ -25,6 +27,7 @@ impl Cli {
 
         match subcommand.as_str() {
             "checker" => parse_checker(program, iter.collect()),
+            "prover" => parse_prover(program, iter.collect()),
             _ => Err(CliError::unknown_subcommand(program, subcommand)),
         }
     }
@@ -33,10 +36,17 @@ impl Cli {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Checker(CheckerCommand),
+    Prover(ProverCommand),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckerCommand {
+    pub game: GameKind,
+    pub input: InputSource,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProverCommand {
     pub game: GameKind,
     pub input: InputSource,
 }
@@ -60,6 +70,13 @@ fn parse_checker(program: String, args: Vec<String>) -> Result<Cli, CliError> {
     let command = checker::parse_checker_command(&program, &args)?;
     Ok(Cli {
         command: Command::Checker(command),
+    })
+}
+
+fn parse_prover(program: String, args: Vec<String>) -> Result<Cli, CliError> {
+    let command = prover::parse_prover_command(&program, &args)?;
+    Ok(Cli {
+        command: Command::Prover(command),
     })
 }
 
@@ -195,7 +212,9 @@ enum CliErrorKind {
 }
 
 fn usage_for(program: &str) -> String {
-    format!("Usage: {program} checker --game <name> [file]")
+    format!(
+        "Usage:\n  {program} checker --game <name> [file]\n  {program} prover --game <name> [file]"
+    )
 }
 
 #[cfg(test)]
@@ -216,7 +235,19 @@ mod tests {
     fn parses_checker_with_stdin() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "nat"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game, GameKind::Nat);
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn parses_prover_with_stdin() {
+        let cli = Cli::parse(vec!["copl-rs", "prover", "--game", "nat"]).expect("cli should parse");
+        let Command::Prover(cmd) = cli.command else {
+            panic!("expected prover command");
+        };
         assert_eq!(cmd.game, GameKind::Nat);
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -225,7 +256,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_nat() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "Nat"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game, GameKind::Nat);
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -234,7 +267,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_compare_nat1() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "CompareNat1"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game, GameKind::CompareNat1);
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -243,7 +278,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_compare_nat1() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "comparenat1"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game, GameKind::CompareNat1);
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -252,7 +289,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_compare_nat2() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "CompareNat2"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game, GameKind::CompareNat2);
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -261,7 +300,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_compare_nat2() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "comparenat2"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game, GameKind::CompareNat2);
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -270,7 +311,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_compare_nat3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "CompareNat3"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "CompareNat3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -279,7 +322,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_compare_nat3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "comparenat3"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "CompareNat3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -288,7 +333,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_ml1() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML1"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML1");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -297,7 +344,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_ml1() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "evalml1"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML1");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -306,7 +355,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_ml1_err() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML1Err"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML1Err");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -315,7 +366,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_ml1_err() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalml1err"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML1Err");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -324,7 +377,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_ml2() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML2"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML2");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -333,7 +388,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_ml2() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "evalml2"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML2");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -342,7 +399,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_ml3() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML3"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -351,7 +410,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_ml3() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "evalml3"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -360,7 +421,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_ml4() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML4"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -369,7 +432,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_ml4() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "evalml4"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -378,7 +443,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_ml5() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML5"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML5");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -387,7 +454,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_ml5() {
         let cli =
             Cli::parse(vec!["copl-rs", "checker", "--game", "evalml5"]).expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalML5");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -396,7 +465,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_cont_ml1() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalContML1"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalContML1");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -405,7 +476,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_cont_ml1() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalcontml1"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalContML1");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -414,7 +487,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_cont_ml4() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalContML4"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalContML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -423,7 +498,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_cont_ml4() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalcontml4"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalContML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -432,7 +509,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_typing_ml4() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "TypingML4"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "TypingML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -441,7 +520,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_typing_ml4() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "typingml4"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "TypingML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -450,7 +531,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_poly_typing_ml4() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "PolyTypingML4"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "PolyTypingML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -459,7 +542,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_poly_typing_ml4() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "polytypingml4"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "PolyTypingML4");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -468,7 +553,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_nameless_ml3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "NamelessML3"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "NamelessML3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -477,7 +564,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_nameless_ml3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "namelessml3"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "NamelessML3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -486,7 +575,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_nameless_ml3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalNamelessML3"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalNamelessML3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -495,7 +586,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_nameless_ml3() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalnamelessml3"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalNamelessML3");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -504,7 +597,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_eval_nat_exp() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalNatExp"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalNatExp");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -513,7 +608,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_eval_nat_exp() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalnatexp"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "EvalNatExp");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -522,7 +619,9 @@ mod tests {
     fn parses_checker_with_derivation_system_name_reduce_nat_exp() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "ReduceNatExp"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "ReduceNatExp");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -531,7 +630,9 @@ mod tests {
     fn keeps_backward_compatibility_for_lowercase_reduce_nat_exp() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "reducenatexp"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
         assert_eq!(cmd.game.as_str(), "ReduceNatExp");
         assert_eq!(cmd.input, InputSource::Stdin);
     }
@@ -540,7 +641,20 @@ mod tests {
     fn parses_checker_with_file() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game=nat", "001.copl"])
             .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game, GameKind::Nat);
+        assert_eq!(cmd.input, InputSource::File("001.copl".into()));
+    }
+
+    #[test]
+    fn parses_prover_with_file() {
+        let cli = Cli::parse(vec!["copl-rs", "prover", "--game=nat", "001.copl"])
+            .expect("cli should parse");
+        let Command::Prover(cmd) = cli.command else {
+            panic!("expected prover command");
+        };
         assert_eq!(cmd.game, GameKind::Nat);
         assert_eq!(cmd.input, InputSource::File("001.copl".into()));
     }
@@ -579,7 +693,27 @@ mod tests {
             "-input.copl",
         ])
         .expect("cli should parse");
-        let Command::Checker(cmd) = cli.command;
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game, GameKind::Nat);
+        assert_eq!(cmd.input, InputSource::File("-input.copl".into()));
+    }
+
+    #[test]
+    fn parses_prover_dash_prefixed_file_after_double_dash() {
+        let cli = Cli::parse(vec![
+            "copl-rs",
+            "prover",
+            "--game",
+            "nat",
+            "--",
+            "-input.copl",
+        ])
+        .expect("cli should parse");
+        let Command::Prover(cmd) = cli.command else {
+            panic!("expected prover command");
+        };
         assert_eq!(cmd.game, GameKind::Nat);
         assert_eq!(cmd.input, InputSource::File("-input.copl".into()));
     }

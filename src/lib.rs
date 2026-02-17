@@ -39,6 +39,10 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
             })?;
             Ok(())
         }
+        Command::Prover(command) => {
+            let _source = read_source(&command.input, stdin)?;
+            Err(RunError::ProverNotImplemented { game: command.game })
+        }
     }
 }
 
@@ -84,6 +88,7 @@ pub enum RunError {
     InputTooLarge { context: String, max_bytes: usize },
     InvalidUtf8 { context: String },
     Check(core::CheckError),
+    ProverNotImplemented { game: core::GameKind },
 }
 
 impl RunError {
@@ -94,6 +99,7 @@ impl RunError {
             Self::InputTooLarge { .. } => 1,
             Self::InvalidUtf8 { .. } => 1,
             Self::Check(_) => 1,
+            Self::ProverNotImplemented { .. } => 1,
         }
     }
 }
@@ -110,6 +116,13 @@ impl fmt::Display for RunError {
             }
             Self::InvalidUtf8 { context } => write!(f, "input is not valid UTF-8 ({context})"),
             Self::Check(err) => write!(f, "{err}"),
+            Self::ProverNotImplemented { game } => {
+                write!(
+                    f,
+                    "prover is not implemented yet for game: {}",
+                    game.as_str()
+                )
+            }
         }
     }
 }
@@ -122,6 +135,7 @@ impl Error for RunError {
             Self::InputTooLarge { .. } => None,
             Self::InvalidUtf8 { .. } => None,
             Self::Check(err) => Some(err),
+            Self::ProverNotImplemented { .. } => None,
         }
     }
 }
@@ -146,6 +160,25 @@ mod tests {
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert_eq!(text.trim(), "Z plus Z is Z");
+    }
+
+    #[test]
+    fn routes_prover_nat_to_not_implemented_error() {
+        let mut stdin = &b"Z plus Z is Z\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "Nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("prover is not implemented yet for game: Nat"));
     }
 
     #[test]

@@ -1,11 +1,11 @@
-use super::{game_command, CheckerCommand, CliError};
+use super::{game_command, CliError, ProverCommand};
 
-pub(super) fn parse_checker_command(
+pub(super) fn parse_prover_command(
     program: &str,
     args: &[String],
-) -> Result<CheckerCommand, CliError> {
+) -> Result<ProverCommand, CliError> {
     let command = game_command::parse_game_command(program, args)?;
-    Ok(CheckerCommand {
+    Ok(ProverCommand {
         game: command.game,
         input: command.input,
     })

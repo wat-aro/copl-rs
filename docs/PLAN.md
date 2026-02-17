@@ -137,7 +137,51 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `02` [P1][Implementation] `prover` サブコマンドの CLI 解析・実行経路を追加する（`src/cli/prover.rs` と `lib::execute` の経路追加）。
+- [x] `02` [P1][Implementation] `prover` サブコマンドの CLI 解析・実行経路を追加する（`src/cli/prover.rs` と `lib::execute` の経路追加）。  
+  完了メモ（2026-02-17）:
+  - 実装:
+    - `Command::Prover(ProverCommand)` を追加し、`Cli::parse` で `prover` サブコマンドを受理するようにした。
+    - `src/cli/prover.rs` を追加し、`prover --game <name> [file]` を解析可能にした。
+    - `src/cli/game_command.rs` を追加し、`checker` / `prover` 共通のゲーム選択・入力元解析（`stdin` / `--` 含む）を typed-state parser で共通化した。
+    - `lib::execute` に `Command::Prover` 分岐を追加し、現時点では `RunError::ProverNotImplemented` を返す経路を追加した。
+  - テスト:
+    - `cli::tests::parses_prover_with_stdin`
+    - `cli::tests::parses_prover_with_file`
+    - `cli::tests::parses_prover_dash_prefixed_file_after_double_dash`
+    - `tests::routes_prover_nat_to_not_implemented_error`
+  - ドキュメント:
+    - `README.md` に `prover --game <name> [file]` のコマンド形と現状（未実装エラー）を追記した。
+    - `docs/design.md` を更新し、`prover` の CLI/実行経路追加と現在状態を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: 既存 CLI テストが `Command::Checker` 単一バリアント前提で、`Command::Prover` 追加時にパターンが崩れる。
+    - Action: `let ... else` で明示的に checker/prover を期待する形に更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: `prover` が `checker` パーサ実装へ直接依存するとサブコマンド間結合が強くなる。
+    - Action: `src/cli/game_command.rs` を導入し、共通パーサを切り出して `checker` / `prover` を薄い adapter に分離した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: CLI エラー usage が `checker` だけを示していた。
+    - Action: usage 表示を `checker` / `prover` の両方を示す形式に更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: `prover` 経路追加後のユーザー向け説明が README/design と不一致だった。
+    - Action: `README.md` と `docs/design.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `03` [P1][Implementation] Nat prover 入力（judgment 単体）パーサを実装する。
 - [ ] `04` [P1][Implementation] Nat prover 本体（`P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`）を実装し、導出木 AST を構築する。
 - [ ] `05` [P1][Implementation] 導出木の pretty-printer を実装し、checker が受理する形式で出力する。

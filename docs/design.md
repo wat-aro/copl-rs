@@ -15,13 +15,13 @@ It is a snapshot of the implementation state and the agreed extension direction.
 - CLI entry point as `copl-rs`.
 - `checker` subcommand with unified game selection:
   - `copl-rs checker --game <name> [file]`
-- `prover` CLI contract is fixed (implementation is still pending):
+- `prover` subcommand CLI parsing and runtime route:
   - `copl-rs prover --game <name> [file]`
 - Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalContML1`, `EvalContML4`, `TypingML4`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
 
 ### Out of scope now
 
-- `prover` command implementation.
+- Nat prover logic implementation (input parser, proof search, and derivation pretty-printer).
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -37,7 +37,11 @@ The project is split into explicit module boundaries:
 - `src/cli.rs`:
   - CLI domain model and subcommand dispatch.
 - `src/cli/checker.rs`:
-  - `checker` subcommand parser implementation (typed state machine).
+  - `checker` subcommand parser adapter.
+- `src/cli/prover.rs`:
+  - `prover` subcommand parser adapter.
+- `src/cli/game_command.rs`:
+  - Shared typed-state parser for `--game <name> [file]` / `stdin` / `--` contract.
 - `src/core/mod.rs`:
   - Shared domain contracts (`GameKind`, `Game`, `CheckReport`, `CheckError`).
 - `src/games/mod.rs`:
@@ -91,7 +95,9 @@ This structure is intended to localize game-specific logic under `games/<game>/`
 
 - `Cli { command: Command }`
 - `Command::Checker(CheckerCommand)`
+- `Command::Prover(ProverCommand)`
 - `CheckerCommand { game: GameKind, input: InputSource }`
+- `ProverCommand { game: GameKind, input: InputSource }`
 - `InputSource::Stdin | InputSource::File(PathBuf)`
 
 ### 4.2 Parsing approach
@@ -99,7 +105,7 @@ This structure is intended to localize game-specific logic under `games/<game>/`
 CLI parsing is split by subcommand module.
 
 - `Cli::parse` resolves the subcommand name and delegates to the corresponding parser module.
-- Checker parsing (`src/cli/checker.rs`) is implemented as a typed state machine:
+- Game/input parsing is implemented in `src/cli/game_command.rs` as a typed state machine and reused by `checker` / `prover` adapters:
   - Internal parser state uses typestate-like markers:
     - mode-like markers: `ModeOptions`, `ModePositional`
     - expectation markers: `ExpectAny`, `ExpectGameValue`
@@ -114,14 +120,14 @@ Current compatibility rules:
 
 - Keep subcommand contracts stable:
   - `copl-rs checker --game <name> [file]`
-  - `copl-rs prover --game <name> [file]` (when implemented)
+  - `copl-rs prover --game <name> [file]`
 - If `[file]` is omitted, read from `stdin`.
 - Support `--` to treat following `-`-prefixed tokens as positional file names.
 - Keep game-name parsing case-insensitive.
 
 ## 5. Runtime Flow
 
-`main -> lib::run -> cli::parse -> execute -> games::run_checker`
+`main -> lib::run -> cli::parse -> execute -> {checker route | prover route}`
 
 Key runtime checks in `lib.rs`:
 
@@ -130,6 +136,7 @@ Key runtime checks in `lib.rs`:
   - test build: 1024 bytes
   - non-test build: 8 MiB
 - UTF-8 validation.
+- Current prover route returns a plain-text `RunError::ProverNotImplemented`.
 
 ## 6. Error Model
 
@@ -344,17 +351,17 @@ Current extension path is:
 This keeps game addition mostly localized to registry points and one module tree.
 Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`.
 
-### 8.2 Adding `prover`
+### 8.2 Extending `prover`
 
-Planned implementation direction:
+Current status:
 
-- Add a new subcommand variant under `Command`.
-- Add prover route in `Cli::parse`.
-- Implement execution path in `lib::execute`.
-- Follow the fixed CLI contract from ADR-0002:
-  - `copl-rs prover --game <name> [file]`
-  - omitted `[file]` means `stdin`
-  - support `--` delimiter for `-`-prefixed file names
+- `prover` is wired in CLI parsing and `lib::execute`.
+- `prover` currently stops with `RunError::ProverNotImplemented`.
+
+Next implementation direction:
+
+- Implement Nat prover input parsing.
+- Implement Nat proof construction and derivation output.
 
 ## 9. Quality Gates
 

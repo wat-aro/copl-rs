@@ -23,7 +23,8 @@ Last updated: 2026-02-17
 
 - Binary name: `copl-rs`
 - Use subcommand style.
-- For now, only `checker` is implemented.
+- `checker` is implemented.
+- `prover` CLI routing is implemented, but proof generation is not implemented yet.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
