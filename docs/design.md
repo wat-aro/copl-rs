@@ -21,7 +21,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- Nat prover proof construction and derivation pretty-printer.
+- Nat prover derivation pretty-printer and CLI output wiring.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -83,7 +83,7 @@ The project is split into explicit module boundaries:
 - `src/games/reduce_nat_exp/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nat/`:
-  - `syntax.rs`, `parser.rs`, `checker.rs`, `mod.rs` (`validate_prover_input`).
+  - `syntax.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 
 This structure is intended to localize game-specific logic under `games/<game>/`.
 
@@ -137,7 +137,8 @@ Key runtime checks in `lib.rs`:
   - non-test build: 8 MiB
 - UTF-8 validation.
 - `prover --game Nat` validates judgment-only input syntax before proving.
-- Current prover route returns a plain-text `RunError::ProverNotImplemented` after parsing.
+- Nat prover core builds an in-memory derivation AST using `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`.
+- Current prover route still returns a plain-text `RunError::ProverNotImplemented` (pretty-printer is pending).
 
 ## 6. Error Model
 
@@ -357,12 +358,12 @@ Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`
 Current status:
 
 - `prover` is wired in CLI parsing and `lib::execute`.
-- `prover --game Nat` now parses judgment-only input (`plus/times ... is ...`) and reports parse errors.
-- `prover` still stops with `RunError::ProverNotImplemented` after parsing.
+- `prover --game Nat` parses judgment-only input (`plus/times ... is ...`) and builds Nat derivation ASTs.
+- `prover` still stops with `RunError::ProverNotImplemented` because derivation pretty-print output is pending.
 
 Next implementation direction:
 
-- Implement Nat proof construction and derivation output.
+- Implement Nat derivation pretty-printer and route prover output to stdout.
 
 ## 9. Quality Gates
 

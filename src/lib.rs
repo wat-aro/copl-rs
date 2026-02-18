@@ -42,7 +42,12 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
         Command::Prover(command) => {
             let source = read_source(&command.input, stdin)?;
             if command.game == core::GameKind::Nat {
-                games::nat::validate_prover_input(&source).map_err(RunError::Check)?;
+                if let Err(err) = games::nat::prove(&source) {
+                    if err.kind() == core::CheckErrorKind::Parse {
+                        return Err(RunError::Check(err));
+                    }
+                    // Keep external behavior stable until Nat prover output is wired.
+                }
             }
             Err(RunError::ProverNotImplemented { game: command.game })
         }
@@ -199,6 +204,25 @@ mod tests {
         .expect_err("run should fail");
 
         assert!(result.to_string().contains("expected 'is'"));
+    }
+
+    #[test]
+    fn routes_prover_nat_with_non_derivable_judgment_to_not_implemented_error() {
+        let mut stdin = &b"S(Z) times S(Z) is Z\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "Nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("prover is not implemented yet for game: Nat"));
     }
 
     #[test]

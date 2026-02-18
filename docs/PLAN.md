@@ -225,7 +225,54 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `04` [P1][Implementation] Nat prover 本体（`P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`）を実装し、導出木 AST を構築する。
+- [x] `04` [P1][Implementation] Nat prover 本体（`P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`）を実装し、導出木 AST を構築する。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - `src/games/nat/prover.rs` を追加し、judgment から Nat 導出木 AST を生成する再帰 prover を実装した。
+    - `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ` を規則どおりに適用し、`NatDerivation` を構築するようにした。
+    - `src/games/nat/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の Nat prover 経路で AST 構築を実行しつつ、現状の外部挙動（未実装エラー）を維持した。
+  - テスト:
+    - `games::nat::prover::tests::proves_plus_judgment_with_p_zero`
+    - `games::nat::prover::tests::proves_times_judgment_with_t_zero`
+    - `games::nat::prover::tests::proves_plus_judgment_with_p_succ_chain`
+    - `games::nat::prover::tests::proves_times_judgment_with_t_succ_chain`
+    - `games::nat::prover::tests::rejects_non_derivable_plus_judgment`
+    - `games::nat::prover::tests::rejects_non_derivable_times_judgment`
+    - `games::nat::prover::tests::builds_same_derivation_shape_as_fixture_007`
+    - `tests::routes_prover_nat_with_non_derivable_judgment_to_not_implemented_error`
+  - ドキュメント:
+    - `docs/design.md` に Nat prover 本体実装済み・pretty-printer 未実装の現状を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: prover 本体追加直後、実行経路未接続だと dead code と責務分断が残る。
+    - Action: `nat::prove` を追加し、`lib::execute` の Nat prover 分岐から呼ぶ形に接続した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: 規則実装の妥当性を固定化する回帰テストが、単純な rule-name 断片確認だけでは弱い。
+    - Action: `copl/007.copl` の解析結果と生成 AST の形状一致を再帰比較するテストを追加した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 非導出 judgment 入力時の CLI 振る舞いが暫定仕様であることがコードから読み取りづらい。
+    - Action: 現状の互換挙動（not implemented 維持）を固定するテストと注記コメントを追加した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: `src/games/nat/prover.rs` の import が重複行で可読性が下がっていた。
+    - Action: `core` import を 1 行に統合した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `05` [P1][Implementation] 導出木の pretty-printer を実装し、checker が受理する形式で出力する。
 - [ ] `06` [P1][Test] ゴールデンテストを追加する（`S(S(Z)) times S(Z) is S(S(Z))` の導出が期待形で出力される）。
 - [ ] `07` [P1][Test] round-trip 検証を追加する（`prover` 出力を `checker` に渡して成功し、root judgment が一致する）。
