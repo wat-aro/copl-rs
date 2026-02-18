@@ -2,7 +2,7 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-17
+Last updated: 2026-02-18
 
 ## Scope Ownership
 
@@ -24,7 +24,8 @@ Last updated: 2026-02-17
 - Binary name: `copl-rs`
 - Use subcommand style.
 - `checker` is implemented.
-- `prover` CLI routing is implemented, but proof generation is not implemented yet.
+- `prover` is implemented for `Nat` (`copl-rs prover --game Nat [file]`).
+- For games other than `Nat`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`

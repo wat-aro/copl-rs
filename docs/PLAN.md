@@ -438,7 +438,46 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `09` [P2][Documentation] 実装完了時に `README.md` / `docs/design.md` / `AGENTS.md` / ADR を同期する。
+- [x] `09` [P2][Documentation] 実装完了時に `README.md` / `docs/design.md` / `AGENTS.md` / ADR を同期する。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - 実装変更なし（ドキュメント同期のみ）。
+  - テスト:
+    - 追加/更新なし。
+  - ドキュメント:
+    - `AGENTS.md` の CLI Policy を更新し、`prover` の現状（Nat 実装済み / 非 Nat 未実装）を反映した。
+    - `docs/adr/0009-split-cli-parser-by-subcommand.md` を更新し、checker-only 前提の文脈を「決定時点」の表現へ修正した。
+    - `README.md` / `docs/design.md` / `docs/PLAN.md` はタスク 05-08 の変更で同期済みであることを確認した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: `AGENTS.md` の prover 状態が「未実装」のままで実装事実と不一致だった。
+    - Action: Nat 実装済み・非 Nat 未実装へ更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: `docs/adr/0009` の Context が checker-only の現在形で記載され、時系列が曖昧だった。
+    - Action: 「At decision time」に修正し、`updated` 日付を追記した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `10` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
 
 #### 共通完了条件（Implementation タスク）
