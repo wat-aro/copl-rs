@@ -358,7 +358,44 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `07` [P1][Test] round-trip 検証を追加する（`prover` 出力を `checker` に渡して成功し、root judgment が一致する）。
+- [x] `07` [P1][Test] round-trip 検証を追加する（`prover` 出力を `checker` に渡して成功し、root judgment が一致する）。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - 実装変更なし（テスト追加のみ）。
+  - テスト:
+    - `tests::prover_nat_output_round_trips_to_checker_root_judgment` を追加した。
+    - `prover --game Nat` の出力導出をそのまま `checker --game Nat` に入力し、成功することと root judgment が元入力 judgment と一致することを検証した。
+  - ドキュメント:
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: round-trip の成功だけでは、最終的な観測値（root judgment 一致）が保証されない。
+    - Action: checker 成功に加えて、出力 root judgment が元入力 judgment と一致する assertion を追加した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `08` [P2][Implementation] 不可能 judgment に対するエラーメッセージ方針を定義し実装する（plain text）。
 - [ ] `09` [P2][Documentation] 実装完了時に `README.md` / `docs/design.md` / `AGENTS.md` / ADR を同期する。
 - [ ] `10` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
