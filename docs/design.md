@@ -148,6 +148,7 @@ Key runtime checks in `lib.rs`:
   - `CheckErrorKind` (`Parse`, `RuleViolation`, `Internal`)
   - optional `SourceSpan`.
 - Top-level runtime errors are wrapped in `RunError`.
+- For non-derivable Nat prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix`.
 
 Error output is currently plain text.
 On successful check, output is the inferred root judgment text in plain text (ADR-0008).
@@ -160,6 +161,7 @@ Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 - `syntax.rs` models Nat judgments as an enum with explicit forms (`PlusIs`, `TimesIs`) (ADR-0007).
 - `NatTerm` / `NatJudgment` rendering for CLI output and diagnostics is defined in `syntax.rs` (`Display` impls).
 - `NatDerivation` rendering in checker-compatible textual form is defined in `syntax.rs` and used by `prover --game Nat`.
+- Nat prover reports non-derivable judgments with actionable plain-text diagnostics (`expected` / `actual` / `fix`), including the corrected result term when derivable.
 - `checker.rs` validates Nat rule constraints (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
 - Rule definitions are fixed and referenced statically from checker-local rule IDs.
 - Rule application checks are written as per-rule pattern matching over `subderivations`, aligned with the reference checker style (ADR-0007).

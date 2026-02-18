@@ -16,9 +16,7 @@ pub(super) fn prove_judgment(judgment: NatJudgment) -> Result<NatDerivation, Che
         } => prove_times(left, right, result),
     };
 
-    derivation.ok_or_else(|| {
-        CheckError::rule_violation(format!("judgment is not derivable in Nat: {judgment}"))
-    })
+    derivation.ok_or_else(|| non_derivable_judgment_error(&judgment))
 }
 
 fn prove_plus(left: &NatTerm, right: &NatTerm, result: &NatTerm) -> Option<NatDerivation> {
@@ -94,6 +92,51 @@ fn eval_times(left: &NatTerm, right: &NatTerm) -> NatTerm {
             let partial = eval_times(inner, right);
             eval_plus(right, &partial)
         }
+    }
+}
+
+fn non_derivable_judgment_error(judgment: &NatJudgment) -> CheckError {
+    let (expected, fix) = match judgment {
+        NatJudgment::PlusIs {
+            left,
+            right,
+            result,
+        } => {
+            let expected_result = eval_plus(left, right);
+            let expected = NatJudgment::PlusIs {
+                left: left.clone(),
+                right: right.clone(),
+                result: expected_result.clone(),
+            };
+            let fix = result_fix_message(result, &expected_result);
+            (expected, fix)
+        }
+        NatJudgment::TimesIs {
+            left,
+            right,
+            result,
+        } => {
+            let expected_result = eval_times(left, right);
+            let expected = NatJudgment::TimesIs {
+                left: left.clone(),
+                right: right.clone(),
+                result: expected_result.clone(),
+            };
+            let fix = result_fix_message(result, &expected_result);
+            (expected, fix)
+        }
+    };
+
+    CheckError::rule_violation(format!(
+        "judgment is not derivable in Nat (expected: {expected}, actual: {judgment}; {fix})"
+    ))
+}
+
+fn result_fix_message(actual_result: &NatTerm, expected_result: &NatTerm) -> String {
+    if actual_result == expected_result {
+        "fix: check the judgment terms and operator".to_string()
+    } else {
+        format!("fix: replace result term with {expected_result}")
     }
 }
 
@@ -194,9 +237,11 @@ mod tests {
         })
         .expect_err("judgment should be rejected");
 
+        assert!(err.message().contains("judgment is not derivable in Nat"));
         assert!(err
             .message()
-            .contains("judgment is not derivable in Nat: Z plus S(Z) is Z"));
+            .contains("expected: Z plus S(Z) is S(Z), actual: Z plus S(Z) is Z"));
+        assert!(err.message().contains("fix: replace result term with S(Z)"));
     }
 
     #[test]
@@ -208,9 +253,11 @@ mod tests {
         })
         .expect_err("judgment should be rejected");
 
+        assert!(err.message().contains("judgment is not derivable in Nat"));
         assert!(err
             .message()
-            .contains("judgment is not derivable in Nat: S(Z) times S(Z) is Z"));
+            .contains("expected: S(Z) times S(Z) is S(Z), actual: S(Z) times S(Z) is Z"));
+        assert!(err.message().contains("fix: replace result term with S(Z)"));
     }
 
     #[test]

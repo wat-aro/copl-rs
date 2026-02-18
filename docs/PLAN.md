@@ -396,7 +396,48 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `08` [P2][Implementation] 不可能 judgment に対するエラーメッセージ方針を定義し実装する（plain text）。
+- [x] `08` [P2][Implementation] 不可能 judgment に対するエラーメッセージ方針を定義し実装する（plain text）。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - Nat prover の導出不能 judgment エラーを plain-text で `expected` / `actual` / `fix` を含む形式に統一した。
+    - `src/games/nat/prover.rs` に非導出メッセージ生成 (`non_derivable_judgment_error`) を追加し、`plus`/`times` の期待結果を計算して修正候補（result term）を提示するようにした。
+  - テスト:
+    - `games::nat::prover::tests::rejects_non_derivable_plus_judgment` を更新した。
+    - `games::nat::prover::tests::rejects_non_derivable_times_judgment` を更新した。
+    - `tests::routes_prover_nat_with_non_derivable_judgment_to_check_error` を更新した。
+  - ドキュメント:
+    - `README.md` に Nat prover 失敗時診断（`expected` / `actual` / `fix`）を追記した。
+    - `docs/design.md` の Error Model/Nat 節に導出不能 judgment 診断方針を追記した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: 既存メッセージは「導出不能」だけで、どこを直せばよいかが読み取りづらい。
+    - Action: expected/actual/fix を含む方針へ統一し、期待される result term を明示する実装に変更した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: CLI 経由の失敗出力が新方針へ追従していることを固定化するテストが不足していた。
+    - Action: `routes_prover_nat_with_non_derivable_judgment_to_check_error` を更新し、`expected` / `fix` の出力を検証した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 非導出メッセージ組み立てロジックが分散すると保守性が下がる。
+    - Action: `non_derivable_judgment_error` と `result_fix_message` に集約して責務を限定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `09` [P2][Documentation] 実装完了時に `README.md` / `docs/design.md` / `AGENTS.md` / ADR を同期する。
 - [ ] `10` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
 

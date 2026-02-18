@@ -28,6 +28,7 @@ cargo run -- prover --game <name> [file]
 - Game names are case-insensitive (`Nat` and `nat` are both accepted).
 - Use `--` before a file name that starts with `-`.
 - `prover --game Nat` accepts a single judgment (`... plus ... is ...` or `... times ... is ...`) and prints a generated derivation in plain text.
+- For non-derivable `prover --game Nat` input, plain-text diagnostics include `expected` / `actual` / `fix`.
 - `prover` for games other than `Nat` is not implemented yet.
 
 Examples:

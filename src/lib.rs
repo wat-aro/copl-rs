@@ -229,7 +229,10 @@ mod tests {
 
         assert!(result
             .to_string()
-            .contains("judgment is not derivable in Nat: S(Z) times S(Z) is Z"));
+            .contains("expected: S(Z) times S(Z) is S(Z), actual: S(Z) times S(Z) is Z"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace result term with S(Z)"));
     }
 
     #[test]
