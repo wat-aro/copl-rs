@@ -539,7 +539,64 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `11` [P1][Implementation] EvalML3 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `11` [P1][Implementation] EvalML3 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - `src/games/eval_ml3/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/eval_ml3/prover.rs` を追加し、`E-Int` / `E-Bool` / `E-Var1` / `E-Var2` / `E-IfT` / `E-IfF` / `E-Let` / `E-LetRec` / `E-Fun` / `E-App` / `E-AppRec` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` と `B-*` を決定的に構築する EvalML3 prover を実装した。
+    - `src/games/eval_ml3/syntax.rs` に `EvalML3Derivation` の `Display` 実装（checker 受理形式の pretty-printer）を追加した。
+    - `src/games/eval_ml3/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game EvalML3` を追加し、成功時に導出テキストを stdout 出力するようにした。
+  - テスト:
+    - `games::eval_ml3::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::eval_ml3::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `games::eval_ml3::prover::tests::proves_eval_int_judgment_with_e_int`
+    - `games::eval_ml3::prover::tests::proves_eval_let_rec_judgment_with_e_let_rec`
+    - `games::eval_ml3::prover::tests::proves_builtin_plus_judgment_with_b_plus`
+    - `games::eval_ml3::prover::tests::rejects_non_derivable_eval_judgment`
+    - `games::eval_ml3::prover::tests::rejects_ill_typed_eval_judgment`
+    - `games::eval_ml3::prover::tests::rejects_non_derivable_builtin_judgment`
+    - `games::eval_ml3::prover::tests::builds_same_derivation_shape_as_fixture_042`
+    - `games::eval_ml3::syntax::tests::formats_leaf_derivation`
+    - `games::eval_ml3::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `tests::routes_prover_eval_ml3_and_prints_derivation`
+    - `tests::routes_prover_eval_ml3_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_eval_ml3_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_eval_ml3_output_round_trips_to_checker_root_judgment`
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、EvalML3 prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、EvalML3 prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy / Input Specification References を更新し、EvalML3 prover 実装済み状態を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: EvalML3 prover 入力が導出形式を受理すると `prover` 契約（judgment-only）に反する。
+    - Action: `parse_judgment_source` と導出入力拒否テストを追加し、EOF までの judgment-only パースを固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: EvalML3 導出整形が `lib::execute` 側に寄るとゲーム実装の凝集が下がる。
+    - Action: `EvalML3Derivation` の `Display` と `eval_ml3::prove` を追加し、整形責務を `games/eval_ml3` 側へ集約した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 変数参照と再帰適用（`E-Var2` / `E-AppRec`）が未固定だと EvalML3 で回帰が起きやすい。
+    - Action: `proves_eval_let_rec_judgment_with_e_let_rec` と fixture 形状比較テストを追加し、環境拡張規則を回帰固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: CLI 経路が Nat/EvalML1 固定のままだと EvalML3 prover の実装事実と不一致になる。
+    - Action: `lib::execute` の `prover` 分岐へ `GameKind::EvalML3` を追加し、CLI route テストと round-trip テストで固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 実装反映後に README/design/AGENTS の記述が古いままだった。
+    - Action: `README.md` / `docs/design.md` / `AGENTS.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `12` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
 
 #### 共通完了条件（Implementation タスク）

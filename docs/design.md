@@ -21,7 +21,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- Prover implementation for games other than `Nat` and `EvalML1` (for example `EvalML3` and beyond).
+- Prover implementation for games other than `Nat`, `EvalML1`, and `EvalML3`.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -61,7 +61,7 @@ The project is split into explicit module boundaries:
 - `src/games/eval_ml2/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml3/`:
-  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
+  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 - `src/games/eval_ml4/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml5/`:
@@ -138,10 +138,12 @@ Key runtime checks in `lib.rs`:
 - UTF-8 validation.
 - `prover --game Nat` validates judgment-only input syntax before proving.
 - `prover --game EvalML1` validates judgment-only input syntax before proving.
+- `prover --game EvalML3` validates judgment-only input syntax before proving.
 - Nat prover core builds an in-memory derivation AST using `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`.
 - EvalML1 prover core builds an in-memory derivation AST using `E-*` / `B-*` rules in a deterministic evaluation order.
-- Nat/EvalML1 provers render derivation trees in checker-compatible plain text and write them to stdout.
-- `prover` for games other than `Nat` / `EvalML1` returns `RunError::ProverNotImplemented`.
+- EvalML3 prover core builds an in-memory derivation AST using `E-*` / `B-*` rules in a deterministic evaluation order, including environment-sensitive rules (`E-Var1`, `E-Var2`, `E-LetRec`, `E-AppRec`).
+- Nat/EvalML1/EvalML3 provers render derivation trees in checker-compatible plain text and write them to stdout.
+- `prover` for games other than `Nat` / `EvalML1` / `EvalML3` returns `RunError::ProverNotImplemented`.
 
 ## 6. Error Model
 
@@ -150,7 +152,7 @@ Key runtime checks in `lib.rs`:
   - `CheckErrorKind` (`Parse`, `RuleViolation`, `Internal`)
   - optional `SourceSpan`.
 - Top-level runtime errors are wrapped in `RunError`.
-- For non-derivable Nat and EvalML1 prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
+- For non-derivable Nat, EvalML1, and EvalML3 prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
 
 Error output is currently plain text.
 On successful check, output is the inferred root judgment text in plain text (ADR-0008).
@@ -237,15 +239,19 @@ Current EvalML2 checker validates derivation trees parsed from CoPL ASCII input.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 
-Current EvalML3 checker validates derivation trees parsed from CoPL ASCII input.
+Current EvalML3 checker/prover validates or generates derivation trees for CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`) and parses environments (`x = v, y = v' |- ...`), closures (`(env)[fun x -> e]`), and recursive closures (`(env)[rec f = fun x -> e]`).
+- `parser.rs` also parses judgment-only prover input (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 - `syntax.rs` models EvalML3 expressions and values, including `let rec`, `fun`, and application.
+- `syntax.rs` includes `EvalML3Derivation` rendering in checker-compatible textual form.
 - `checker.rs` validates EvalML3 and builtin arithmetic/boolean rules (`E-Int`, `E-Bool`, `E-Var1`, `E-Var2`, `E-IfT`, `E-IfF`, `E-Let`, `E-LetRec`, `E-Fun`, `E-App`, `E-AppRec`, `E-Plus`, `E-Minus`, `E-Times`, `E-Lt`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`).
+- `prover.rs` deterministically constructs EvalML3 derivations by recursively evaluating expressions/environments and emitting matching `E-*`/`B-*` rule nodes.
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+- Non-derivable prover judgments are reported as plain-text `RuleViolation` with actionable hints (`expected` / `actual` / `fix`) where derivation expectations are computable.
 
 Current EvalML4 checker validates derivation trees parsed from CoPL ASCII input.
 
@@ -370,11 +376,12 @@ Current status:
 - `prover` is wired in CLI parsing and `lib::execute`.
 - `prover --game Nat` parses judgment-only input (`plus/times ... is ...`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game EvalML1` parses judgment-only input (`evalto` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
+- `prover --game EvalML3` parses judgment-only input (`Gamma |- ... evalto ...` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover` for unsupported games returns `RunError::ProverNotImplemented`.
 
 Next implementation direction:
 
-- Implement `prover --game EvalML3` with judgment-only parser, prover core, and checker round-trip tests.
+- Re-evaluate whether to introduce a shared proof-search core now that prover coverage reached three games.
 
 ## 9. Quality Gates
 
@@ -410,6 +417,7 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalML1Err checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- EvalML3 prover is implemented with game-specific recursive evaluation that deterministically emits `E-*` / `B-*` derivations and checker-compatible pretty-printed output.
 - EvalContML1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalContML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - TypingML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

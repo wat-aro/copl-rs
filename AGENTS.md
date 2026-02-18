@@ -26,7 +26,8 @@ Last updated: 2026-02-18
 - `checker` is implemented.
 - `prover` is implemented for `Nat` (`copl-rs prover --game Nat [file]`).
 - `prover` is implemented for `EvalML1` (`copl-rs prover --game EvalML1 [file]`).
-- For games other than `Nat` / `EvalML1`, `prover` currently returns a not-implemented error.
+- `prover` is implemented for `EvalML3` (`copl-rs prover --game EvalML3 [file]`).
+- For games other than `Nat` / `EvalML1` / `EvalML3`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -56,6 +57,7 @@ Last updated: 2026-02-18
 - `games/compare_nat2` is split into `syntax` / `parser` / `checker`.
 - `games/compare_nat3` is split into `syntax` / `parser` / `checker`.
 - `games/eval_ml1` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/eval_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_nat_exp` is split into `syntax` / `parser` / `checker`.
 - `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker`.
 - Use `enum GameKind + match` for game registry/dispatch.
@@ -135,6 +137,7 @@ Last updated: 2026-02-18
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat2.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML1.html
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalNatExp.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/ReduceNatExp.html
 - ASCII examples:
@@ -143,6 +146,7 @@ Last updated: 2026-02-18
   - CompareNat2: `copl/010.copl`, `copl/013.copl`
   - CompareNat3: `copl/011.copl`, `copl/014.copl`
   - EvalML1: `copl/025.copl` to `copl/030.copl`
+  - EvalML3: `copl/040.copl` to `copl/053.copl`
   - EvalNatExp: `copl/015.copl` to `copl/020.copl`
   - ReduceNatExp: `copl/021.copl` to `copl/024.copl`
 

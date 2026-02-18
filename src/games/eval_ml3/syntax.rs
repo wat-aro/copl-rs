@@ -291,3 +291,125 @@ pub struct EvalML3Derivation {
     pub rule_name: String,
     pub subderivations: Vec<EvalML3Derivation>,
 }
+
+impl fmt::Display for EvalML3Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &EvalML3Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        EvalML3BinOp, EvalML3Derivation, EvalML3Env, EvalML3Expr, EvalML3Judgment, EvalML3Value,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::eval_ml3::parser::parse_source;
+
+    fn derivation(
+        judgment: EvalML3Judgment,
+        rule_name: &str,
+        subderivations: Vec<EvalML3Derivation>,
+    ) -> EvalML3Derivation {
+        EvalML3Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            EvalML3Judgment::EvalTo {
+                env: EvalML3Env::default(),
+                expr: EvalML3Expr::Int(3),
+                value: EvalML3Value::Int(3),
+            },
+            "E-Int",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "|- 3 evalto 3 by E-Int {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            EvalML3Judgment::EvalTo {
+                env: EvalML3Env::default(),
+                expr: EvalML3Expr::BinOp {
+                    op: EvalML3BinOp::Plus,
+                    left: Box::new(EvalML3Expr::Int(3)),
+                    right: Box::new(EvalML3Expr::Int(5)),
+                },
+                value: EvalML3Value::Int(8),
+            },
+            "E-Plus",
+            vec![
+                derivation(
+                    EvalML3Judgment::EvalTo {
+                        env: EvalML3Env::default(),
+                        expr: EvalML3Expr::Int(3),
+                        value: EvalML3Value::Int(3),
+                    },
+                    "E-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    EvalML3Judgment::EvalTo {
+                        env: EvalML3Env::default(),
+                        expr: EvalML3Expr::Int(5),
+                        value: EvalML3Value::Int(5),
+                    },
+                    "E-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    EvalML3Judgment::PlusIs {
+                        left: 3,
+                        right: 5,
+                        result: 8,
+                    },
+                    "B-Plus",
+                    Vec::new(),
+                ),
+            ],
+        );
+
+        let rendered = derivation.to_string();
+        let expected = "\
+|- 3 + 5 evalto 8 by E-Plus {
+  |- 3 evalto 3 by E-Int {};
+  |- 5 evalto 5 by E-Int {};
+  3 plus 5 is 8 by B-Plus {}
+}";
+        assert_eq!(rendered, expected);
+        assert!(parse_source(&rendered).is_ok());
+    }
+}

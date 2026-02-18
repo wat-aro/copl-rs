@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<EvalML3Derivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<EvalML3Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -735,7 +748,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::eval_ml3::syntax::{EvalML3Env, EvalML3Expr, EvalML3Judgment, EvalML3Value};
 
     #[test]
@@ -831,5 +844,38 @@ mod tests {
                 }),
             }
         );
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source("|- let rec f = fun x -> x + 1 in f 2 evalto 3")
+            .expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            EvalML3Judgment::EvalTo {
+                env: EvalML3Env::default(),
+                expr: EvalML3Expr::LetRec {
+                    name: "f".to_string(),
+                    param: "x".to_string(),
+                    fun_body: Box::new(EvalML3Expr::BinOp {
+                        op: crate::games::eval_ml3::syntax::EvalML3BinOp::Plus,
+                        left: Box::new(EvalML3Expr::Var("x".to_string())),
+                        right: Box::new(EvalML3Expr::Int(1)),
+                    }),
+                    body: Box::new(EvalML3Expr::App {
+                        func: Box::new(EvalML3Expr::Var("f".to_string())),
+                        arg: Box::new(EvalML3Expr::Int(2)),
+                    }),
+                },
+                value: EvalML3Value::Int(3),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("|- 3 evalto 3 by E-Int {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }
