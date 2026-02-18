@@ -273,7 +273,54 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `05` [P1][Implementation] 導出木の pretty-printer を実装し、checker が受理する形式で出力する。
+- [x] `05` [P1][Implementation] 導出木の pretty-printer を実装し、checker が受理する形式で出力する。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - `src/games/nat/syntax.rs` に `NatDerivation` の `Display` 実装（deterministic pretty-printer）を追加した。
+    - pretty-printer は 2 スペースインデント、複数 premise の `;` 区切り、leaf の `{}`
+      を固定し、checker が受理できる Nat 導出テキストを生成するようにした。
+    - `src/games/nat/mod.rs` の `prove` を `Result<String, CheckError>` に変更し、Nat prover 生成結果を文字列として返すようにした。
+    - `src/lib.rs` の `prover --game Nat` 経路を実装し、成功時に導出テキストを stdout 出力して `Ok(())` を返すようにした。
+  - テスト:
+    - `games::nat::syntax::tests::formats_leaf_derivation`
+    - `games::nat::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `tests::routes_prover_nat_and_prints_leaf_derivation`
+    - `tests::routes_prover_nat_and_prints_derivation`
+    - `tests::routes_prover_nat_with_non_derivable_judgment_to_check_error`
+    - `tests::routes_prover_non_nat_to_not_implemented_error`
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、`Nat` は導出出力済み・非 Nat は未実装であることを反映した。
+    - `docs/design.md` の scope/runtime/Nat 節を更新し、pretty-printer と Nat prover 出力配線の実装済み状態を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: Nat prover を有効化した後、非 Nat game が未実装エラーを返し続ける回帰テストが不足していた。
+    - Action: `tests::routes_prover_non_nat_to_not_implemented_error` を追加して回帰を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: pretty-printer の改行/`;` 仕様が崩れても検知できるテストが不足していた。
+    - Action: nested 導出の期待文字列一致と parser 再受理を同時に検証するテストを追加した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: Nat prover の表示責務が `lib::execute` 側にあると凝集が下がる。
+    - Action: `NatDerivation` の `Display` と `nat::prove` で整形責務を `games/nat` 側へ集約した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 実装後のユーザー向け説明が README/design で古いままだった。
+    - Action: `README.md` / `docs/design.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `06` [P1][Test] ゴールデンテストを追加する（`S(S(Z)) times S(Z) is S(S(Z))` の導出が期待形で出力される）。
 - [ ] `07` [P1][Test] round-trip 検証を追加する（`prover` 出力を `checker` に渡して成功し、root judgment が一致する）。
 - [ ] `08` [P2][Implementation] 不可能 judgment に対するエラーメッセージ方針を定義し実装する（plain text）。

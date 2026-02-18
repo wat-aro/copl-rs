@@ -42,12 +42,12 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
         Command::Prover(command) => {
             let source = read_source(&command.input, stdin)?;
             if command.game == core::GameKind::Nat {
-                if let Err(err) = games::nat::prove(&source) {
-                    if err.kind() == core::CheckErrorKind::Parse {
-                        return Err(RunError::Check(err));
-                    }
-                    // Keep external behavior stable until Nat prover output is wired.
-                }
+                let derivation = games::nat::prove(&source).map_err(RunError::Check)?;
+                writeln!(stdout, "{derivation}").map_err(|source| RunError::Io {
+                    source,
+                    context: "stdout".to_string(),
+                })?;
+                return Ok(());
             }
             Err(RunError::ProverNotImplemented { game: command.game })
         }
@@ -171,7 +171,7 @@ mod tests {
     }
 
     #[test]
-    fn routes_prover_nat_to_not_implemented_error() {
+    fn routes_prover_nat_and_prints_leaf_derivation() {
         let mut stdin = &b"Z plus Z is Z\n"[..];
         let mut out = Vec::new();
         let mut err = Vec::new();
@@ -181,12 +181,11 @@ mod tests {
             &mut stdin,
             &mut out,
             &mut err,
-        )
-        .expect_err("run should fail");
+        );
 
-        assert!(result
-            .to_string()
-            .contains("prover is not implemented yet for game: Nat"));
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "Z plus Z is Z by P-Zero {}");
     }
 
     #[test]
@@ -207,7 +206,7 @@ mod tests {
     }
 
     #[test]
-    fn routes_prover_nat_with_non_derivable_judgment_to_not_implemented_error() {
+    fn routes_prover_nat_with_non_derivable_judgment_to_check_error() {
         let mut stdin = &b"S(Z) times S(Z) is Z\n"[..];
         let mut out = Vec::new();
         let mut err = Vec::new();
@@ -222,7 +221,44 @@ mod tests {
 
         assert!(result
             .to_string()
-            .contains("prover is not implemented yet for game: Nat"));
+            .contains("judgment is not derivable in Nat: S(Z) times S(Z) is Z"));
+    }
+
+    #[test]
+    fn routes_prover_nat_and_prints_derivation() {
+        let mut stdin = &b"Z plus S(Z) is S(Z)\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "Nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "Z plus S(Z) is S(Z) by P-Zero {}");
+    }
+
+    #[test]
+    fn routes_prover_non_nat_to_not_implemented_error() {
+        let mut stdin = &b"Z is less than S(Z)\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "CompareNat1"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("prover is not implemented yet for game: CompareNat1"));
     }
 
     #[test]

@@ -21,7 +21,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- Nat prover derivation pretty-printer and CLI output wiring.
+- Nat prover for games other than `Nat`.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -138,7 +138,8 @@ Key runtime checks in `lib.rs`:
 - UTF-8 validation.
 - `prover --game Nat` validates judgment-only input syntax before proving.
 - Nat prover core builds an in-memory derivation AST using `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`.
-- Current prover route still returns a plain-text `RunError::ProverNotImplemented` (pretty-printer is pending).
+- Nat prover renders the derivation tree in checker-compatible plain text and writes it to stdout.
+- `prover` for non-`Nat` games still returns `RunError::ProverNotImplemented`.
 
 ## 6. Error Model
 
@@ -158,6 +159,7 @@ Current Nat checker validates derivation trees parsed from CoPL ASCII input.
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
 - `syntax.rs` models Nat judgments as an enum with explicit forms (`PlusIs`, `TimesIs`) (ADR-0007).
 - `NatTerm` / `NatJudgment` rendering for CLI output and diagnostics is defined in `syntax.rs` (`Display` impls).
+- `NatDerivation` rendering in checker-compatible textual form is defined in `syntax.rs` and used by `prover --game Nat`.
 - `checker.rs` validates Nat rule constraints (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`).
 - Rule definitions are fixed and referenced statically from checker-local rule IDs.
 - Rule application checks are written as per-rule pattern matching over `subderivations`, aligned with the reference checker style (ADR-0007).

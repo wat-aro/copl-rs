@@ -27,8 +27,8 @@ cargo run -- prover --game <name> [file]
 - If `[file]` is omitted, input is read from `stdin`.
 - Game names are case-insensitive (`Nat` and `nat` are both accepted).
 - Use `--` before a file name that starts with `-`.
-- `prover` CLI routing is available, but proof generation is not implemented yet (it currently returns an error).
-- For `prover --game Nat`, input is currently parsed as a single judgment (`... plus ... is ...` or `... times ... is ...`) before the not-implemented error is returned.
+- `prover --game Nat` accepts a single judgment (`... plus ... is ...` or `... times ... is ...`) and prints a generated derivation in plain text.
+- `prover` for games other than `Nat` is not implemented yet.
 
 Examples:
 
@@ -36,6 +36,7 @@ Examples:
 cargo run -- checker --game Nat copl/001.copl
 cat copl/001.copl | cargo run -- checker --game Nat
 cargo run -- checker --game Nat -- -input.copl
+echo "S(S(Z)) times S(Z) is S(S(Z))" | cargo run -- prover --game Nat
 ```
 
 Supported `--game` values:
