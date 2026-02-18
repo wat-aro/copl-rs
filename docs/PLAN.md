@@ -597,7 +597,44 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `12` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
+- [x] `12` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - prover 共通コア導入の要否を再評価し、現時点では game 特化 prover 維持を継続する判断を確定した（コード変更なし）。
+  - テスト:
+    - 追加/更新なし（Improvement/Decision タスクのため）。
+  - ドキュメント:
+    - `docs/design.md` の `8.2 Extending prover` を更新し、導入見送りの理由と再検討条件を明文化した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: 再評価結果の判断根拠が設計スナップショット上で明示されていなかった。
+    - Action: `docs/design.md` に導入見送り理由（高凝集/低結合・`YAGNI`・`KISS`）を追記した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: 次回再評価のトリガー条件が曖昧だった。
+    - Action: 再検討条件（非決定的探索の必要化、共通ロジック増加、cross-cutting 変更増加）を `docs/design.md` に追加した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
 #### 共通完了条件（Implementation タスク）
 

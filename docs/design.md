@@ -379,9 +379,18 @@ Current status:
 - `prover --game EvalML3` parses judgment-only input (`Gamma |- ... evalto ...` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover` for unsupported games returns `RunError::ProverNotImplemented`.
 
-Next implementation direction:
+Re-evaluation result (2026-02-18):
 
-- Re-evaluate whether to introduce a shared proof-search core now that prover coverage reached three games.
+- Do not introduce a shared proof-search core at this point.
+- Keep game-specific prover implementations (`Nat`, `EvalML1`, `EvalML3`) as the default strategy.
+- Rationale:
+  - The three provers are deterministic, rule-driven evaluators, but their core domains differ (`Nat` structural arithmetic recursion vs `EvalML1` expression evaluation vs `EvalML3` environment/closure-sensitive evaluation).
+  - Current overlap is limited to small helper patterns and does not justify a new cross-game proof-search abstraction.
+  - Introducing a generic core now would increase coupling across game modules without a proportional reduction in implementation complexity.
+- Revisit this decision when one of the following becomes true:
+  - A new prover requires non-deterministic search/backtracking beyond current deterministic evaluators.
+  - Shared prover logic grows enough that local helper extraction is no longer sufficient.
+  - Adding a new prover repeatedly requires touching multiple existing prover modules for cross-cutting behavior.
 
 ## 9. Quality Gates
 
