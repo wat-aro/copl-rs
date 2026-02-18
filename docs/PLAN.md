@@ -321,7 +321,43 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `06` [P1][Test] ゴールデンテストを追加する（`S(S(Z)) times S(Z) is S(S(Z))` の導出が期待形で出力される）。
+- [x] `06` [P1][Test] ゴールデンテストを追加する（`S(S(Z)) times S(Z) is S(S(Z))` の導出が期待形で出力される）。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - 実装変更なし（テスト追加のみ）。
+  - テスト:
+    - `tests::routes_prover_nat_matches_golden_fixture_007` を追加し、`prover --game Nat` の出力が `copl/007.copl` の導出本文（header 除く）と完全一致することを検証した。
+  - ドキュメント:
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: 期待値抽出ロジックをテスト本体に埋め込むと意図が読み取りづらい。
+    - Action: `fixture_007_derivation_body()` ヘルパーへ切り出し、ゴールデン比較の意図を明確化した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `07` [P1][Test] round-trip 検証を追加する（`prover` 出力を `checker` に渡して成功し、root judgment が一致する）。
 - [ ] `08` [P2][Implementation] 不可能 judgment に対するエラーメッセージ方針を定義し実装する（plain text）。
 - [ ] `09` [P2][Documentation] 実装完了時に `README.md` / `docs/design.md` / `AGENTS.md` / ADR を同期する。

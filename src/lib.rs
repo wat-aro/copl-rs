@@ -152,6 +152,14 @@ impl Error for RunError {
 mod tests {
     use super::{run, MAX_INPUT_BYTES};
 
+    fn fixture_007_derivation_body() -> &'static str {
+        include_str!("../copl/007.copl")
+            .split_once("\n\n")
+            .expect("fixture should contain a header and derivation body")
+            .1
+            .trim()
+    }
+
     #[test]
     fn routes_checker_nat() {
         let mut stdin = &b"// -*- copl-game: \"Nat\" -*-\n\nZ plus Z is Z by P-Zero {}\n"[..];
@@ -240,6 +248,24 @@ mod tests {
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert_eq!(text.trim(), "Z plus S(Z) is S(Z) by P-Zero {}");
+    }
+
+    #[test]
+    fn routes_prover_nat_matches_golden_fixture_007() {
+        let mut stdin = &b"S(S(Z)) times S(Z) is S(S(Z))\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "Nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), fixture_007_derivation_body());
     }
 
     #[test]
