@@ -28,8 +28,9 @@ cargo run -- prover --game <name> [file]
 - Game names are case-insensitive (`Nat` and `nat` are both accepted).
 - Use `--` before a file name that starts with `-`.
 - `prover --game Nat` accepts a single judgment (`... plus ... is ...` or `... times ... is ...`) and prints a generated derivation in plain text.
-- For non-derivable `prover --game Nat` input, plain-text diagnostics include `expected` / `actual` / `fix`.
-- `prover` for games other than `Nat` is not implemented yet.
+- `prover --game EvalML1` accepts a single judgment (`... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
+- For non-derivable `prover --game Nat` and `prover --game EvalML1` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
+- `prover` for games other than `Nat` and `EvalML1` is not implemented yet.
 
 Examples:
 
@@ -38,6 +39,7 @@ cargo run -- checker --game Nat copl/001.copl
 cat copl/001.copl | cargo run -- checker --game Nat
 cargo run -- checker --game Nat -- -input.copl
 echo "S(S(Z)) times S(Z) is S(S(Z))" | cargo run -- prover --game Nat
+echo "3 + if -23 < -2 * 8 then 8 else 2 + 4 evalto 11" | cargo run -- prover --game EvalML1
 ```
 
 Supported `--game` values:

@@ -21,7 +21,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- Nat prover for games other than `Nat`.
+- Prover implementation for games other than `Nat` and `EvalML1` (for example `EvalML3` and beyond).
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -55,7 +55,7 @@ The project is split into explicit module boundaries:
 - `src/games/compare_nat3/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml1/`:
-  - `syntax.rs`, `parser.rs`, `checker.rs`.
+  - `syntax.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 - `src/games/eval_ml1_err/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/eval_ml2/`:
@@ -137,9 +137,11 @@ Key runtime checks in `lib.rs`:
   - non-test build: 8 MiB
 - UTF-8 validation.
 - `prover --game Nat` validates judgment-only input syntax before proving.
+- `prover --game EvalML1` validates judgment-only input syntax before proving.
 - Nat prover core builds an in-memory derivation AST using `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`.
-- Nat prover renders the derivation tree in checker-compatible plain text and writes it to stdout.
-- `prover` for non-`Nat` games still returns `RunError::ProverNotImplemented`.
+- EvalML1 prover core builds an in-memory derivation AST using `E-*` / `B-*` rules in a deterministic evaluation order.
+- Nat/EvalML1 provers render derivation trees in checker-compatible plain text and write them to stdout.
+- `prover` for games other than `Nat` / `EvalML1` returns `RunError::ProverNotImplemented`.
 
 ## 6. Error Model
 
@@ -148,7 +150,7 @@ Key runtime checks in `lib.rs`:
   - `CheckErrorKind` (`Parse`, `RuleViolation`, `Internal`)
   - optional `SourceSpan`.
 - Top-level runtime errors are wrapped in `RunError`.
-- For non-derivable Nat prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix`.
+- For non-derivable Nat and EvalML1 prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
 
 Error output is currently plain text.
 On successful check, output is the inferred root judgment text in plain text (ADR-0008).
@@ -201,15 +203,19 @@ Current CompareNat3 checker validates derivation trees parsed from CoPL ASCII in
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... is less than ...`).
 
-Current EvalML1 checker validates derivation trees parsed from CoPL ASCII input.
+Current EvalML1 checker/prover validates or generates derivation trees for CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`).
+- `parser.rs` also parses judgment-only prover input (`... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 - `syntax.rs` models integers, booleans, expressions (`if`, `+`, `-`, `*`, `<`), and judgments (`evalto`, `plus is`, `minus is`, `times is`, `less than is`).
+- `syntax.rs` includes `EvalML1Derivation` rendering in checker-compatible textual form.
 - `checker.rs` validates EvalML1 and builtin arithmetic/boolean rules (`E-Int`, `E-Bool`, `E-IfT`, `E-IfF`, `E-Plus`, `E-Minus`, `E-Times`, `E-Lt`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`).
+- `prover.rs` deterministically constructs EvalML1 derivations by recursively evaluating expressions and emitting matching `E-*`/`B-*` rule nodes.
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+- Non-derivable prover judgments are reported as plain-text `RuleViolation` with actionable hints (`expected` / `actual` / `fix`) where derivation expectations are computable.
 
 Current EvalML1Err checker validates derivation trees parsed from CoPL ASCII input.
 
@@ -362,12 +368,13 @@ Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`
 Current status:
 
 - `prover` is wired in CLI parsing and `lib::execute`.
-- `prover --game Nat` parses judgment-only input (`plus/times ... is ...`) and builds Nat derivation ASTs.
-- `prover` still stops with `RunError::ProverNotImplemented` because derivation pretty-print output is pending.
+- `prover --game Nat` parses judgment-only input (`plus/times ... is ...`), constructs derivation ASTs, and prints checker-compatible derivations.
+- `prover --game EvalML1` parses judgment-only input (`evalto` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
+- `prover` for unsupported games returns `RunError::ProverNotImplemented`.
 
 Next implementation direction:
 
-- Implement Nat derivation pretty-printer and route prover output to stdout.
+- Implement `prover --game EvalML3` with judgment-only parser, prover core, and checker round-trip tests.
 
 ## 9. Quality Gates
 
@@ -395,6 +402,7 @@ Completed or frozen plans are archived under `docs/plans/`.
 - Premise arity mismatches are treated as rule-validation failures in checker (`RuleViolation`), not parse errors (ADR-0005).
 - Checker inconsistency diagnostics carry failing-node `SourceSpan` (`line:column`) (ADR-0006).
 - Successful checker output is aligned with the reference implementation by printing the inferred root judgment text directly (ADR-0008).
+- EvalML1 prover is implemented with game-specific recursive evaluation that deterministically emits `E-*` / `B-*` derivations and checker-compatible pretty-printed output.
 - CompareNat1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat2 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - CompareNat3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

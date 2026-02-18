@@ -481,13 +481,70 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `10` [P1][Implementation] EvalML1 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `10` [P1][Implementation] EvalML1 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - `src/games/eval_ml1/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/eval_ml1/prover.rs` を追加し、`E-Int` / `E-Bool` / `E-IfT` / `E-IfF` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` と `B-*` を決定的に構築する EvalML1 prover を実装した。
+    - `src/games/eval_ml1/syntax.rs` に `EvalML1Derivation` の `Display` 実装（checker 受理形式の pretty-printer）を追加した。
+    - `src/games/eval_ml1/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game EvalML1` を追加し、成功時に導出テキストを stdout 出力するようにした。
+  - テスト:
+    - `games::eval_ml1::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::eval_ml1::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `games::eval_ml1::prover::tests::proves_eval_int_judgment_with_e_int`
+    - `games::eval_ml1::prover::tests::proves_eval_if_judgment_with_e_if_t`
+    - `games::eval_ml1::prover::tests::proves_builtin_plus_judgment_with_b_plus`
+    - `games::eval_ml1::prover::tests::rejects_non_derivable_eval_judgment`
+    - `games::eval_ml1::prover::tests::rejects_ill_typed_eval_judgment`
+    - `games::eval_ml1::prover::tests::rejects_non_derivable_builtin_judgment`
+    - `games::eval_ml1::prover::tests::builds_same_derivation_shape_as_fixture_029`
+    - `games::eval_ml1::syntax::tests::formats_leaf_derivation`
+    - `games::eval_ml1::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `tests::routes_prover_eval_ml1_and_prints_derivation`
+    - `tests::routes_prover_eval_ml1_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_eval_ml1_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_eval_ml1_output_round_trips_to_checker_root_judgment`
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、EvalML1 prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、EvalML1 prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy を更新し、EvalML1 prover 実装済み・モジュール境界を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: EvalML1 prover の入力が導出形式まで受理されると、`prover` 契約（judgment-only）と不一致になる。
+    - Action: `parse_judgment_source` と導出入力拒否テストを追加し、EOF までの judgment-only パースを固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: EvalML1 prover の整形責務が `lib::execute` 側にあると、ゲーム実装の凝集が下がる。
+    - Action: `EvalML1Derivation` の `Display` と `eval_ml1::prove` を追加し、整形責務を `games/eval_ml1` 側へ集約した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: CLI 経路の Nat 特化分岐のままだと EvalML1 prover を追加した際に分岐責務が崩れる。
+    - Action: `lib::execute` の prover 分岐を `match GameKind` に整理し、Nat/EvalML1 の並列実装を明示した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: EvalML1 prover の実装事実に対して README/design/AGENTS の記述が古いままだった。
+    - Action: `README.md` / `docs/design.md` / `AGENTS.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 型不整合な式（例: `true + 1`）の導出不能経路が回帰テストで固定されていなかった。
+    - Action: `rejects_ill_typed_eval_judgment` を追加し、generic な `fix` 診断を含む失敗経路を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `11` [P1][Implementation] EvalML3 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `12` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
 
 #### 共通完了条件（Implementation タスク）
 
-- `prover --game Nat` で CLI が受理される。
+- 対象 game の `prover --game <name>` で CLI が受理される。
 - 代表入力で期待導出を出力できる。
 - 生成導出の checker round-trip テストが通る。
 - 代表的な失敗系（導出不能 judgment）が通る。

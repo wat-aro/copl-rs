@@ -25,7 +25,8 @@ Last updated: 2026-02-18
 - Use subcommand style.
 - `checker` is implemented.
 - `prover` is implemented for `Nat` (`copl-rs prover --game Nat [file]`).
-- For games other than `Nat`, `prover` currently returns a not-implemented error.
+- `prover` is implemented for `EvalML1` (`copl-rs prover --game EvalML1 [file]`).
+- For games other than `Nat` / `EvalML1`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -50,11 +51,11 @@ Last updated: 2026-02-18
 - Start with a single crate.
 - Keep `src/main.rs` focused on CLI entry; place logic in `src/lib.rs`.
 - Module boundaries: `cli` / `core` / `games`.
-- `games/nat` is split into `syntax` / `parser` / `checker`.
+- `games/nat` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/compare_nat1` is split into `syntax` / `parser` / `checker`.
 - `games/compare_nat2` is split into `syntax` / `parser` / `checker`.
 - `games/compare_nat3` is split into `syntax` / `parser` / `checker`.
-- `games/eval_ml1` is split into `syntax` / `parser` / `checker`.
+- `games/eval_ml1` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_nat_exp` is split into `syntax` / `parser` / `checker`.
 - `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker`.
 - Use `enum GameKind + match` for game registry/dispatch.
