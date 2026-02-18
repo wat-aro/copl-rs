@@ -57,8 +57,8 @@
 
 ### Prover 実装計画（Nat-first）
 
-最終更新日: 2026-02-17
-このフェーズのスコープ: `prover` サブコマンドを Nat game 向けに最小実装し、`checker` が受理する導出を生成できる状態にする。
+最終更新日: 2026-02-18
+このフェーズのスコープ: `prover` サブコマンドを Nat / EvalML1 / EvalML3 向けに実装し、`checker` が受理する導出を生成できる状態にする。
 
 #### 背景
 
@@ -69,12 +69,14 @@
 #### フェーズ1のスコープ
 
 - `copl-rs prover --game Nat [file]` を実装する。
-- 入力 judgment から Nat の導出木を生成し、プレーンテキストで出力する。
+- `copl-rs prover --game EvalML1 [file]` を実装する。
+- `copl-rs prover --game EvalML3 [file]` を実装する。
+- 入力 judgment から Nat / EvalML1 / EvalML3 の導出木を生成し、プレーンテキストで出力する。
 - 生成結果は `checker` に通ることを保証する。
 
 #### フェーズ1の非スコープ
 
-- Nat 以外の game への prover 展開。
+- Nat / EvalML1 / EvalML3 以外の game への prover 展開。
 - 汎用探索エンジン（単一化 + バックトラック + tabling）の導入。
 - JSON 出力。
 - 部分導出（hole 付き）入力。
@@ -85,6 +87,7 @@
 - Nat の規則構成:
   - `resolve_plus(l, r, out)` は `P-Zero` / `P-Succ` で構成する。
   - `resolve_times(l, r, out)` は `T-Zero` / `T-Succ` で構成し、必要な `plus` 前提を再帰で構築する。
+- EvalML1 / EvalML3 は checker の規則順に対応する game 特化 evaluator を実装し、`E-*` / `B-*` 規則の導出を決定的に構成する。
 - 出力順と整形を固定し、同一入力で同一導出を返す。
 - 将来の共通化は prover 対象 game が 2〜3 件になった時点で再評価する。
 
@@ -478,7 +481,9 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `10` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
+- [ ] `10` [P1][Implementation] EvalML1 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `11` [P1][Implementation] EvalML3 prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `12` [P3][Improvement] prover 対応 game が 2〜3 件になった時点で、汎用 proof-search コア導入の要否を再評価する。
 
 #### 共通完了条件（Implementation タスク）
 
