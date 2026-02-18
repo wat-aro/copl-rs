@@ -1,6 +1,6 @@
 # PLAN
 
-最終更新日: 2026-02-17
+最終更新日: 2026-02-18
 このファイルは現在計画の単一ソースです。
 
 ## 運用ルール
@@ -182,7 +182,49 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `03` [P1][Implementation] Nat prover 入力（judgment 単体）パーサを実装する。
+- [x] `03` [P1][Implementation] Nat prover 入力（judgment 単体）パーサを実装する。  
+  完了メモ（2026-02-18）:
+  - 実装:
+    - `src/games/nat/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/nat/mod.rs` に `validate_prover_input` を追加し、Nat prover 入力検証の窓口を用意した。
+    - `src/lib.rs` の `prover` 経路で `--game Nat` のときに judgment 入力を先にパースし、成功時は従来どおり未実装エラーへ進むようにした。
+  - テスト:
+    - `games::nat::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::nat::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `tests::routes_prover_nat_with_invalid_judgment_to_parse_error`
+  - ドキュメント:
+    - `README.md` に Nat prover 入力の現状（judgment 単体パース）を追記した。
+    - `docs/design.md` に Nat prover 入力パース実装済みの状態を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: `parse_judgment_source` 追加直後に未使用警告が出ており、モジュール責務が完結していなかった。
+    - Action: `validate_prover_input` と `lib::execute` の Nat prover 経路を追加し、実行経路から利用する形にした。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: judgment-only parser が導出入力を誤受理しないことを固定化する回帰テストが不足していた。
+    - Action: 導出入力を拒否するテストを追加し、EOF までの厳格パースを検証した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: prover の挙動変更（Nat 入力の事前パース）に対して README/design の説明が古かった。
+    - Action: `README.md` と `docs/design.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `04` [P1][Implementation] Nat prover 本体（`P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`）を実装し、導出木 AST を構築する。
 - [ ] `05` [P1][Implementation] 導出木の pretty-printer を実装し、checker が受理する形式で出力する。
 - [ ] `06` [P1][Test] ゴールデンテストを追加する（`S(S(Z)) times S(Z) is S(S(Z))` の導出が期待形で出力される）。

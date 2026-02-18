@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-17
+Last updated: 2026-02-18
 
 ## 1. Purpose
 
@@ -21,7 +21,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- Nat prover logic implementation (input parser, proof search, and derivation pretty-printer).
+- Nat prover proof construction and derivation pretty-printer.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -83,7 +83,7 @@ The project is split into explicit module boundaries:
 - `src/games/reduce_nat_exp/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`.
 - `src/games/nat/`:
-  - `syntax.rs`, `parser.rs`, `checker.rs`.
+  - `syntax.rs`, `parser.rs`, `checker.rs`, `mod.rs` (`validate_prover_input`).
 
 This structure is intended to localize game-specific logic under `games/<game>/`.
 
@@ -136,7 +136,8 @@ Key runtime checks in `lib.rs`:
   - test build: 1024 bytes
   - non-test build: 8 MiB
 - UTF-8 validation.
-- Current prover route returns a plain-text `RunError::ProverNotImplemented`.
+- `prover --game Nat` validates judgment-only input syntax before proving.
+- Current prover route returns a plain-text `RunError::ProverNotImplemented` after parsing.
 
 ## 6. Error Model
 
@@ -356,11 +357,11 @@ Detailed step-by-step instructions are documented in `docs/how-to-add-a-game.md`
 Current status:
 
 - `prover` is wired in CLI parsing and `lib::execute`.
-- `prover` currently stops with `RunError::ProverNotImplemented`.
+- `prover --game Nat` now parses judgment-only input (`plus/times ... is ...`) and reports parse errors.
+- `prover` still stops with `RunError::ProverNotImplemented` after parsing.
 
 Next implementation direction:
 
-- Implement Nat prover input parsing.
 - Implement Nat proof construction and derivation output.
 
 ## 9. Quality Gates

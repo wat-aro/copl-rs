@@ -15,6 +15,18 @@ pub fn parse_source(source: &str) -> Result<NatDerivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<NatJudgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -250,7 +262,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::nat::syntax::{NatJudgment, NatTerm};
 
     #[test]
@@ -303,5 +315,26 @@ S(Z) plus Z is S(Z) by P-Succ {
         assert_eq!(parsed.span.column, 1);
         assert_eq!(parsed.subderivations[0].span.line, 3);
         assert_eq!(parsed.subderivations[0].span.column, 3);
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed =
+            parse_judgment_source("S(S(Z)) times S(Z) is S(S(Z))").expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            NatJudgment::TimesIs {
+                left: NatTerm::S(Box::new(NatTerm::S(Box::new(NatTerm::Z)))),
+                right: NatTerm::S(Box::new(NatTerm::Z)),
+                result: NatTerm::S(Box::new(NatTerm::S(Box::new(NatTerm::Z)))),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("Z plus Z is Z by P-Zero {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }

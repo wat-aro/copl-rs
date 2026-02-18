@@ -28,6 +28,7 @@ cargo run -- prover --game <name> [file]
 - Game names are case-insensitive (`Nat` and `nat` are both accepted).
 - Use `--` before a file name that starts with `-`.
 - `prover` CLI routing is available, but proof generation is not implemented yet (it currently returns an error).
+- For `prover --game Nat`, input is currently parsed as a single judgment (`... plus ... is ...` or `... times ... is ...`) before the not-implemented error is returned.
 
 Examples:
 

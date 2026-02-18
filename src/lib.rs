@@ -40,7 +40,10 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
             Ok(())
         }
         Command::Prover(command) => {
-            let _source = read_source(&command.input, stdin)?;
+            let source = read_source(&command.input, stdin)?;
+            if command.game == core::GameKind::Nat {
+                games::nat::validate_prover_input(&source).map_err(RunError::Check)?;
+            }
             Err(RunError::ProverNotImplemented { game: command.game })
         }
     }
@@ -179,6 +182,23 @@ mod tests {
         assert!(result
             .to_string()
             .contains("prover is not implemented yet for game: Nat"));
+    }
+
+    #[test]
+    fn routes_prover_nat_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"Z plus Z by P-Zero {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "Nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected 'is'"));
     }
 
     #[test]
