@@ -2,7 +2,7 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-18
+Last updated: 2026-02-19
 
 ## Scope Ownership
 
@@ -25,9 +25,12 @@ Last updated: 2026-02-18
 - Use subcommand style.
 - `checker` is implemented.
 - `prover` is implemented for `Nat` (`copl-rs prover --game Nat [file]`).
+- `prover` is implemented for `CompareNat1` (`copl-rs prover --game CompareNat1 [file]`).
+- `prover` is implemented for `CompareNat2` (`copl-rs prover --game CompareNat2 [file]`).
+- `prover` is implemented for `CompareNat3` (`copl-rs prover --game CompareNat3 [file]`).
 - `prover` is implemented for `EvalML1` (`copl-rs prover --game EvalML1 [file]`).
 - `prover` is implemented for `EvalML3` (`copl-rs prover --game EvalML3 [file]`).
-- For games other than `Nat` / `EvalML1` / `EvalML3`, `prover` currently returns a not-implemented error.
+- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML3`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -53,9 +56,9 @@ Last updated: 2026-02-18
 - Keep `src/main.rs` focused on CLI entry; place logic in `src/lib.rs`.
 - Module boundaries: `cli` / `core` / `games`.
 - `games/nat` is split into `syntax` / `parser` / `checker` / `prover`.
-- `games/compare_nat1` is split into `syntax` / `parser` / `checker`.
-- `games/compare_nat2` is split into `syntax` / `parser` / `checker`.
-- `games/compare_nat3` is split into `syntax` / `parser` / `checker`.
+- `games/compare_nat1` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/compare_nat2` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/compare_nat3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_ml1` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_nat_exp` is split into `syntax` / `parser` / `checker`.

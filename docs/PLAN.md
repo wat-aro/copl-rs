@@ -635,9 +635,174 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `13` [P2][Implementation] `CompareNat1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `14` [P2][Implementation] `CompareNat2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `15` [P2][Implementation] `CompareNat3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `13` [P2][Implementation] `CompareNat1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-19）:
+  - 実装:
+    - `src/games/compare_nat1/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/compare_nat1/prover.rs` を追加し、`L-Succ` / `L-Trans` を決定的に構築する CompareNat1 prover を実装した。
+    - `src/games/compare_nat1/syntax.rs` に `CompareNat1Derivation` の `Display` 実装（checker 受理形式の pretty-printer）を追加した。
+    - `src/games/compare_nat1/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game CompareNat1` を追加し、成功時に導出テキストを stdout 出力するようにした。
+  - テスト:
+    - `games::compare_nat1::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::compare_nat1::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `games::compare_nat1::prover::tests::proves_judgment_with_l_succ`
+    - `games::compare_nat1::prover::tests::proves_judgment_with_l_trans_chain`
+    - `games::compare_nat1::prover::tests::rejects_non_derivable_judgment`
+    - `games::compare_nat1::prover::tests::builds_same_derivation_shape_as_fixture_012`
+    - `games::compare_nat1::syntax::tests::formats_leaf_derivation`
+    - `games::compare_nat1::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `tests::routes_prover_compare_nat1_and_prints_derivation`
+    - `tests::routes_prover_compare_nat1_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_compare_nat1_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_compare_nat1_output_round_trips_to_checker_root_judgment`
+    - `tests::routes_prover_non_nat_to_not_implemented_error`（未対応 game として `EvalML1Err` を利用）
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、CompareNat1 prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、CompareNat1 prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy を更新し、CompareNat1 prover 実装済み・モジュール境界を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: CompareNat1 prover 入力が導出形式を受理すると `prover` 契約（judgment-only）と不一致になる。
+    - Action: `parse_judgment_source` と導出入力拒否テストを追加し、EOF までの judgment-only パースを固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: CompareNat1 導出整形が未実装だと CLI 出力契約（checker 受理形式）を満たせない。
+    - Action: `CompareNat1Derivation` の `Display` と checker 再受理テストを追加し、整形仕様を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: CLI 経路に `CompareNat1` 分岐がないと `RunError::ProverNotImplemented` のままとなる。
+    - Action: `lib::execute` の `prover` 分岐へ `GameKind::CompareNat1` を追加し、ルーティング/round-trip テストで固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: CompareNat1 prover 追加後、未対応 game 回帰テストが実装済み game を参照しないことを明示する必要があった。
+    - Action: `routes_prover_non_nat_to_not_implemented_error` で未対応 game として `EvalML1Err` を使用し、将来の対応拡張でも壊れにくい形に固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `14` [P2][Implementation] `CompareNat2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-19）:
+  - 実装:
+    - `src/games/compare_nat2/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/compare_nat2/prover.rs` を追加し、`L-Zero` / `L-SuccSucc` を決定的に構築する CompareNat2 prover を実装した。
+    - `src/games/compare_nat2/syntax.rs` に `CompareNat2Derivation` の `Display` 実装（checker 受理形式の pretty-printer）を追加した。
+    - `src/games/compare_nat2/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game CompareNat2` を追加し、成功時に導出テキストを stdout 出力するようにした。
+  - テスト:
+    - `games::compare_nat2::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::compare_nat2::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `games::compare_nat2::prover::tests::proves_judgment_with_l_zero`
+    - `games::compare_nat2::prover::tests::proves_judgment_with_l_succ_succ_chain`
+    - `games::compare_nat2::prover::tests::rejects_non_derivable_judgment`
+    - `games::compare_nat2::prover::tests::builds_same_derivation_shape_as_fixture_013`
+    - `games::compare_nat2::syntax::tests::formats_leaf_derivation`
+    - `games::compare_nat2::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `tests::routes_prover_compare_nat2_and_prints_derivation`
+    - `tests::routes_prover_compare_nat2_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_compare_nat2_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_compare_nat2_output_round_trips_to_checker_root_judgment`
+    - `tests::routes_prover_non_nat_to_not_implemented_error`（未対応 game として `EvalML1Err` を利用）
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、CompareNat2 prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、CompareNat2 prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy を更新し、CompareNat2 prover 実装済み・モジュール境界を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: CompareNat2 prover 入力が導出形式を受理すると `prover` 契約（judgment-only）と不一致になる。
+    - Action: `parse_judgment_source` と導出入力拒否テストを追加し、EOF までの judgment-only パースを固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: CompareNat2 導出整形が未実装だと CLI 出力契約（checker 受理形式）を満たせない。
+    - Action: `CompareNat2Derivation` の `Display` と checker 再受理テストを追加し、整形仕様を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: CLI 経路に `CompareNat2` 分岐がないと `RunError::ProverNotImplemented` のままとなる。
+    - Action: `lib::execute` の `prover` 分岐へ `GameKind::CompareNat2` を追加し、ルーティング/round-trip テストで固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: CompareNat2 prover 追加後、未対応 game 回帰テストが実装済み game を参照しないことを明示する必要があった。
+    - Action: `routes_prover_non_nat_to_not_implemented_error` で未対応 game として `EvalML1Err` を使用し、将来の対応拡張でも壊れにくい形に固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `15` [P2][Implementation] `CompareNat3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-19）:
+  - 実装:
+    - `src/games/compare_nat3/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/compare_nat3/prover.rs` を追加し、`L-Succ` / `L-SuccR` を決定的に構築する CompareNat3 prover を実装した。
+    - `src/games/compare_nat3/syntax.rs` に `CompareNat3Derivation` の `Display` 実装（checker 受理形式の pretty-printer）を追加した。
+    - `src/games/compare_nat3/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game CompareNat3` を追加し、成功時に導出テキストを stdout 出力するようにした。
+  - テスト:
+    - `games::compare_nat3::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::compare_nat3::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `games::compare_nat3::prover::tests::proves_judgment_with_l_succ`
+    - `games::compare_nat3::prover::tests::proves_judgment_with_l_succ_r_chain`
+    - `games::compare_nat3::prover::tests::rejects_non_derivable_judgment`
+    - `games::compare_nat3::prover::tests::builds_same_derivation_shape_as_fixture_014`
+    - `games::compare_nat3::syntax::tests::formats_leaf_derivation`
+    - `games::compare_nat3::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `tests::routes_prover_compare_nat3_and_prints_derivation`
+    - `tests::routes_prover_compare_nat3_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_compare_nat3_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_compare_nat3_output_round_trips_to_checker_root_judgment`
+    - `tests::routes_prover_non_nat_to_not_implemented_error`（未対応 game として `EvalML1Err` を継続利用）
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、CompareNat3 prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、CompareNat3 prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy を更新し、CompareNat3 prover 実装済み・モジュール境界を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: CompareNat3 prover 入力が導出形式を受理すると `prover` 契約（judgment-only）と不一致になる。
+    - Action: `parse_judgment_source` と導出入力拒否テストを追加し、EOF までの judgment-only パースを固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: CompareNat3 導出整形が未実装だと CLI 出力契約（checker 受理形式）を満たせない。
+    - Action: `CompareNat3Derivation` の `Display` と checker 再受理テストを追加し、整形仕様を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: CLI 経路に `CompareNat3` 分岐がないと `RunError::ProverNotImplemented` のままとなる。
+    - Action: `lib::execute` の `prover` 分岐へ `GameKind::CompareNat3` を追加し、ルーティング/round-trip テストで固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: CompareNat3 prover 追加後、未対応 game 回帰テストが実装済み game を参照しないことを確認する必要があった。
+    - Action: `routes_prover_non_nat_to_not_implemented_error` が `EvalML1Err`（未対応 game）を参照することを確認し、回帰安全性を維持した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `16` [P2][Implementation] `EvalML1Err` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `17` [P2][Implementation] `EvalML2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `18` [P2][Implementation] `EvalML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
