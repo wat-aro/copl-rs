@@ -433,6 +433,7 @@ Standard pre-commit checks:
 - `cargo fmt`
 - `cargo test`
 - `cargo clippy --all-targets --all-features -- -D warnings`
+- Backlog task completion (`[ ] -> [x]` in `docs/PLAN.md`) is finalized in one flow via the `task-commit` skill after validation.
 
 Development style follows TDD (`Red -> Green -> Refactor`), then a 5-iteration `review -> improve` loop after implementation.
 Review criteria are aligned with `AGENTS.md` Design Principles (`high cohesion/low coupling`, `YAGNI`, `KISS`).

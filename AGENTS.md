@@ -106,6 +106,7 @@ Last updated: 2026-02-19
 ## Task Completion
 
 - After meeting the Definition of Done, run the `retrospect` skill for documentation sync and retrospective review.
+- When marking a backlog task done (`[ ] -> [x]` in `docs/PLAN.md`), run the `task-commit` skill so task checks and commit creation are handled in one flow.
 - Before committing, follow the checks in the `Pre-Commit Validation` section. If any check is intentionally skipped, document the reason in the commit message.
 
 ## ADR Policy
