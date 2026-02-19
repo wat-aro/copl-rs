@@ -126,7 +126,7 @@ impl EvalContML4Expr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {
@@ -560,4 +560,183 @@ pub struct EvalContML4Derivation {
     pub judgment: EvalContML4Judgment,
     pub rule_name: String,
     pub subderivations: Vec<EvalContML4Derivation>,
+}
+
+impl fmt::Display for EvalContML4Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &EvalContML4Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        EvalContML4BinOp, EvalContML4ContFrame, EvalContML4Continuation, EvalContML4Derivation,
+        EvalContML4Env, EvalContML4Expr, EvalContML4Judgment, EvalContML4Value,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::eval_cont_ml4::parser::parse_source;
+
+    fn derivation(
+        judgment: EvalContML4Judgment,
+        rule_name: &str,
+        subderivations: Vec<EvalContML4Derivation>,
+    ) -> EvalContML4Derivation {
+        EvalContML4Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            EvalContML4Judgment::PlusIs {
+                left: 1,
+                right: 2,
+                result: 3,
+            },
+            "B-Plus",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "1 plus 2 is 3 by B-Plus {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let _ = parse_source(include_str!("../../../copl/130.copl")).expect("fixture parses");
+
+        let derivation = derivation(
+            EvalContML4Judgment::EvalTo {
+                env: EvalContML4Env::default(),
+                expr: EvalContML4Expr::BinOp {
+                    op: EvalContML4BinOp::Plus,
+                    left: Box::new(EvalContML4Expr::Int(1)),
+                    right: Box::new(EvalContML4Expr::Int(2)),
+                },
+                continuation: EvalContML4Continuation::implicit_hole(),
+                value: EvalContML4Value::Int(3),
+                has_continuation: false,
+            },
+            "E-BinOp",
+            vec![derivation(
+                EvalContML4Judgment::EvalTo {
+                    env: EvalContML4Env::default(),
+                    expr: EvalContML4Expr::Int(1),
+                    continuation: EvalContML4Continuation {
+                        frames: vec![EvalContML4ContFrame::EvalR {
+                            env: Some(EvalContML4Env::default()),
+                            op: EvalContML4BinOp::Plus,
+                            right: EvalContML4Expr::Int(2),
+                        }],
+                        explicit_ret: false,
+                    },
+                    value: EvalContML4Value::Int(3),
+                    has_continuation: true,
+                },
+                "E-Int",
+                vec![derivation(
+                    EvalContML4Judgment::ContEvalTo {
+                        input: EvalContML4Value::Int(1),
+                        continuation: EvalContML4Continuation {
+                            frames: vec![EvalContML4ContFrame::EvalR {
+                                env: Some(EvalContML4Env::default()),
+                                op: EvalContML4BinOp::Plus,
+                                right: EvalContML4Expr::Int(2),
+                            }],
+                            explicit_ret: false,
+                        },
+                        value: EvalContML4Value::Int(3),
+                    },
+                    "C-EvalR",
+                    vec![derivation(
+                        EvalContML4Judgment::EvalTo {
+                            env: EvalContML4Env::default(),
+                            expr: EvalContML4Expr::Int(2),
+                            continuation: EvalContML4Continuation {
+                                frames: vec![EvalContML4ContFrame::Plus { left: 1 }],
+                                explicit_ret: false,
+                            },
+                            value: EvalContML4Value::Int(3),
+                            has_continuation: true,
+                        },
+                        "E-Int",
+                        vec![derivation(
+                            EvalContML4Judgment::ContEvalTo {
+                                input: EvalContML4Value::Int(2),
+                                continuation: EvalContML4Continuation {
+                                    frames: vec![EvalContML4ContFrame::Plus { left: 1 }],
+                                    explicit_ret: false,
+                                },
+                                value: EvalContML4Value::Int(3),
+                            },
+                            "C-Plus",
+                            vec![
+                                derivation(
+                                    EvalContML4Judgment::PlusIs {
+                                        left: 1,
+                                        right: 2,
+                                        result: 3,
+                                    },
+                                    "B-Plus",
+                                    Vec::new(),
+                                ),
+                                derivation(
+                                    EvalContML4Judgment::ContEvalTo {
+                                        input: EvalContML4Value::Int(3),
+                                        continuation: EvalContML4Continuation::hole(),
+                                        value: EvalContML4Value::Int(3),
+                                    },
+                                    "C-Ret",
+                                    Vec::new(),
+                                ),
+                            ],
+                        )],
+                    )],
+                )],
+            )],
+        );
+
+        let expected_text = "\
+|- 1 + 2 evalto 3 by E-BinOp {
+  |- 1 >> {|- _ + 2} evalto 3 by E-Int {
+    1 => {|- _ + 2} evalto 3 by C-EvalR {
+      |- 2 >> {1 + _} evalto 3 by E-Int {
+        2 => {1 + _} evalto 3 by C-Plus {
+          1 plus 2 is 3 by B-Plus {};
+          3 => _ evalto 3 by C-Ret {}
+        }
+      }
+    }
+  }
+}";
+        assert_eq!(derivation.to_string(), expected_text);
+    }
 }
