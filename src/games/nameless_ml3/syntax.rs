@@ -113,7 +113,7 @@ impl NamedExpr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {
@@ -237,7 +237,7 @@ impl NamelessExpr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {
@@ -322,4 +322,120 @@ pub struct NamelessML3Derivation {
     pub judgment: NamelessML3Judgment,
     pub rule_name: String,
     pub subderivations: Vec<NamelessML3Derivation>,
+}
+
+impl fmt::Display for NamelessML3Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &NamelessML3Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        NamedExpr, NamelessExpr, NamelessML3BinOp, NamelessML3Derivation, NamelessML3Env,
+        NamelessML3Judgment,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::nameless_ml3::parser::parse_source;
+
+    fn derivation(
+        judgment: NamelessML3Judgment,
+        rule_name: &str,
+        subderivations: Vec<NamelessML3Derivation>,
+    ) -> NamelessML3Derivation {
+        NamelessML3Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            NamelessML3Judgment::Translates {
+                env: NamelessML3Env::default(),
+                named: NamedExpr::Int(1),
+                nameless: NamelessExpr::Int(1),
+            },
+            "Tr-Int",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "|- 1 ==> 1 by Tr-Int {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            NamelessML3Judgment::Translates {
+                env: NamelessML3Env::default(),
+                named: NamedExpr::BinOp {
+                    op: NamelessML3BinOp::Plus,
+                    left: Box::new(NamedExpr::Int(1)),
+                    right: Box::new(NamedExpr::Int(2)),
+                },
+                nameless: NamelessExpr::BinOp {
+                    op: NamelessML3BinOp::Plus,
+                    left: Box::new(NamelessExpr::Int(1)),
+                    right: Box::new(NamelessExpr::Int(2)),
+                },
+            },
+            "Tr-Plus",
+            vec![
+                derivation(
+                    NamelessML3Judgment::Translates {
+                        env: NamelessML3Env::default(),
+                        named: NamedExpr::Int(1),
+                        nameless: NamelessExpr::Int(1),
+                    },
+                    "Tr-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    NamelessML3Judgment::Translates {
+                        env: NamelessML3Env::default(),
+                        named: NamedExpr::Int(2),
+                        nameless: NamelessExpr::Int(2),
+                    },
+                    "Tr-Int",
+                    Vec::new(),
+                ),
+            ],
+        );
+
+        let expected = "\
+|- 1 + 2 ==> 1 + 2 by Tr-Plus {
+  |- 1 ==> 1 by Tr-Int {};
+  |- 2 ==> 2 by Tr-Int {}
+}";
+        assert_eq!(derivation.to_string(), expected);
+        parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
 }

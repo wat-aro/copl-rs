@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<NamelessML3Derivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<NamelessML3Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -646,7 +659,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::nameless_ml3::syntax::{
         NamedExpr, NamelessExpr, NamelessML3BinOp, NamelessML3Env, NamelessML3Judgment,
     };
@@ -756,5 +769,33 @@ mod tests {
                 }),
             }
         );
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source("|- let x = 3 in x ==> let . = 3 in #1")
+            .expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            NamelessML3Judgment::Translates {
+                env: NamelessML3Env::default(),
+                named: NamedExpr::Let {
+                    name: "x".to_string(),
+                    bound_expr: Box::new(NamedExpr::Int(3)),
+                    body: Box::new(NamedExpr::Var("x".to_string())),
+                },
+                nameless: NamelessExpr::Let {
+                    bound_expr: Box::new(NamelessExpr::Int(3)),
+                    body: Box::new(NamelessExpr::Index(1)),
+                },
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("|- 1 ==> 1 by Tr-Int {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("unexpected token after derivation"));
     }
 }
