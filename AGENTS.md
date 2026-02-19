@@ -106,6 +106,10 @@ Last updated: 2026-02-19
 - After meeting the Definition of Done, run the `retrospect` skill for documentation sync and retrospective review.
 - Create a commit for the completed task only when the user explicitly requests it.
 - Before committing, follow the checks in the `Pre-Commit Validation` section. If any check is intentionally skipped, document the reason in the commit message.
+- When the user explicitly requests a commit for a specific task, treat that task as a hard commit boundary.
+- When the user explicitly requests a commit for a specific task, treat the task as incomplete until the commit is actually created.
+- After pre-commit validation for that task passes, create the commit immediately before touching the next backlog task.
+- During commit preparation, do not introduce new edits for other tasks; if temporary file swaps are required for validation, restore only the original pre-existing working-tree state after the commit.
 
 ## ADR Policy
 
