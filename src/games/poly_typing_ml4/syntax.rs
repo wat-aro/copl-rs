@@ -235,7 +235,7 @@ impl PolyTypingML4Expr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {
@@ -339,4 +339,116 @@ pub struct PolyTypingML4Derivation {
     pub judgment: PolyTypingML4Judgment,
     pub rule_name: String,
     pub subderivations: Vec<PolyTypingML4Derivation>,
+}
+
+impl fmt::Display for PolyTypingML4Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &PolyTypingML4Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        PolyTypingML4BinOp, PolyTypingML4Derivation, PolyTypingML4Env, PolyTypingML4Expr,
+        PolyTypingML4Judgment, PolyTypingML4Type,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::poly_typing_ml4::parser::parse_source;
+
+    fn derivation(
+        judgment: PolyTypingML4Judgment,
+        rule_name: &str,
+        subderivations: Vec<PolyTypingML4Derivation>,
+    ) -> PolyTypingML4Derivation {
+        PolyTypingML4Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            PolyTypingML4Judgment::HasType {
+                env: PolyTypingML4Env::default(),
+                expr: PolyTypingML4Expr::Int(1),
+                ty: PolyTypingML4Type::Int,
+            },
+            "T-Int",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "|- 1 : int by T-Int {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            PolyTypingML4Judgment::HasType {
+                env: PolyTypingML4Env::default(),
+                expr: PolyTypingML4Expr::BinOp {
+                    op: PolyTypingML4BinOp::Plus,
+                    left: Box::new(PolyTypingML4Expr::Int(1)),
+                    right: Box::new(PolyTypingML4Expr::Int(2)),
+                },
+                ty: PolyTypingML4Type::Int,
+            },
+            "T-Plus",
+            vec![
+                derivation(
+                    PolyTypingML4Judgment::HasType {
+                        env: PolyTypingML4Env::default(),
+                        expr: PolyTypingML4Expr::Int(1),
+                        ty: PolyTypingML4Type::Int,
+                    },
+                    "T-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    PolyTypingML4Judgment::HasType {
+                        env: PolyTypingML4Env::default(),
+                        expr: PolyTypingML4Expr::Int(2),
+                        ty: PolyTypingML4Type::Int,
+                    },
+                    "T-Int",
+                    Vec::new(),
+                ),
+            ],
+        );
+
+        let expected = "\
+|- 1 + 2 : int by T-Plus {
+  |- 1 : int by T-Int {};
+  |- 2 : int by T-Int {}
+}";
+        assert_eq!(derivation.to_string(), expected);
+        parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
 }
