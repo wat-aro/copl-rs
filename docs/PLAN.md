@@ -862,7 +862,60 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `17` [P2][Implementation] `EvalML2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `17` [P2][Implementation] `EvalML2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-19）:
+  - 実装:
+    - `src/games/eval_ml2/prover.rs` を追加し、`E-Int` / `E-Bool` / `E-Var1` / `E-Var2` / `E-IfT` / `E-IfF` / `E-Let` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` と `B-*` を決定的に構築する EvalML2 prover を実装した。
+    - `src/games/eval_ml2/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game EvalML2` を追加し、成功時に導出テキストを stdout 出力するようにした。
+    - `tests::routes_prover_non_nat_to_not_implemented_error` の未対応 game を `EvalML4` に切り替え、未実装回帰の意図を維持した。
+  - テスト:
+    - `games::eval_ml2::prover::tests::proves_eval_int_judgment_with_e_int`
+    - `games::eval_ml2::prover::tests::proves_eval_let_judgment_with_e_let`
+    - `games::eval_ml2::prover::tests::proves_builtin_plus_judgment_with_b_plus`
+    - `games::eval_ml2::prover::tests::rejects_non_derivable_eval_judgment`
+    - `games::eval_ml2::prover::tests::rejects_ill_typed_eval_judgment`
+    - `games::eval_ml2::prover::tests::rejects_non_derivable_builtin_judgment`
+    - `games::eval_ml2::prover::tests::builds_same_derivation_shape_as_fixture_037`
+    - `tests::routes_prover_eval_ml2_and_prints_derivation`
+    - `tests::routes_prover_eval_ml2_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_eval_ml2_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_eval_ml2_output_round_trips_to_checker_root_judgment`
+    - `tests::routes_prover_non_nat_to_not_implemented_error`（未対応 game として `EvalML4` を利用）
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、EvalML2 prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、EvalML2 prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy / Input Specification References を更新し、EvalML2 prover 実装済み状態を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: `EvalML2` の prover entry が `mod.rs` に存在せず、judgment-only parser が未使用のままだった。
+    - Action: `mod prover;` と `prove` を追加し、`parse_judgment_source` から prover までを接続した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: `E-Var1` / `E-Var2` の環境シャドーイング挙動が回帰しやすく、単体の簡易ケースだけでは不十分だった。
+    - Action: `copl/037.copl` を使った導出形状比較テストを追加し、入れ子 `let` と `E-Var2` を含む導出を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: `EvalML2` 実装後も `routes_prover_non_nat_to_not_implemented_error` が `EvalML2` を参照すると回帰テスト意図が崩れる。
+    - Action: 未対応 game を `EvalML4` に切り替え、未実装経路の回帰テストとして維持した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: 実装後に README/design/AGENTS の prover 対応一覧が旧状態（EvalML2 未実装）だった。
+    - Action: `README.md` / `docs/design.md` / `AGENTS.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 指摘なし
+    - Action: なし
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `18` [P2][Implementation] `EvalML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `19` [P2][Implementation] `EvalML5` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `20` [P2][Implementation] `EvalContML1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。

@@ -30,8 +30,9 @@ Last updated: 2026-02-19
 - `prover` is implemented for `CompareNat3` (`copl-rs prover --game CompareNat3 [file]`).
 - `prover` is implemented for `EvalML1` (`copl-rs prover --game EvalML1 [file]`).
 - `prover` is implemented for `EvalML1Err` (`copl-rs prover --game EvalML1Err [file]`).
+- `prover` is implemented for `EvalML2` (`copl-rs prover --game EvalML2 [file]`).
 - `prover` is implemented for `EvalML3` (`copl-rs prover --game EvalML3 [file]`).
-- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML3`, `prover` currently returns a not-implemented error.
+- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -62,6 +63,7 @@ Last updated: 2026-02-19
 - `games/compare_nat3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_ml1` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_ml1_err` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/eval_ml2` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_nat_exp` is split into `syntax` / `parser` / `checker`.
 - `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker`.
@@ -147,6 +149,7 @@ Last updated: 2026-02-19
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/CompareNat3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML1.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML1Err.html
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML2.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalNatExp.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/ReduceNatExp.html
@@ -157,6 +160,7 @@ Last updated: 2026-02-19
   - CompareNat3: `copl/011.copl`, `copl/014.copl`
   - EvalML1: `copl/025.copl` to `copl/030.copl`
   - EvalML1Err: `copl/031.copl` to `copl/033.copl`
+  - EvalML2: `copl/034.copl` to `copl/039.copl`
   - EvalML3: `copl/040.copl` to `copl/053.copl`
   - EvalNatExp: `copl/015.copl` to `copl/020.copl`
   - ReduceNatExp: `copl/021.copl` to `copl/024.copl`
