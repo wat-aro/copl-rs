@@ -53,7 +53,13 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::EvalML4 => games::eval_ml4::prove(&source),
                 core::GameKind::EvalML5 => games::eval_ml5::prove(&source),
                 core::GameKind::EvalContML1 => games::eval_cont_ml1::prove(&source),
-                _ => return Err(RunError::ProverNotImplemented { game: command.game }),
+                core::GameKind::EvalContML4 => games::eval_cont_ml4::prove(&source),
+                core::GameKind::TypingML4 => games::typing_ml4::prove(&source),
+                core::GameKind::PolyTypingML4 => games::poly_typing_ml4::prove(&source),
+                core::GameKind::NamelessML3 => games::nameless_ml3::prove(&source),
+                core::GameKind::EvalNamelessML3 => games::eval_nameless_ml3::prove(&source),
+                core::GameKind::EvalNatExp => games::eval_nat_exp::prove(&source),
+                core::GameKind::ReduceNatExp => games::reduce_nat_exp::prove(&source),
             }
             .map_err(RunError::Check)?;
             writeln!(stdout, "{derivation}").map_err(|source| RunError::Io {
@@ -359,6 +365,39 @@ mod tests {
     }
 
     #[test]
+    fn prover_eval_ml1_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML1"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML1"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
     fn routes_prover_eval_ml3_and_prints_derivation() {
         let mut stdin = &b"|- let rec f = fun x -> x + 1 in f 2 evalto 3\n"[..];
         let mut out = Vec::new();
@@ -459,6 +498,39 @@ mod tests {
     }
 
     #[test]
+    fn prover_eval_ml3_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML3"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML3"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
     fn routes_prover_eval_ml4_and_prints_derivation() {
         let mut stdin = &b"|- [] evalto []\n"[..];
         let mut out = Vec::new();
@@ -519,6 +591,39 @@ mod tests {
     #[test]
     fn prover_eval_ml4_output_round_trips_to_checker_root_judgment() {
         let judgment = "|- let x = 1 :: [] in match x with [] -> 0 | a :: b -> a evalto 1\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_ml4_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) evalto 6\n";
         let expected_root = judgment.trim();
 
         let mut prover_stdin = judgment.as_bytes();
@@ -645,6 +750,39 @@ mod tests {
     }
 
     #[test]
+    fn prover_eval_ml1_err_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML1Err"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML1Err"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
     fn routes_prover_eval_ml2_and_prints_derivation() {
         let mut stdin = &b"|- let x = 1 in x + 2 evalto 3\n"[..];
         let mut out = Vec::new();
@@ -714,6 +852,39 @@ mod tests {
     #[test]
     fn prover_eval_ml2_output_round_trips_to_checker_root_judgment() {
         let judgment = "|- let x = 3 * 3 in let y = 4 * x in x + y evalto 45\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML2"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML2"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_ml2_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) evalto 6\n";
         let expected_root = judgment.trim();
 
         let mut prover_stdin = judgment.as_bytes();
@@ -1180,6 +1351,39 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn prover_eval_ml5_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML5"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML5"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
     fn routes_prover_eval_cont_ml1_and_prints_derivation() {
         let mut stdin = &b"3 + 5 evalto 8\n"[..];
         let mut out = Vec::new();
@@ -1273,6 +1477,828 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         let mut checker_err = Vec::new();
         let checker_result = run(
             vec!["copl-rs", "checker", "--game", "EvalContML1"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_cont_ml1_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalContML1"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalContML1"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_eval_cont_ml4_and_prints_derivation() {
+        let mut stdin = &b"|- 1 + 2 evalto 3\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalContML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- 1 + 2 evalto 3 by E-BinOp {
+  |- 1 >> {|- _ + 2} evalto 3 by E-Int {
+    1 => {|- _ + 2} evalto 3 by C-EvalR {
+      |- 2 >> {1 + _} evalto 3 by E-Int {
+        2 => {1 + _} evalto 3 by C-Plus {
+          1 plus 2 is 3 by B-Plus {};
+          3 => _ evalto 3 by C-Ret {}
+        }
+      }
+    }
+  }
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_eval_cont_ml4_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 evalto 1 by E-Int { 1 => _ evalto 1 by C-Ret {} }\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalContML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected end of input"));
+    }
+
+    #[test]
+    fn routes_prover_eval_cont_ml4_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 1 + 2 evalto 2\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalContML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in EvalContML4"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 1 + 2 evalto 3, actual: |- 1 + 2 evalto 2"));
+        assert!(result.to_string().contains("fix: replace value with 3"));
+    }
+
+    #[test]
+    fn prover_eval_cont_ml4_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- 1 + 2 evalto 3\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalContML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalContML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_cont_ml4_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalContML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalContML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_typing_ml4_and_prints_derivation() {
+        let mut stdin = &b"|- fun x -> x + 1 : int -> int\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- fun x -> x + 1 : int -> int by T-Fun {
+  x : int |- x + 1 : int by T-Plus {
+    x : int |- x : int by T-Var {};
+    x : int |- 1 : int by T-Int {}
+  }
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_typing_ml4_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("unexpected trailing tokens"));
+    }
+
+    #[test]
+    fn routes_prover_typing_ml4_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 1 : bool\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in TypingML4"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 1 : int, actual: |- 1 : bool"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace conclusion type with int"));
+    }
+
+    #[test]
+    fn prover_typing_ml4_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- fun x -> x + 1 : int -> int\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "TypingML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_typing_ml4_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) : int\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "TypingML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_poly_typing_ml4_and_prints_derivation() {
+        let mut stdin = &b"|- fun x -> x : 'a -> 'a\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- fun x -> x : 'a -> 'a by T-Abs {
+  x : 'a |- x : 'a by T-Var {}
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_poly_typing_ml4_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("unexpected trailing tokens"));
+    }
+
+    #[test]
+    fn routes_prover_poly_typing_ml4_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 1 : bool\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in PolyTypingML4"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 1 : int, actual: |- 1 : bool"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace conclusion type with int"));
+    }
+
+    #[test]
+    fn prover_poly_typing_ml4_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- fun x -> x : 'a -> 'a\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "PolyTypingML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_poly_typing_ml4_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) : int\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "PolyTypingML4"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_nameless_ml3_and_prints_derivation() {
+        let mut stdin = &b"|- let x = 3 in x ==> let . = 3 in #1\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "NamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- let x = 3 in x ==> let . = 3 in #1 by Tr-Let {
+  |- 3 ==> 3 by Tr-Int {};
+  x |- x ==> #1 by Tr-Var1 {}
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_nameless_ml3_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 ==> 1 by Tr-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "NamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("unexpected token after derivation"));
+    }
+
+    #[test]
+    fn routes_prover_nameless_ml3_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- let x = 3 in x ==> let . = 3 in #2\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "NamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in NamelessML3"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- let x = 3 in x ==> let . = 3 in #1, actual: |- let x = 3 in x ==> let . = 3 in #2"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace nameless expression with let . = 3 in #1"));
+    }
+
+    #[test]
+    fn prover_nameless_ml3_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- let x = 3 in x ==> let . = 3 in #1\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "NamelessML3"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "NamelessML3"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_nameless_ml3_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) ==> 1 + (2 + 3)\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "NamelessML3"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "NamelessML3"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_eval_nameless_ml3_and_prints_derivation() {
+        let mut stdin = &b"|- let . = 3 in #1 evalto 3\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- let . = 3 in #1 evalto 3 by E-Let {
+  |- 3 evalto 3 by E-Int {};
+  3 |- #1 evalto 3 by E-Var {}
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_eval_nameless_ml3_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 evalto 1 by E-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected end of input"));
+    }
+
+    #[test]
+    fn routes_prover_eval_nameless_ml3_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 3 + 5 evalto 7\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNamelessML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in EvalNamelessML3"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 3 + 5 evalto 8, actual: |- 3 + 5 evalto 7"));
+        assert!(result.to_string().contains("fix: replace value with 8"));
+    }
+
+    #[test]
+    fn prover_eval_nameless_ml3_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- let . = 3 in #1 evalto 3\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNamelessML3"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalNamelessML3"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_nameless_ml3_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "|- 1 + (2 + 3) evalto 6\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNamelessML3"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalNamelessML3"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_eval_nat_exp_and_prints_derivation() {
+        let mut stdin = &b"S(Z) + S(Z) evalto S(S(Z))\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNatExp"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(
+            text.trim(),
+            "S(Z) + S(Z) evalto S(S(Z)) by E-Plus {\n  S(Z) evalto S(Z) by E-Const {};\n  S(Z) evalto S(Z) by E-Const {};\n  S(Z) plus S(Z) is S(S(Z)) by P-Succ {\n    Z plus S(Z) is S(Z) by P-Zero {}\n  }\n}"
+        );
+    }
+
+    #[test]
+    fn routes_prover_eval_nat_exp_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"Z + S(Z) evalto\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNatExp"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected Nat term"));
+    }
+
+    #[test]
+    fn routes_prover_eval_nat_exp_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"S(Z) * S(Z) evalto Z\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNatExp"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in EvalNatExp"));
+        assert!(result
+            .to_string()
+            .contains("expected: S(Z) * S(Z) evalto S(Z), actual: S(Z) * S(Z) evalto Z"));
+        assert!(result.to_string().contains("fix: replace value with S(Z)"));
+    }
+
+    #[test]
+    fn prover_eval_nat_exp_output_round_trips_to_checker_root_judgment() {
+        let judgment = "S(S(Z)) * S(Z) evalto S(S(Z))\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNatExp"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalNatExp"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_nat_exp_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "Z + (S(Z) + Z) evalto S(Z)\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalNatExp"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalNatExp"],
             &mut checker_stdin,
             &mut checker_out,
             &mut checker_err,
@@ -1613,6 +2639,112 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert_eq!(text.trim(), "Z + S(S(Z)) -*-> S(S(Z))");
+    }
+
+    #[test]
+    fn routes_prover_reduce_nat_exp_and_prints_derivation() {
+        let mut stdin = &b"S(Z) + S(Z) ---> S(S(Z))\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "ReduceNatExp"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(
+            text.trim(),
+            "S(Z) + S(Z) ---> S(S(Z)) by R-Plus {\n  S(Z) plus S(Z) is S(S(Z)) by P-Succ {\n    Z plus S(Z) is S(Z) by P-Zero {}\n  }\n}"
+        );
+    }
+
+    #[test]
+    fn routes_prover_reduce_nat_exp_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"S(Z) + S(Z) ---> Z\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "ReduceNatExp"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in ReduceNatExp"));
+    }
+
+    #[test]
+    fn prover_reduce_nat_exp_output_round_trips_to_checker_root_judgment() {
+        let judgment = "S(Z) + S(Z) -*-> S(S(Z))\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "ReduceNatExp"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "ReduceNatExp"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_reduce_nat_exp_output_round_trips_with_right_nested_plus_expression() {
+        let judgment = "Z + (S(Z) + Z) ---> Z + S(Z)\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "ReduceNatExp"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "ReduceNatExp"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
     }
 
     #[test]

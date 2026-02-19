@@ -121,7 +121,7 @@ impl EvalML2Expr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {

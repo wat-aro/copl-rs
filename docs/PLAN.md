@@ -233,13 +233,349 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `21` [P2][Implementation] `EvalContML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `22` [P2][Implementation] `TypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `23` [P2][Implementation] `PolyTypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `24` [P2][Implementation] `NamelessML3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `25` [P2][Implementation] `EvalNamelessML3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `26` [P2][Implementation] `EvalNatExp` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
-- [ ] `27` [P2][Implementation] `ReduceNatExp` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `21` [P2][Implementation] `EvalContML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_cont_ml4/prover.rs` を追加し、`E-*` / `C-*` / `B-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/eval_cont_ml4/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/eval_cont_ml4/syntax.rs` に導出 pretty-printer（`Display for EvalContML4Derivation`）を追加した。
+      - `src/games/eval_cont_ml4/mod.rs` と `src/lib.rs` に `prover --game EvalContML4` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/eval_cont_ml4/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/eval_cont_ml4/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/eval_cont_ml4/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game EvalContML4` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `EvalContML4` の continuation frame 文字列表現（`{|- _ + 2}`）に対して、期待文字列側の空白が checker 互換フォーマットと不一致だった。
+      - Action: `src/games/eval_cont_ml4/syntax.rs` と `src/lib.rs` の期待文字列を実際の pretty-printer 出力に合わせて修正した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `E-Var` の最近束縛優先（同名変数の後勝ち）を `EvalContML4` prover で直接検証するテストが不足していた。
+      - Action: `src/games/eval_cont_ml4/prover.rs` に `proves_var_with_nearest_binding_by_e_var` を追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `22` [P2][Implementation] `TypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/typing_ml4/prover.rs` を追加し、`T-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/typing_ml4/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/typing_ml4/syntax.rs` に導出 pretty-printer（`Display for TypingML4Derivation`）を追加した。
+      - `src/games/typing_ml4/mod.rs` と `src/lib.rs` に `prover --game TypingML4` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/typing_ml4/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/typing_ml4/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/typing_ml4/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game TypingML4` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: 同名変数の最近束縛優先（後勝ち）を `TypingML4` prover で直接検証するテストが不足していた。
+      - Action: `src/games/typing_ml4/prover.rs` に `proves_var_with_nearest_binding_by_t_var` を追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `23` [P2][Implementation] `PolyTypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/poly_typing_ml4/prover.rs` を追加し、`T-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/poly_typing_ml4/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/poly_typing_ml4/syntax.rs` に導出 pretty-printer（`Display for PolyTypingML4Derivation`）を追加した。
+      - `src/games/poly_typing_ml4/mod.rs` と `src/lib.rs` に `prover --game PolyTypingML4` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/poly_typing_ml4/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/poly_typing_ml4/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/poly_typing_ml4/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game PolyTypingML4` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `InferContext` の型変換 helper 名 (`to_surface_type`) が clippy `wrong-self-convention` に抵触していた。
+      - Action: `surface_type_from_infer` へ改名し、関連呼び出しを更新した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `T-Var` の多相インスタンス化を直接検証する prover テストが不足していた。
+      - Action: `src/games/poly_typing_ml4/prover.rs` に `proves_var_instantiation_by_t_var` を追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `24` [P2][Implementation] `NamelessML3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/nameless_ml3/prover.rs` を追加し、`Tr-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/nameless_ml3/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/nameless_ml3/syntax.rs` に導出 pretty-printer（`Display for NamelessML3Derivation`）を追加した。
+      - `src/games/nameless_ml3/mod.rs` と `src/lib.rs` に `prover --game NamelessML3` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/nameless_ml3/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/nameless_ml3/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/nameless_ml3/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game NamelessML3` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `as_nameless` helper が常に `Some` を返す `Option` で、不要な抽象化と clippy リスクがあった。
+      - Action: `src/games/nameless_ml3/prover.rs` の `as_nameless` を `&NamelessExpr` を返す実装へ簡素化し、呼び出し側を整理した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `25` [P2][Implementation] `EvalNamelessML3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_nameless_ml3/prover.rs` を追加し、`E-*` / `B-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/eval_nameless_ml3/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/eval_nameless_ml3/syntax.rs` に導出 pretty-printer（`Display for EvalNamelessML3Derivation`）を追加した。
+      - `src/games/eval_nameless_ml3/mod.rs` と `src/lib.rs` に `prover --game EvalNamelessML3` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/eval_nameless_ml3/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/eval_nameless_ml3/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/eval_nameless_ml3/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game EvalNamelessML3` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `EvalNamelessML3` prover 追加後も、公開ドキュメントの一部に未実装扱いの記述が残るリスクがあった。
+      - Action: `README.md` / `docs/design.md` / `AGENTS.md` の prover 対応一覧と未実装一覧を更新した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `26` [P2][Implementation] `EvalNatExp` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_nat_exp/prover.rs` を追加し、`E-*` / `P-*` / `T-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/eval_nat_exp/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/eval_nat_exp/syntax.rs` に導出 pretty-printer（`Display for EvalNatExpDerivation`）を追加した。
+      - `src/games/eval_nat_exp/mod.rs` と `src/lib.rs` に `prover --game EvalNatExp` の CLI 経路を接続した。
+      - `src/games/eval_nat_exp/syntax.rs` の式 pretty-printer を修正し、右結合の同優先順位式（`a + (b + c)` / `a * (b * c)`）で括弧を保持するようにした。
+    - テスト:
+      - `src/games/eval_nat_exp/parser.rs` / `src/games/eval_nat_exp/syntax.rs` / `src/games/eval_nat_exp/prover.rs` / `src/lib.rs` に正常系・異常系・round-trip テストを追加した。
+      - `src/lib.rs` に `prover_eval_nat_exp_output_round_trips_with_right_nested_plus_expression` を追加し、right-nested `+` を含む judgment の prover -> checker round-trip 回帰を固定した。
+      - `src/games/eval_nat_exp/syntax.rs` に `keeps_parentheses_for_right_nested_same_precedence_expression` を追加し、right-nested `+` / `*` の括弧保持を固定した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` を同期した。
+    - R1:
+      - Finding: `EvalNatExp` の式 pretty-printer が `a + (b + c)` を `a + b + c` に崩し、prover 出力が checker で `E-Plus` premise 不整合になるケースがあった。
+      - Action: `src/games/eval_nat_exp/syntax.rs` で右部分式の表示優先順位を 1 段上げて括弧を保持し、`src/lib.rs` / `src/games/eval_nat_exp/syntax.rs` に回帰テストを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `27` [P2][Implementation] `ReduceNatExp` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/reduce_nat_exp/prover.rs` を追加し、`R-*` / `DR-*` / `MR-*` / `P-*` / `T-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/reduce_nat_exp/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/reduce_nat_exp/syntax.rs` に導出 pretty-printer（`Display for ReduceNatExpDerivation`）を追加した。
+      - `src/games/reduce_nat_exp/mod.rs` と `src/lib.rs` に `prover --game ReduceNatExp` の CLI 経路を接続した。
+      - `src/games/reduce_nat_exp/syntax.rs` の式 pretty-printer を修正し、右結合の同優先順位式（`a + (b + c)` / `a * (b * c)`）で括弧を保持するようにした。
+    - テスト:
+      - `src/games/reduce_nat_exp/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/reduce_nat_exp/syntax.rs` に pretty-printer の leaf/nested/right-nested 括弧保持テストを追加した。
+      - `src/games/reduce_nat_exp/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game ReduceNatExp` の正常系/異常系/round-trip テストを追加した。
+      - `src/lib.rs` に `prover_reduce_nat_exp_output_round_trips_with_right_nested_plus_expression` を追加し、right-nested `+` を含む judgment の prover -> checker round-trip 回帰を固定した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `ReduceNatExp` の式 pretty-printer が `a + (b + c)` を `a + b + c` に崩し、prover 出力が checker で `R-PlusR` premise 不整合になるケースがあった。
+      - Action: `src/games/reduce_nat_exp/syntax.rs` で右部分式の表示優先順位を 1 段上げて括弧を保持し、`src/lib.rs` / `src/games/reduce_nat_exp/syntax.rs` に回帰テストを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `ReduceNatExp` round-trip テスト入力がテスト時入力上限（1024 bytes）を超える導出を生成し、`checker` 側で `InputTooLarge` になった。
+      - Action: `src/lib.rs` の round-trip テスト入力を導出サイズが上限内に収まるシナリオへ置き換えた。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `28` [P3][Improvement] 同優先順位の右結合式を持つ game の pretty-printer を監査し、`prover -> checker` round-trip で括弧欠落による AST 変形が起きないことを回帰テストで固定する。
+  - 理由: `EvalNatExp` と `ReduceNatExp` で `a + (b + c)` の括弧欠落による checker 不整合を確認したため、同型ロジックの横展開確認が必要。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_ml1/syntax.rs` / `src/games/eval_ml1_err/syntax.rs` / `src/games/eval_ml2/syntax.rs` / `src/games/eval_ml3/syntax.rs` / `src/games/eval_ml4/syntax.rs` / `src/games/eval_ml5/syntax.rs` / `src/games/eval_cont_ml1/syntax.rs` / `src/games/eval_cont_ml4/syntax.rs` / `src/games/typing_ml4/syntax.rs` / `src/games/poly_typing_ml4/syntax.rs` / `src/games/nameless_ml3/syntax.rs` / `src/games/eval_nameless_ml3/syntax.rs` の二項演算子 pretty-printer を監査し、右項表示の親優先順位を `op.precedence() + 1` に統一した。
+      - 既に回帰を入れていた `EvalNatExp` / `ReduceNatExp` と同じ方針で、同型ロジックの game 横断整合を取った。
+    - テスト:
+      - `src/lib.rs` に `prover_*_output_round_trips_with_right_nested_plus_expression` テストを追加し、`EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalContML1` / `EvalContML4` / `TypingML4` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` の `prover -> checker` round-trip で `1 + (2 + 3)` の括弧保持を固定した。
+      - `cargo test right_nested_plus_expression` で対象回帰テスト群（14件）を実行し、全件成功を確認した。
+    - ドキュメント:
+      - `docs/PLAN.md` を更新した。
+    - R1:
+      - Finding: `EvalNatExp` / `ReduceNatExp` 以外の game では、右ネスト `+` の `prover -> checker` 回帰が未固定だった。
+      - Action: `src/lib.rs` に game 別の right-nested `+` round-trip テストを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 二項演算子 pretty-printer の右項親優先順位が game 間で不統一だった。
+      - Action: 対象 12 game の `syntax.rs` で `op.precedence() + 1` に統一した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
 #### 共通完了条件（Implementation タスク）
 

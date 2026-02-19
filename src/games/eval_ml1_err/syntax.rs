@@ -87,7 +87,7 @@ impl EvalML1ErrExpr {
                 if parent == 0 && matches!(right.as_ref(), Self::If { .. }) {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {

@@ -35,7 +35,14 @@ Last updated: 2026-02-19
 - `prover` is implemented for `EvalML4` (`copl-rs prover --game EvalML4 [file]`).
 - `prover` is implemented for `EvalML5` (`copl-rs prover --game EvalML5 [file]`).
 - `prover` is implemented for `EvalContML1` (`copl-rs prover --game EvalContML1 [file]`).
-- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalContML1`, `prover` currently returns a not-implemented error.
+- `prover` is implemented for `EvalContML4` (`copl-rs prover --game EvalContML4 [file]`).
+- `prover` is implemented for `TypingML4` (`copl-rs prover --game TypingML4 [file]`).
+- `prover` is implemented for `PolyTypingML4` (`copl-rs prover --game PolyTypingML4 [file]`).
+- `prover` is implemented for `NamelessML3` (`copl-rs prover --game NamelessML3 [file]`).
+- `prover` is implemented for `EvalNamelessML3` (`copl-rs prover --game EvalNamelessML3 [file]`).
+- `prover` is implemented for `EvalNatExp` (`copl-rs prover --game EvalNatExp [file]`).
+- `prover` is implemented for `ReduceNatExp` (`copl-rs prover --game ReduceNatExp [file]`).
+- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalContML1` / `EvalContML4` / `TypingML4` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -71,8 +78,13 @@ Last updated: 2026-02-19
 - `games/eval_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_ml5` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_cont_ml1` is split into `syntax` / `parser` / `checker` / `prover`.
-- `games/eval_nat_exp` is split into `syntax` / `parser` / `checker`.
-- `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker`.
+- `games/eval_cont_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/typing_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/poly_typing_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/nameless_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/eval_nameless_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/eval_nat_exp` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker` / `prover`.
 - Use `enum GameKind + match` for game registry/dispatch.
 
 ## Design Principles
