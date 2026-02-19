@@ -181,3 +181,101 @@ pub struct EvalML1ErrDerivation {
     pub rule_name: String,
     pub subderivations: Vec<EvalML1ErrDerivation>,
 }
+
+impl fmt::Display for EvalML1ErrDerivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &EvalML1ErrDerivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        EvalML1ErrBinOp, EvalML1ErrDerivation, EvalML1ErrExpr, EvalML1ErrJudgment, EvalML1ErrValue,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::eval_ml1_err::parser::parse_source;
+
+    fn derivation(
+        judgment: EvalML1ErrJudgment,
+        rule_name: &str,
+        subderivations: Vec<EvalML1ErrDerivation>,
+    ) -> EvalML1ErrDerivation {
+        EvalML1ErrDerivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            EvalML1ErrJudgment::EvalTo {
+                expr: EvalML1ErrExpr::Bool(true),
+                value: EvalML1ErrValue::Bool(true),
+            },
+            "E-Bool",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "true evalto true by E-Bool {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            EvalML1ErrJudgment::EvalTo {
+                expr: EvalML1ErrExpr::BinOp {
+                    op: EvalML1ErrBinOp::Plus,
+                    left: Box::new(EvalML1ErrExpr::Int(1)),
+                    right: Box::new(EvalML1ErrExpr::Bool(true)),
+                },
+                value: EvalML1ErrValue::Error,
+            },
+            "E-PlusBoolR",
+            vec![derivation(
+                EvalML1ErrJudgment::EvalTo {
+                    expr: EvalML1ErrExpr::Bool(true),
+                    value: EvalML1ErrValue::Bool(true),
+                },
+                "E-Bool",
+                Vec::new(),
+            )],
+        );
+
+        let rendered = derivation.to_string();
+        let expected = "\
+1 + true evalto error by E-PlusBoolR {
+  true evalto true by E-Bool {}
+}";
+        assert_eq!(rendered, expected);
+        assert!(parse_source(&rendered).is_ok());
+    }
+}

@@ -803,7 +803,65 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `16` [P2][Implementation] `EvalML1Err` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `16` [P2][Implementation] `EvalML1Err` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。  
+  完了メモ（2026-02-19）:
+  - 実装:
+    - `src/games/eval_ml1_err/parser.rs` に judgment 単体入力向け `parse_judgment_source` を追加した。
+    - `src/games/eval_ml1_err/prover.rs` を追加し、`E-Int` / `E-Bool` / `E-IfT` / `E-IfF` / `E-IfInt` / `E-IfTError` / `E-IfFError` / `E-*` / `E-*Bool*` / `E-*Error*` と `B-*` を決定的に構築する EvalML1Err prover を実装した。
+    - `src/games/eval_ml1_err/syntax.rs` に `EvalML1ErrDerivation` の `Display` 実装（checker 受理形式の pretty-printer）を追加した。
+    - `src/games/eval_ml1_err/mod.rs` に `prove` を追加し、judgment-only parser と prover 本体を接続した。
+    - `src/lib.rs` の `prover` 経路に `--game EvalML1Err` を追加し、成功時に導出テキストを stdout 出力するようにした。
+  - テスト:
+    - `games::eval_ml1_err::parser::tests::parses_judgment_only_input_for_prover`
+    - `games::eval_ml1_err::parser::tests::rejects_derivation_input_in_judgment_only_parser`
+    - `games::eval_ml1_err::syntax::tests::formats_leaf_derivation`
+    - `games::eval_ml1_err::syntax::tests::formats_nested_derivation_in_checker_accepted_shape`
+    - `games::eval_ml1_err::prover::tests::proves_eval_int_judgment_with_e_int`
+    - `games::eval_ml1_err::prover::tests::proves_eval_if_error_judgment_with_e_if_t_error`
+    - `games::eval_ml1_err::prover::tests::proves_builtin_plus_judgment_with_b_plus`
+    - `games::eval_ml1_err::prover::tests::rejects_non_derivable_eval_judgment`
+    - `games::eval_ml1_err::prover::tests::rejects_non_derivable_if_with_error_condition`
+    - `games::eval_ml1_err::prover::tests::rejects_non_derivable_builtin_judgment`
+    - `games::eval_ml1_err::prover::tests::builds_same_derivation_shape_as_fixture_033`
+    - `tests::routes_prover_eval_ml1_err_and_prints_derivation`
+    - `tests::routes_prover_eval_ml1_err_with_invalid_judgment_to_parse_error`
+    - `tests::routes_prover_eval_ml1_err_with_non_derivable_judgment_to_check_error`
+    - `tests::prover_eval_ml1_err_output_round_trips_to_checker_root_judgment`
+    - `tests::routes_prover_non_nat_to_not_implemented_error`（未対応 game として `EvalML2` を利用）
+  - ドキュメント:
+    - `README.md` の prover 説明を更新し、EvalML1Err prover の入力形・現状・失敗時診断方針を反映した。
+    - `docs/design.md` の scope/runtime/error/status/extension 節を更新し、EvalML1Err prover 実装済み状態へ同期した。
+    - `AGENTS.md` の CLI Policy / Implementation Policy / Input Specification References を更新し、EvalML1Err prover 実装済み状態を反映した。
+    - `docs/PLAN.md` の当該タスクを完了化した。
+  - R1:
+    - Finding: EvalML1Err prover 入力が導出形式を受理すると `prover` 契約（judgment-only）と不一致になる。
+    - Action: `parse_judgment_source` と導出入力拒否テストを追加し、EOF までの judgment-only パースを固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R2:
+    - Finding: EvalML1Err 導出整形が未実装だと CLI 出力契約（checker 受理形式）を満たせない。
+    - Action: `EvalML1ErrDerivation` の `Display` と checker 再受理テストを追加し、整形仕様を固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R3:
+    - Finding: `if` / 二項演算の error 系規則は複数候補があり、規則選択順が曖昧だと導出が不安定になる。
+    - Action: left-to-right の決定的順序（`Bool`/`Error` 分岐を含む）で prover を実装し、fixture 形状比較テストで固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R4:
+    - Finding: EvalML1Err prover 追加後、未対応 game 回帰テストが実装済み game を参照しないことを明示する必要があった。
+    - Action: `routes_prover_non_nat_to_not_implemented_error` の対象を `EvalML2` に切り替え、将来の対応拡張でも壊れにくい形に固定した。
+    - Scope: in-scope
+    - Backlog: なし
+  - R5:
+    - Finding: 実装反映後に README/design/AGENTS の記述が古いままだった。
+    - Action: `README.md` / `docs/design.md` / `AGENTS.md` を同一変更で更新した。
+    - Scope: in-scope
+    - Backlog: なし
+  - 検証:
+    - `cargo fmt`: pass
+    - `cargo test`: pass
+    - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `17` [P2][Implementation] `EvalML2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `18` [P2][Implementation] `EvalML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `19` [P2][Implementation] `EvalML5` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
