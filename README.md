@@ -37,8 +37,9 @@ cargo run -- prover --game <name> [file]
 - `prover --game EvalML3` accepts a single judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalML4` accepts a single judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalML5` accepts a single judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`, `p matches v when (...)`, `p doesn't match v`) and prints a generated derivation in plain text.
-- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, `prover --game EvalML4`, and `prover --game EvalML5` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
-- `prover` for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, and `EvalML5` is not implemented yet.
+- `prover --game EvalContML1` accepts a single judgment (`... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
+- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, `prover --game EvalML4`, `prover --game EvalML5`, and `prover --game EvalContML1` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
+- `prover` for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, and `EvalContML1` is not implemented yet.
 
 Examples:
 
@@ -56,6 +57,7 @@ echo "|- let x = 3 * 3 in let y = 4 * x in x + y evalto 45" | cargo run -- prove
 echo "|- let rec f = fun x -> x + 1 in f 2 evalto 3" | cargo run -- prover --game EvalML3
 echo "|- let x = 1 :: [] in match x with [] -> 0 | a :: b -> a evalto 1" | cargo run -- prover --game EvalML4
 echo "|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1" | cargo run -- prover --game EvalML5
+echo "3 + 5 evalto 8" | cargo run -- prover --game EvalContML1
 ```
 
 Supported `--game` values:

@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<EvalContML1Derivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<EvalContML1Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -605,7 +618,7 @@ impl Parser {
 mod tests {
     use crate::core::CheckErrorKind;
 
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::eval_cont_ml1::syntax::{
         EvalContML1ContFrame, EvalContML1Expr, EvalContML1Judgment, EvalContML1Value,
     };
@@ -677,5 +690,45 @@ mod tests {
         let err = parse_source(source).expect_err("parse should fail");
         assert_eq!(err.kind(), CheckErrorKind::Parse);
         assert!(err.message().contains("expected '_'"));
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source("if 4 < 5 then 2 + 3 else 8 * 8 evalto 5")
+            .expect("judgment should parse");
+
+        assert_eq!(
+            parsed,
+            EvalContML1Judgment::EvalTo {
+                expr: EvalContML1Expr::If {
+                    condition: Box::new(EvalContML1Expr::BinOp {
+                        op: crate::games::eval_cont_ml1::syntax::EvalContML1BinOp::Lt,
+                        left: Box::new(EvalContML1Expr::Int(4)),
+                        right: Box::new(EvalContML1Expr::Int(5)),
+                    }),
+                    then_branch: Box::new(EvalContML1Expr::BinOp {
+                        op: crate::games::eval_cont_ml1::syntax::EvalContML1BinOp::Plus,
+                        left: Box::new(EvalContML1Expr::Int(2)),
+                        right: Box::new(EvalContML1Expr::Int(3)),
+                    }),
+                    else_branch: Box::new(EvalContML1Expr::BinOp {
+                        op: crate::games::eval_cont_ml1::syntax::EvalContML1BinOp::Times,
+                        left: Box::new(EvalContML1Expr::Int(8)),
+                        right: Box::new(EvalContML1Expr::Int(8)),
+                    }),
+                },
+                continuation:
+                    crate::games::eval_cont_ml1::syntax::EvalContML1Continuation::implicit_hole(),
+                value: EvalContML1Value::Int(5),
+                has_continuation: false,
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("3 evalto 3 by E-Int { 3 => _ evalto 3 by C-Ret {} }")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }

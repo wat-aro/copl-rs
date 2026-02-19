@@ -21,7 +21,7 @@ It is a snapshot of the implementation state and the agreed extension direction.
 
 ### Out of scope now
 
-- Prover implementation for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, and `EvalML5`.
+- Prover implementation for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, and `EvalContML1`.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -67,7 +67,7 @@ The project is split into explicit module boundaries:
 - `src/games/eval_ml5/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 - `src/games/eval_cont_ml1/`:
-  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
+  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 - `src/games/eval_cont_ml4/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`.
 - `src/games/typing_ml4/`:
@@ -146,6 +146,7 @@ Key runtime checks in `lib.rs`:
 - `prover --game EvalML3` validates judgment-only input syntax before proving.
 - `prover --game EvalML4` validates judgment-only input syntax before proving.
 - `prover --game EvalML5` validates judgment-only input syntax before proving.
+- `prover --game EvalContML1` validates judgment-only input syntax before proving.
 - Nat prover core builds an in-memory derivation AST using `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`.
 - CompareNat1 prover core builds an in-memory derivation AST using `L-Succ` / `L-Trans`.
 - CompareNat2 prover core builds an in-memory derivation AST using `L-Zero` / `L-SuccSucc`.
@@ -156,8 +157,9 @@ Key runtime checks in `lib.rs`:
 - EvalML3 prover core builds an in-memory derivation AST using `E-*` / `B-*` rules in a deterministic evaluation order, including environment-sensitive rules (`E-Var1`, `E-Var2`, `E-LetRec`, `E-AppRec`).
 - EvalML4 prover core builds an in-memory derivation AST using `E-*` / `B-*` rules in a deterministic evaluation order, including list/match rules (`E-Nil`, `E-Cons`, `E-MatchNil`, `E-MatchCons`) and nearest-binding variable lookup (`E-Var`).
 - EvalML5 prover core builds an in-memory derivation AST using `E-*` / `M-*` / `NM-*` / `B-*` rules in a deterministic evaluation order, including multi-clause pattern matching (`E-MatchM1`, `E-MatchM2`, `E-MatchN`) and pattern-relation judgments.
-- Nat/CompareNat1/CompareNat2/CompareNat3/EvalML1/EvalML1Err/EvalML2/EvalML3/EvalML4/EvalML5 provers render derivation trees in checker-compatible plain text and write them to stdout.
-- `prover` for games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` returns `RunError::ProverNotImplemented`.
+- EvalContML1 prover core builds an in-memory derivation AST using `E-*` / `C-*` / `B-*` rules in a deterministic continuation-evaluation order.
+- Nat/CompareNat1/CompareNat2/CompareNat3/EvalML1/EvalML1Err/EvalML2/EvalML3/EvalML4/EvalML5/EvalContML1 provers render derivation trees in checker-compatible plain text and write them to stdout.
+- `prover` for games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalContML1` returns `RunError::ProverNotImplemented`.
 
 ## 6. Error Model
 
@@ -166,7 +168,7 @@ Key runtime checks in `lib.rs`:
   - `CheckErrorKind` (`Parse`, `RuleViolation`, `Internal`)
   - optional `SourceSpan`.
 - Top-level runtime errors are wrapped in `RunError`.
-- For non-derivable Nat, CompareNat1, CompareNat2, CompareNat3, EvalML1, EvalML1Err, EvalML2, EvalML3, EvalML4, and EvalML5 prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
+- For non-derivable Nat, CompareNat1, CompareNat2, CompareNat3, EvalML1, EvalML1Err, EvalML2, EvalML3, EvalML4, EvalML5, and EvalContML1 prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
 
 Error output is currently plain text.
 On successful check, output is the inferred root judgment text in plain text (ADR-0008).
@@ -313,15 +315,18 @@ Current EvalML5 checker/prover validates or generates derivation trees for CoPL 
 - Successful check result text is the inferred root judgment (`Gamma |- ... evalto ...`, `p matches v when (...)`, `p doesn't match v`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
 - Non-derivable prover judgments are reported as plain-text `RuleViolation` with actionable hints (`expected` / `actual` / `fix`) where derivation expectations are computable.
 
-Current EvalContML1 checker validates derivation trees parsed from CoPL ASCII input.
+Current EvalContML1 checker/prover validates or generates derivation trees for CoPL ASCII input.
 
 - `parser.rs` builds a generic derivation tree (`judgment + raw rule name + subderivations`) and parses continuation judgments (`>>`, `=>`, `_`) and continuation frames (`{_ op e}`, `{i op _}`, `{if _ then e2 else e3}`).
-- `syntax.rs` models EvalML1-style expressions/values extended with continuation structures and continuation-application judgments.
+- `parser.rs` also parses judgment-only prover input (`... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+- `syntax.rs` models EvalML1-style expressions/values extended with continuation structures and continuation-application judgments, and includes `EvalContML1Derivation` rendering in checker-compatible textual form.
 - `checker.rs` validates continuation evaluation and builtin arithmetic/boolean rules (`E-Int`, `E-Bool`, `E-BinOp`, `E-If`, `C-Ret`, `C-EvalR`, `C-Plus`, `C-Minus`, `C-Times`, `C-Lt`, `C-IfT`, `C-IfF`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`).
+- `prover.rs` deterministically constructs EvalContML1 derivations by recursively evaluating expressions and continuations, and emitting matching `E-*` / `C-*` / `B-*` rule nodes.
 - Rule names are stored as raw text in the parsed tree and matched to static rule definitions in checker.
 - Unknown rule names and premise arity mismatches are reported as `RuleViolation`.
 - `RuleViolation` diagnostics carry the derivation node source location (`SourceSpan`), failing premise path (`root`, `1`, `1.2`, ...), and actionable hints where available.
 - Successful check result text is the inferred root judgment (`... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`).
+- Non-derivable prover judgments are reported as plain-text `RuleViolation` with actionable hints (`expected` / `actual` / `fix`) where derivation expectations are computable.
 
 Current EvalContML4 checker validates derivation trees parsed from CoPL ASCII input.
 
@@ -424,14 +429,15 @@ Current status:
 - `prover --game EvalML3` parses judgment-only input (`Gamma |- ... evalto ...` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game EvalML4` parses judgment-only input (`Gamma |- ... evalto ...` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game EvalML5` parses judgment-only input (`Gamma |- ... evalto ...` / `plus` / `minus` / `times` / `less than` / pattern `matches` / pattern `doesn't match`), constructs derivation ASTs, and prints checker-compatible derivations.
+- `prover --game EvalContML1` parses judgment-only input (`evalto` / continuation-application / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover` for unsupported games returns `RunError::ProverNotImplemented`.
 
 Re-evaluation result (2026-02-19):
 
 - Do not introduce a shared proof-search core at this point.
-- Keep game-specific prover implementations (`Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`) as the default strategy.
+- Keep game-specific prover implementations (`Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalContML1`) as the default strategy.
 - Rationale:
-  - The ten provers are deterministic, rule-driven evaluators, but their core domains differ (`Nat` arithmetic recursion, `CompareNat1` transitive less-than chaining, `CompareNat2` structural less-than recursion, `CompareNat3` right-side successor recursion, `EvalML1` expression evaluation, `EvalML1Err` error-aware evaluation, `EvalML2` environment-sensitive evaluation, `EvalML3` environment/closure-sensitive evaluation, `EvalML4` list/match-aware evaluation, and `EvalML5` multi-clause/pattern-relation-aware evaluation).
+  - The eleven provers are deterministic, rule-driven evaluators, but their core domains differ (`Nat` arithmetic recursion, `CompareNat1` transitive less-than chaining, `CompareNat2` structural less-than recursion, `CompareNat3` right-side successor recursion, `EvalML1` expression evaluation, `EvalML1Err` error-aware evaluation, `EvalML2` environment-sensitive evaluation, `EvalML3` environment/closure-sensitive evaluation, `EvalML4` list/match-aware evaluation, `EvalML5` multi-clause/pattern-relation-aware evaluation, and `EvalContML1` continuation-machine evaluation).
   - Current overlap is limited to small helper patterns and does not justify a new cross-game proof-search abstraction.
   - Introducing a generic core now would increase coupling across game modules without a proportional reduction in implementation complexity.
 - Revisit this decision when one of the following becomes true:
@@ -485,6 +491,7 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalML5 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalML5 prover is implemented with game-specific recursive evaluation/pattern resolution that deterministically emits `E-*` / `M-*` / `NM-*` / `B-*` derivations and checker-compatible pretty-printed output.
 - EvalContML1 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
+- EvalContML1 prover is implemented with game-specific recursive continuation evaluation that deterministically emits `E-*` / `C-*` / `B-*` derivations and checker-compatible pretty-printed output.
 - EvalContML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - TypingML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - PolyTypingML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).

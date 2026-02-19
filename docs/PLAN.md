@@ -190,7 +190,49 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `20` [P2][Implementation] `EvalContML1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `20` [P2][Implementation] `EvalContML1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_cont_ml1/prover.rs` を追加し、`E-*` / `C-*` / `B-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/eval_cont_ml1/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/eval_cont_ml1/syntax.rs` に導出 pretty-printer（`Display for EvalContML1Derivation`）を追加した。
+      - `src/games/eval_cont_ml1/mod.rs` と `src/lib.rs` に `prover --game EvalContML1` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/eval_cont_ml1/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/eval_cont_ml1/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/eval_cont_ml1/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game EvalContML1` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `C-Ret` の空 continuation を tail 継承（`explicit_ret = false`）のまま生成すると fixture 形状比較で不一致になった。
+      - Action: `src/games/eval_cont_ml1/prover.rs` で `C-Ret` 生成時の continuation を常に `hole()` に正規化した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `21` [P2][Implementation] `EvalContML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `22` [P2][Implementation] `TypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `23` [P2][Implementation] `PolyTypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
