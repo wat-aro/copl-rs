@@ -50,6 +50,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::EvalML1Err => games::eval_ml1_err::prove(&source),
                 core::GameKind::EvalML2 => games::eval_ml2::prove(&source),
                 core::GameKind::EvalML3 => games::eval_ml3::prove(&source),
+                core::GameKind::EvalML4 => games::eval_ml4::prove(&source),
                 _ => return Err(RunError::ProverNotImplemented { game: command.game }),
             }
             .map_err(RunError::Check)?;
@@ -445,6 +446,97 @@ mod tests {
         let mut checker_err = Vec::new();
         let checker_result = run(
             vec!["copl-rs", "checker", "--game", "EvalML3"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_eval_ml4_and_prints_derivation() {
+        let mut stdin = &b"|- [] evalto []\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- [] evalto [] by E-Nil {}");
+    }
+
+    #[test]
+    fn routes_prover_eval_ml4_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- [] evalto [] by E-Nil {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected end of input"));
+    }
+
+    #[test]
+    fn routes_prover_eval_ml4_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- match [] with [] -> 0 | a :: b -> a evalto 1\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in EvalML4"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- match [] with [] -> 0 | a :: b -> a evalto 0, actual: |- match [] with [] -> 0 | a :: b -> a evalto 1"));
+        assert!(result.to_string().contains("fix: replace value with 0"));
+    }
+
+    #[test]
+    fn prover_eval_ml4_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- let x = 1 :: [] in match x with [] -> 0 | a :: b -> a evalto 1\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML4"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML4"],
             &mut checker_stdin,
             &mut checker_out,
             &mut checker_err,
@@ -995,13 +1087,13 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
-    fn routes_prover_non_nat_to_not_implemented_error() {
+    fn routes_prover_eval_ml5_to_not_implemented_error() {
         let mut stdin = &b"Z is less than S(Z)\n"[..];
         let mut out = Vec::new();
         let mut err = Vec::new();
 
         let result = run(
-            vec!["copl-rs", "prover", "--game", "EvalML4"],
+            vec!["copl-rs", "prover", "--game", "EvalML5"],
             &mut stdin,
             &mut out,
             &mut err,
@@ -1010,7 +1102,7 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
 
         assert!(result
             .to_string()
-            .contains("prover is not implemented yet for game: EvalML4"));
+            .contains("prover is not implemented yet for game: EvalML5"));
     }
 
     #[test]

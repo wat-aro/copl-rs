@@ -35,8 +35,9 @@ cargo run -- prover --game <name> [file]
 - `prover --game EvalML1Err` accepts a single judgment (`... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`; values include `error`) and prints a generated derivation in plain text.
 - `prover --game EvalML2` accepts a single judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalML3` accepts a single judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
-- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, and `prover --game EvalML3` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
-- `prover` for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, and `EvalML3` is not implemented yet.
+- `prover --game EvalML4` accepts a single judgment (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
+- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, and `prover --game EvalML4` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
+- `prover` for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, and `EvalML4` is not implemented yet.
 
 Examples:
 
@@ -52,6 +53,7 @@ echo "3 + if -23 < -2 * 8 then 8 else 2 + 4 evalto 11" | cargo run -- prover --g
 echo "1 + true + 2 evalto error" | cargo run -- prover --game EvalML1Err
 echo "|- let x = 3 * 3 in let y = 4 * x in x + y evalto 45" | cargo run -- prover --game EvalML2
 echo "|- let rec f = fun x -> x + 1 in f 2 evalto 3" | cargo run -- prover --game EvalML3
+echo "|- let x = 1 :: [] in match x with [] -> 0 | a :: b -> a evalto 1" | cargo run -- prover --game EvalML4
 ```
 
 Supported `--game` values:

@@ -362,3 +362,157 @@ pub struct EvalML4Derivation {
     pub rule_name: String,
     pub subderivations: Vec<EvalML4Derivation>,
 }
+
+impl fmt::Display for EvalML4Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &EvalML4Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        EvalML4BinOp, EvalML4Derivation, EvalML4Env, EvalML4Expr, EvalML4Judgment, EvalML4Value,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::eval_ml4::parser::parse_source;
+
+    fn derivation(
+        judgment: EvalML4Judgment,
+        rule_name: &str,
+        subderivations: Vec<EvalML4Derivation>,
+    ) -> EvalML4Derivation {
+        EvalML4Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            EvalML4Judgment::EvalTo {
+                env: EvalML4Env::default(),
+                expr: EvalML4Expr::Nil,
+                value: EvalML4Value::Nil,
+            },
+            "E-Nil",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "|- [] evalto [] by E-Nil {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            EvalML4Judgment::EvalTo {
+                env: EvalML4Env::default(),
+                expr: EvalML4Expr::Cons {
+                    head: Box::new(EvalML4Expr::BinOp {
+                        op: EvalML4BinOp::Plus,
+                        left: Box::new(EvalML4Expr::Int(1)),
+                        right: Box::new(EvalML4Expr::Int(2)),
+                    }),
+                    tail: Box::new(EvalML4Expr::Nil),
+                },
+                value: EvalML4Value::Cons {
+                    head: Box::new(EvalML4Value::Int(3)),
+                    tail: Box::new(EvalML4Value::Nil),
+                },
+            },
+            "E-Cons",
+            vec![
+                derivation(
+                    EvalML4Judgment::EvalTo {
+                        env: EvalML4Env::default(),
+                        expr: EvalML4Expr::BinOp {
+                            op: EvalML4BinOp::Plus,
+                            left: Box::new(EvalML4Expr::Int(1)),
+                            right: Box::new(EvalML4Expr::Int(2)),
+                        },
+                        value: EvalML4Value::Int(3),
+                    },
+                    "E-Plus",
+                    vec![
+                        derivation(
+                            EvalML4Judgment::EvalTo {
+                                env: EvalML4Env::default(),
+                                expr: EvalML4Expr::Int(1),
+                                value: EvalML4Value::Int(1),
+                            },
+                            "E-Int",
+                            Vec::new(),
+                        ),
+                        derivation(
+                            EvalML4Judgment::EvalTo {
+                                env: EvalML4Env::default(),
+                                expr: EvalML4Expr::Int(2),
+                                value: EvalML4Value::Int(2),
+                            },
+                            "E-Int",
+                            Vec::new(),
+                        ),
+                        derivation(
+                            EvalML4Judgment::PlusIs {
+                                left: 1,
+                                right: 2,
+                                result: 3,
+                            },
+                            "B-Plus",
+                            Vec::new(),
+                        ),
+                    ],
+                ),
+                derivation(
+                    EvalML4Judgment::EvalTo {
+                        env: EvalML4Env::default(),
+                        expr: EvalML4Expr::Nil,
+                        value: EvalML4Value::Nil,
+                    },
+                    "E-Nil",
+                    Vec::new(),
+                ),
+            ],
+        );
+
+        let expected = "\
+|- 1 + 2 :: [] evalto 3 :: [] by E-Cons {
+  |- 1 + 2 evalto 3 by E-Plus {
+    |- 1 evalto 1 by E-Int {};
+    |- 2 evalto 2 by E-Int {};
+    1 plus 2 is 3 by B-Plus {}
+  };
+  |- [] evalto [] by E-Nil {}
+}";
+        assert_eq!(derivation.to_string(), expected);
+        parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
+}

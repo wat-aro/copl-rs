@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<EvalML4Derivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<EvalML4Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -878,7 +891,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::eval_ml4::syntax::{EvalML4Env, EvalML4Expr, EvalML4Judgment, EvalML4Value};
 
     #[test]
@@ -971,5 +984,35 @@ mod tests {
                 cons_case: Box::new(EvalML4Expr::Var("a".to_string())),
             }
         );
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source("|- match 1 :: [] with [] -> 0 | a :: b -> a evalto 1")
+            .expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            EvalML4Judgment::EvalTo {
+                env: EvalML4Env::default(),
+                expr: EvalML4Expr::Match {
+                    scrutinee: Box::new(EvalML4Expr::Cons {
+                        head: Box::new(EvalML4Expr::Int(1)),
+                        tail: Box::new(EvalML4Expr::Nil),
+                    }),
+                    nil_case: Box::new(EvalML4Expr::Int(0)),
+                    head_name: "a".to_string(),
+                    tail_name: "b".to_string(),
+                    cons_case: Box::new(EvalML4Expr::Var("a".to_string())),
+                },
+                value: EvalML4Value::Int(1),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("|- [] evalto [] by E-Nil {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }

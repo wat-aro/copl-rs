@@ -104,7 +104,49 @@
 
 - [x] `01`-`17` [Archive] 完了済みタスクをアーカイブへ移動した。
   - 参照: `docs/plans/2026-02-19-prover-roadmap-completed-01-17.md`
-- [ ] `18` [P2][Implementation] `EvalML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `18` [P2][Implementation] `EvalML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_ml4/prover.rs` を追加し、`E-*` / `B-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/eval_ml4/parser.rs` に judgment-only parser (`parse_judgment_source`) を追加した。
+      - `src/games/eval_ml4/syntax.rs` に導出 pretty-printer (`Display for EvalML4Derivation`) を追加した。
+      - `src/games/eval_ml4/mod.rs` と `src/lib.rs` に `prover --game EvalML4` の CLI 経路を接続した。
+    - テスト:
+      - `src/games/eval_ml4/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/eval_ml4/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/eval_ml4/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game EvalML4` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `E-Var` の最近束縛優先を直接検証するテストが不足していた。
+      - Action: `src/games/eval_ml4/prover.rs` に `proves_var_with_nearest_binding_by_e_var` を追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `19` [P2][Implementation] `EvalML5` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `20` [P2][Implementation] `EvalContML1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `21` [P2][Implementation] `EvalContML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
