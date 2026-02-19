@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<EvalNamelessML3Derivation, CheckErro
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<EvalNamelessML3Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -732,7 +745,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::eval_nameless_ml3::syntax::{
         EvalNamelessML3BinOp, EvalNamelessML3Env, EvalNamelessML3Expr, EvalNamelessML3Judgment,
         EvalNamelessML3Value,
@@ -827,5 +840,39 @@ mod tests {
                 },
             }
         );
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source("5 |- if #1 < 5 then #1 + 2 else 0 evalto 7")
+            .expect("judgment should parse");
+
+        assert_eq!(
+            parsed,
+            EvalNamelessML3Judgment::EvalTo {
+                env: EvalNamelessML3Env(vec![EvalNamelessML3Value::Int(5)]),
+                expr: EvalNamelessML3Expr::If {
+                    condition: Box::new(EvalNamelessML3Expr::BinOp {
+                        op: EvalNamelessML3BinOp::Lt,
+                        left: Box::new(EvalNamelessML3Expr::Index(1)),
+                        right: Box::new(EvalNamelessML3Expr::Int(5)),
+                    }),
+                    then_branch: Box::new(EvalNamelessML3Expr::BinOp {
+                        op: EvalNamelessML3BinOp::Plus,
+                        left: Box::new(EvalNamelessML3Expr::Index(1)),
+                        right: Box::new(EvalNamelessML3Expr::Int(2)),
+                    }),
+                    else_branch: Box::new(EvalNamelessML3Expr::Int(0)),
+                },
+                value: EvalNamelessML3Value::Int(7),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("|- 1 evalto 1 by E-Int {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }

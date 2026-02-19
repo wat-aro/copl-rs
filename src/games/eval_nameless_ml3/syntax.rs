@@ -134,7 +134,7 @@ impl EvalNamelessML3Expr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {
@@ -255,4 +255,127 @@ pub struct EvalNamelessML3Derivation {
     pub judgment: EvalNamelessML3Judgment,
     pub rule_name: String,
     pub subderivations: Vec<EvalNamelessML3Derivation>,
+}
+
+impl fmt::Display for EvalNamelessML3Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &EvalNamelessML3Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        EvalNamelessML3BinOp, EvalNamelessML3Derivation, EvalNamelessML3Env, EvalNamelessML3Expr,
+        EvalNamelessML3Judgment, EvalNamelessML3Value,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::eval_nameless_ml3::parser::parse_source;
+
+    fn derivation(
+        judgment: EvalNamelessML3Judgment,
+        rule_name: &str,
+        subderivations: Vec<EvalNamelessML3Derivation>,
+    ) -> EvalNamelessML3Derivation {
+        EvalNamelessML3Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            EvalNamelessML3Judgment::PlusIs {
+                left: 1,
+                right: 2,
+                result: 3,
+            },
+            "B-Plus",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "1 plus 2 is 3 by B-Plus {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let _ = parse_source(include_str!("../../../copl/055.copl")).expect("fixture parses");
+
+        let derivation = derivation(
+            EvalNamelessML3Judgment::EvalTo {
+                env: EvalNamelessML3Env(vec![EvalNamelessML3Value::Bool(true)]),
+                expr: EvalNamelessML3Expr::BinOp {
+                    op: EvalNamelessML3BinOp::Plus,
+                    left: Box::new(EvalNamelessML3Expr::Int(1)),
+                    right: Box::new(EvalNamelessML3Expr::Int(2)),
+                },
+                value: EvalNamelessML3Value::Int(3),
+            },
+            "E-Plus",
+            vec![
+                derivation(
+                    EvalNamelessML3Judgment::EvalTo {
+                        env: EvalNamelessML3Env(vec![EvalNamelessML3Value::Bool(true)]),
+                        expr: EvalNamelessML3Expr::Int(1),
+                        value: EvalNamelessML3Value::Int(1),
+                    },
+                    "E-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    EvalNamelessML3Judgment::EvalTo {
+                        env: EvalNamelessML3Env(vec![EvalNamelessML3Value::Bool(true)]),
+                        expr: EvalNamelessML3Expr::Int(2),
+                        value: EvalNamelessML3Value::Int(2),
+                    },
+                    "E-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    EvalNamelessML3Judgment::PlusIs {
+                        left: 1,
+                        right: 2,
+                        result: 3,
+                    },
+                    "B-Plus",
+                    Vec::new(),
+                ),
+            ],
+        );
+
+        let expected = "\
+true |- 1 + 2 evalto 3 by E-Plus {
+  true |- 1 evalto 1 by E-Int {};
+  true |- 2 evalto 2 by E-Int {};
+  1 plus 2 is 3 by B-Plus {}
+}";
+        assert_eq!(derivation.to_string(), expected);
+    }
 }
