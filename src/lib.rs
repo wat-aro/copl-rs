@@ -44,6 +44,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
             let derivation = match command.game {
                 core::GameKind::Nat => games::nat::prove(&source),
                 core::GameKind::CompareNat1 => games::compare_nat1::prove(&source),
+                core::GameKind::CompareNat2 => games::compare_nat2::prove(&source),
                 core::GameKind::EvalML1 => games::eval_ml1::prove(&source),
                 core::GameKind::EvalML3 => games::eval_ml3::prove(&source),
                 _ => return Err(RunError::ProverNotImplemented { game: command.game }),
@@ -585,6 +586,106 @@ mod tests {
         let mut checker_err = Vec::new();
         let checker_result = run(
             vec!["copl-rs", "checker", "--game", "CompareNat1"],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_prover_compare_nat2_and_prints_derivation() {
+        let mut stdin = &b"S(S(Z)) is less than S(S(S(Z)))\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "CompareNat2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+S(S(Z)) is less than S(S(S(Z))) by L-SuccSucc {
+  S(Z) is less than S(S(Z)) by L-SuccSucc {
+    Z is less than S(Z) by L-Zero {}
+  }
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_compare_nat2_with_invalid_judgment_to_parse_error() {
+        let mut stdin =
+            &b"S(Z) is less than S(S(Z)) by L-SuccSucc { Z is less than S(Z) by L-Zero {} }\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "CompareNat2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected end of input"));
+    }
+
+    #[test]
+    fn routes_prover_compare_nat2_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"S(Z) is less than Z\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "CompareNat2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in CompareNat2"));
+        assert!(result
+            .to_string()
+            .contains("expected: S(Z) is less than S(S(Z)), actual: S(Z) is less than Z"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace right term with S(S(Z))"));
+    }
+
+    #[test]
+    fn prover_compare_nat2_output_round_trips_to_checker_root_judgment() {
+        let judgment = "S(S(Z)) is less than S(S(S(S(S(Z)))))\n";
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", "CompareNat2"],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", "CompareNat2"],
             &mut checker_stdin,
             &mut checker_out,
             &mut checker_err,
