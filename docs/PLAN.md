@@ -1,6 +1,6 @@
 # PLAN
 
-最終更新日: 2026-02-18
+最終更新日: 2026-02-19
 このファイルは現在計画の単一ソースです。
 
 ## 運用ルール
@@ -635,6 +635,21 @@
     - `cargo fmt`: pass
     - `cargo test`: pass
     - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [ ] `13` [P2][Implementation] `CompareNat1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `14` [P2][Implementation] `CompareNat2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `15` [P2][Implementation] `CompareNat3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `16` [P2][Implementation] `EvalML1Err` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `17` [P2][Implementation] `EvalML2` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `18` [P2][Implementation] `EvalML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `19` [P2][Implementation] `EvalML5` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `20` [P2][Implementation] `EvalContML1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `21` [P2][Implementation] `EvalContML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `22` [P2][Implementation] `TypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `23` [P2][Implementation] `PolyTypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `24` [P2][Implementation] `NamelessML3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `25` [P2][Implementation] `EvalNamelessML3` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `26` [P2][Implementation] `EvalNatExp` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [ ] `27` [P2][Implementation] `ReduceNatExp` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 
 #### 共通完了条件（Implementation タスク）
 
