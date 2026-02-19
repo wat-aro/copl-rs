@@ -15,6 +15,19 @@ pub fn parse_source(source: &str) -> Result<ReduceNatExpDerivation, CheckError> 
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<ReduceNatExpJudgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -224,6 +237,10 @@ impl Parser {
         }
     }
 
+    fn consume_trailing_semicolons(&mut self) {
+        while self.consume_semicolon() {}
+    }
+
     fn consume_arrow_reduce(&mut self) -> bool {
         self.consume_if(|kind| matches!(kind, TokenKind::ArrowReduce))
     }
@@ -322,7 +339,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::reduce_nat_exp::syntax::{NatTerm, ReduceNatExpExpr, ReduceNatExpJudgment};
 
     #[test]
@@ -375,5 +392,34 @@ Z -*-> Z by MR-One {
         assert_eq!(parsed.span.column, 1);
         assert_eq!(parsed.subderivations[0].span.line, 3);
         assert_eq!(parsed.subderivations[0].span.column, 3);
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source("S(Z) + (S(Z) * Z) -d-> S(Z) + Z")
+            .expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            ReduceNatExpJudgment::DeterministicReducesTo {
+                from: ReduceNatExpExpr::Plus(
+                    Box::new(ReduceNatExpExpr::Nat(NatTerm::S(Box::new(NatTerm::Z)))),
+                    Box::new(ReduceNatExpExpr::Times(
+                        Box::new(ReduceNatExpExpr::Nat(NatTerm::S(Box::new(NatTerm::Z)))),
+                        Box::new(ReduceNatExpExpr::Nat(NatTerm::Z)),
+                    )),
+                ),
+                to: ReduceNatExpExpr::Plus(
+                    Box::new(ReduceNatExpExpr::Nat(NatTerm::S(Box::new(NatTerm::Z)))),
+                    Box::new(ReduceNatExpExpr::Nat(NatTerm::Z)),
+                ),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("Z -*-> Z by MR-Zero {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }
