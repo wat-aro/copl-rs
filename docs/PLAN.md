@@ -147,7 +147,49 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `19` [P2][Implementation] `EvalML5` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+- [x] `19` [P2][Implementation] `EvalML5` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
+  - 完了メモ（2026-02-19）:
+    - 実装:
+      - `src/games/eval_ml5/prover.rs` を追加し、`E-*` / `M-*` / `NM-*` / `B-*` 規則に対応する決定的な prover を実装した。
+      - `src/games/eval_ml5/mod.rs` と `src/lib.rs` に `prover --game EvalML5` の CLI 経路を接続した。
+      - `src/games/eval_ml5/parser.rs` の judgment-only parser を `prover` 入口から利用する構成に接続した。
+      - `src/games/eval_ml5/syntax.rs` の導出 pretty-printer（`Display for EvalML5Derivation`）を `prover` 出力に利用する構成に接続した。
+    - テスト:
+      - `src/games/eval_ml5/parser.rs` に judgment-only parser の正常系/異常系テストを追加した。
+      - `src/games/eval_ml5/syntax.rs` に pretty-printer の leaf/nested テストを追加した。
+      - `src/games/eval_ml5/prover.rs` に正常系/異常系/fixture 形状比較テストを追加した。
+      - `src/lib.rs` に `prover --game EvalML5` の正常系/異常系/round-trip テストを追加した。
+    - ドキュメント:
+      - `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期した。
+    - R1:
+      - Finding: `EvalML5` round-trip テスト入力がテスト時入力上限（1024 bytes）を超える導出を生成し、`checker` 側で `InputTooLarge` になった。
+      - Action: `src/lib.rs` の round-trip テスト入力を導出サイズが上限内に収まる同等シナリオへ置き換えた。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `NM-ConsConsL` のテストで、規則集合では導出不能な head mismatch（`[]` vs 整数）を使っていた。
+      - Action: `src/games/eval_ml5/prover.rs` のテスト値を list-vs-list mismatch に修正し、`NM-ConsNil` を前提に導出できる形へ変更した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `20` [P2][Implementation] `EvalContML1` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `21` [P2][Implementation] `EvalContML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。
 - [ ] `22` [P2][Implementation] `TypingML4` prover を実装する（judgment-only parser / prover 本体 / pretty-printer / CLI 経路 / round-trip テスト）。

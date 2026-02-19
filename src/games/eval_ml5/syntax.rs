@@ -441,3 +441,340 @@ pub struct EvalML5Derivation {
     pub rule_name: String,
     pub subderivations: Vec<EvalML5Derivation>,
 }
+
+impl fmt::Display for EvalML5Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &EvalML5Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        EvalML5BinOp, EvalML5Derivation, EvalML5Env, EvalML5Expr, EvalML5Judgment,
+        EvalML5MatchClause, EvalML5Pattern, EvalML5Value,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::eval_ml5::parser::parse_source;
+
+    fn derivation(
+        judgment: EvalML5Judgment,
+        rule_name: &str,
+        subderivations: Vec<EvalML5Derivation>,
+    ) -> EvalML5Derivation {
+        EvalML5Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            EvalML5Judgment::EvalTo {
+                env: EvalML5Env::default(),
+                expr: EvalML5Expr::Nil,
+                value: EvalML5Value::Nil,
+            },
+            "E-Nil",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "|- [] evalto [] by E-Nil {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            EvalML5Judgment::EvalTo {
+                env: EvalML5Env::default(),
+                expr: EvalML5Expr::Match {
+                    scrutinee: Box::new(EvalML5Expr::Cons {
+                        head: Box::new(EvalML5Expr::Int(1)),
+                        tail: Box::new(EvalML5Expr::Nil),
+                    }),
+                    clauses: vec![
+                        EvalML5MatchClause {
+                            pattern: EvalML5Pattern::Nil,
+                            body: EvalML5Expr::Int(0),
+                        },
+                        EvalML5MatchClause {
+                            pattern: EvalML5Pattern::Cons {
+                                head: Box::new(EvalML5Pattern::Var("x".to_string())),
+                                tail: Box::new(EvalML5Pattern::Var("xs".to_string())),
+                            },
+                            body: EvalML5Expr::Var("x".to_string()),
+                        },
+                    ],
+                },
+                value: EvalML5Value::Int(1),
+            },
+            "E-MatchN",
+            vec![
+                derivation(
+                    EvalML5Judgment::EvalTo {
+                        env: EvalML5Env::default(),
+                        expr: EvalML5Expr::Cons {
+                            head: Box::new(EvalML5Expr::Int(1)),
+                            tail: Box::new(EvalML5Expr::Nil),
+                        },
+                        value: EvalML5Value::Cons {
+                            head: Box::new(EvalML5Value::Int(1)),
+                            tail: Box::new(EvalML5Value::Nil),
+                        },
+                    },
+                    "E-Cons",
+                    vec![
+                        derivation(
+                            EvalML5Judgment::EvalTo {
+                                env: EvalML5Env::default(),
+                                expr: EvalML5Expr::Int(1),
+                                value: EvalML5Value::Int(1),
+                            },
+                            "E-Int",
+                            Vec::new(),
+                        ),
+                        derivation(
+                            EvalML5Judgment::EvalTo {
+                                env: EvalML5Env::default(),
+                                expr: EvalML5Expr::Nil,
+                                value: EvalML5Value::Nil,
+                            },
+                            "E-Nil",
+                            Vec::new(),
+                        ),
+                    ],
+                ),
+                derivation(
+                    EvalML5Judgment::NotMatch {
+                        pattern: EvalML5Pattern::Nil,
+                        value: EvalML5Value::Cons {
+                            head: Box::new(EvalML5Value::Int(1)),
+                            tail: Box::new(EvalML5Value::Nil),
+                        },
+                    },
+                    "NM-ConsNil",
+                    Vec::new(),
+                ),
+                derivation(
+                    EvalML5Judgment::EvalTo {
+                        env: EvalML5Env::default(),
+                        expr: EvalML5Expr::Match {
+                            scrutinee: Box::new(EvalML5Expr::Cons {
+                                head: Box::new(EvalML5Expr::Int(1)),
+                                tail: Box::new(EvalML5Expr::Nil),
+                            }),
+                            clauses: vec![EvalML5MatchClause {
+                                pattern: EvalML5Pattern::Cons {
+                                    head: Box::new(EvalML5Pattern::Var("x".to_string())),
+                                    tail: Box::new(EvalML5Pattern::Var("xs".to_string())),
+                                },
+                                body: EvalML5Expr::Var("x".to_string()),
+                            }],
+                        },
+                        value: EvalML5Value::Int(1),
+                    },
+                    "E-MatchM2",
+                    vec![
+                        derivation(
+                            EvalML5Judgment::EvalTo {
+                                env: EvalML5Env::default(),
+                                expr: EvalML5Expr::Cons {
+                                    head: Box::new(EvalML5Expr::Int(1)),
+                                    tail: Box::new(EvalML5Expr::Nil),
+                                },
+                                value: EvalML5Value::Cons {
+                                    head: Box::new(EvalML5Value::Int(1)),
+                                    tail: Box::new(EvalML5Value::Nil),
+                                },
+                            },
+                            "E-Cons",
+                            vec![
+                                derivation(
+                                    EvalML5Judgment::EvalTo {
+                                        env: EvalML5Env::default(),
+                                        expr: EvalML5Expr::Int(1),
+                                        value: EvalML5Value::Int(1),
+                                    },
+                                    "E-Int",
+                                    Vec::new(),
+                                ),
+                                derivation(
+                                    EvalML5Judgment::EvalTo {
+                                        env: EvalML5Env::default(),
+                                        expr: EvalML5Expr::Nil,
+                                        value: EvalML5Value::Nil,
+                                    },
+                                    "E-Nil",
+                                    Vec::new(),
+                                ),
+                            ],
+                        ),
+                        derivation(
+                            EvalML5Judgment::Matches {
+                                pattern: EvalML5Pattern::Cons {
+                                    head: Box::new(EvalML5Pattern::Var("x".to_string())),
+                                    tail: Box::new(EvalML5Pattern::Var("xs".to_string())),
+                                },
+                                value: EvalML5Value::Cons {
+                                    head: Box::new(EvalML5Value::Int(1)),
+                                    tail: Box::new(EvalML5Value::Nil),
+                                },
+                                bindings: EvalML5Env(vec![
+                                    crate::games::eval_ml5::syntax::EvalML5Binding {
+                                        name: "x".to_string(),
+                                        value: EvalML5Value::Int(1),
+                                    },
+                                    crate::games::eval_ml5::syntax::EvalML5Binding {
+                                        name: "xs".to_string(),
+                                        value: EvalML5Value::Nil,
+                                    },
+                                ]),
+                            },
+                            "M-Cons",
+                            vec![
+                                derivation(
+                                    EvalML5Judgment::Matches {
+                                        pattern: EvalML5Pattern::Var("x".to_string()),
+                                        value: EvalML5Value::Int(1),
+                                        bindings: EvalML5Env(vec![
+                                            crate::games::eval_ml5::syntax::EvalML5Binding {
+                                                name: "x".to_string(),
+                                                value: EvalML5Value::Int(1),
+                                            },
+                                        ]),
+                                    },
+                                    "M-Var",
+                                    Vec::new(),
+                                ),
+                                derivation(
+                                    EvalML5Judgment::Matches {
+                                        pattern: EvalML5Pattern::Var("xs".to_string()),
+                                        value: EvalML5Value::Nil,
+                                        bindings: EvalML5Env(vec![
+                                            crate::games::eval_ml5::syntax::EvalML5Binding {
+                                                name: "xs".to_string(),
+                                                value: EvalML5Value::Nil,
+                                            },
+                                        ]),
+                                    },
+                                    "M-Var",
+                                    Vec::new(),
+                                ),
+                            ],
+                        ),
+                        derivation(
+                            EvalML5Judgment::EvalTo {
+                                env: EvalML5Env(vec![
+                                    crate::games::eval_ml5::syntax::EvalML5Binding {
+                                        name: "x".to_string(),
+                                        value: EvalML5Value::Int(1),
+                                    },
+                                    crate::games::eval_ml5::syntax::EvalML5Binding {
+                                        name: "xs".to_string(),
+                                        value: EvalML5Value::Nil,
+                                    },
+                                ]),
+                                expr: EvalML5Expr::Var("x".to_string()),
+                                value: EvalML5Value::Int(1),
+                            },
+                            "E-Var",
+                            Vec::new(),
+                        ),
+                    ],
+                ),
+            ],
+        );
+
+        let expected = "\
+|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1 by E-MatchN {
+  |- 1 :: [] evalto 1 :: [] by E-Cons {
+    |- 1 evalto 1 by E-Int {};
+    |- [] evalto [] by E-Nil {}
+  };
+  [] doesn't match 1 :: [] by NM-ConsNil {};
+  |- match 1 :: [] with x :: xs -> x evalto 1 by E-MatchM2 {
+    |- 1 :: [] evalto 1 :: [] by E-Cons {
+      |- 1 evalto 1 by E-Int {};
+      |- [] evalto [] by E-Nil {}
+    };
+    x :: xs matches 1 :: [] when (x = 1, xs = []) by M-Cons {
+      x matches 1 when (x = 1) by M-Var {};
+      xs matches [] when (xs = []) by M-Var {}
+    };
+    x = 1, xs = [] |- x evalto 1 by E-Var {}
+  }
+}";
+        assert_eq!(derivation.to_string(), expected);
+        parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
+
+    #[test]
+    fn keeps_parentheses_for_nested_pattern_display() {
+        let pattern = EvalML5Pattern::Cons {
+            head: Box::new(EvalML5Pattern::Cons {
+                head: Box::new(EvalML5Pattern::Var("x".to_string())),
+                tail: Box::new(EvalML5Pattern::Wildcard),
+            }),
+            tail: Box::new(EvalML5Pattern::Var("xs".to_string())),
+        };
+        assert_eq!(pattern.to_string(), "(x :: _) :: xs");
+
+        let expr = EvalML5Expr::Match {
+            scrutinee: Box::new(EvalML5Expr::Var("l".to_string())),
+            clauses: vec![EvalML5MatchClause {
+                pattern,
+                body: EvalML5Expr::Int(1),
+            }],
+        };
+        assert_eq!(expr.to_string(), "match l with (x :: _) :: xs -> 1");
+    }
+
+    #[test]
+    fn renders_sub_and_negative_numbers_in_list_values() {
+        let value = EvalML5Value::Cons {
+            head: Box::new(EvalML5Value::Int(-1)),
+            tail: Box::new(EvalML5Value::Cons {
+                head: Box::new(EvalML5Value::Int(2)),
+                tail: Box::new(EvalML5Value::Nil),
+            }),
+        };
+        let expr = EvalML5Expr::BinOp {
+            op: EvalML5BinOp::Minus,
+            left: Box::new(EvalML5Expr::Int(3)),
+            right: Box::new(EvalML5Expr::Int(4)),
+        };
+        let judgment = EvalML5Judgment::EvalTo {
+            env: EvalML5Env::default(),
+            expr,
+            value,
+        };
+        assert_eq!(judgment.to_string(), "|- 3 - 4 evalto -1 :: 2 :: []");
+    }
+}

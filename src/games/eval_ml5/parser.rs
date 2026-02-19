@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<EvalML5Derivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<EvalML5Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -976,7 +989,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::eval_ml5::syntax::{
         EvalML5Env, EvalML5Expr, EvalML5Judgment, EvalML5MatchClause, EvalML5Pattern, EvalML5Value,
     };
@@ -1117,5 +1130,53 @@ mod tests {
                 ],
             }
         );
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed = parse_judgment_source(
+            "|- match x with [] -> 0 | [] :: l' -> 1 | (y :: _) :: z -> y evalto 1",
+        )
+        .expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            EvalML5Judgment::EvalTo {
+                env: EvalML5Env::default(),
+                expr: EvalML5Expr::Match {
+                    scrutinee: Box::new(EvalML5Expr::Var("x".to_string())),
+                    clauses: vec![
+                        EvalML5MatchClause {
+                            pattern: EvalML5Pattern::Nil,
+                            body: EvalML5Expr::Int(0),
+                        },
+                        EvalML5MatchClause {
+                            pattern: EvalML5Pattern::Cons {
+                                head: Box::new(EvalML5Pattern::Nil),
+                                tail: Box::new(EvalML5Pattern::Var("l'".to_string())),
+                            },
+                            body: EvalML5Expr::Int(1),
+                        },
+                        EvalML5MatchClause {
+                            pattern: EvalML5Pattern::Cons {
+                                head: Box::new(EvalML5Pattern::Cons {
+                                    head: Box::new(EvalML5Pattern::Var("y".to_string())),
+                                    tail: Box::new(EvalML5Pattern::Wildcard),
+                                }),
+                                tail: Box::new(EvalML5Pattern::Var("z".to_string())),
+                            },
+                            body: EvalML5Expr::Var("y".to_string()),
+                        },
+                    ],
+                },
+                value: EvalML5Value::Int(1),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("|- [] evalto [] by E-Nil {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }
