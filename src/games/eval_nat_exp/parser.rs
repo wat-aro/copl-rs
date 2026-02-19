@@ -11,8 +11,22 @@ pub fn parse_source(source: &str) -> Result<EvalNatExpDerivation, CheckError> {
     let tokens = tokenize(source)?;
     let mut parser = Parser::new(tokens);
     let derivation = parser.parse_derivation()?;
+    parser.consume_trailing_semicolons();
     parser.expect_eof()?;
     Ok(derivation)
+}
+
+pub(super) fn parse_judgment_source(source: &str) -> Result<EvalNatExpJudgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
 }
 
 struct Parser {
@@ -213,6 +227,10 @@ impl Parser {
         }
     }
 
+    fn consume_trailing_semicolons(&mut self) {
+        while self.consume_semicolon() {}
+    }
+
     fn consume_evalto(&mut self) -> bool {
         self.consume_if(|kind| matches!(kind, TokenKind::EvalTo))
     }
@@ -303,7 +321,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::eval_nat_exp::syntax::{EvalNatExpExpr, EvalNatExpJudgment, NatTerm};
 
     #[test]
@@ -360,5 +378,31 @@ Z + S(Z) evalto S(Z) by E-Plus {
         assert_eq!(parsed.span.column, 1);
         assert_eq!(parsed.subderivations[0].span.line, 3);
         assert_eq!(parsed.subderivations[0].span.column, 3);
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed =
+            parse_judgment_source("S(Z) * (S(Z) + Z) evalto S(Z)").expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            EvalNatExpJudgment::EvalTo {
+                expr: EvalNatExpExpr::Times(
+                    Box::new(EvalNatExpExpr::Nat(NatTerm::S(Box::new(NatTerm::Z)))),
+                    Box::new(EvalNatExpExpr::Plus(
+                        Box::new(EvalNatExpExpr::Nat(NatTerm::S(Box::new(NatTerm::Z)))),
+                        Box::new(EvalNatExpExpr::Nat(NatTerm::Z)),
+                    )),
+                ),
+                value: NatTerm::S(Box::new(NatTerm::Z)),
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("Z evalto Z by E-Const {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("expected end of input"));
     }
 }
