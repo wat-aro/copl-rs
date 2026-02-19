@@ -19,6 +19,19 @@ pub fn parse_source(source: &str) -> Result<TypingML4Derivation, CheckError> {
     Ok(derivation)
 }
 
+pub(super) fn parse_judgment_source(source: &str) -> Result<TypingML4Judgment, CheckError> {
+    if source.trim().is_empty() {
+        return Err(CheckError::parse("input is empty"));
+    }
+
+    let tokens = tokenize(source)?;
+    let mut parser = Parser::new(tokens);
+    let judgment = parser.parse_judgment()?;
+    parser.consume_trailing_semicolons();
+    parser.expect_eof()?;
+    Ok(judgment)
+}
+
 struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -721,7 +734,7 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_source;
+    use super::{parse_judgment_source, parse_source};
     use crate::games::typing_ml4::syntax::{
         TypingML4BinOp, TypingML4Env, TypingML4Expr, TypingML4Judgment, TypingML4Type,
     };
@@ -830,5 +843,36 @@ mod tests {
         assert_eq!(env.0[0].name, "f");
         assert_eq!(env.0[0].ty.to_string(), "(int -> int) list -> bool");
         assert_eq!(ty.to_string(), "(int -> int) list -> bool");
+    }
+
+    #[test]
+    fn parses_judgment_only_input_for_prover() {
+        let parsed =
+            parse_judgment_source("|- fun x -> x + 1 : int -> int").expect("judgment should parse");
+        assert_eq!(
+            parsed,
+            TypingML4Judgment::HasType {
+                env: TypingML4Env::default(),
+                expr: TypingML4Expr::Fun {
+                    param: "x".to_string(),
+                    body: Box::new(TypingML4Expr::BinOp {
+                        op: TypingML4BinOp::Plus,
+                        left: Box::new(TypingML4Expr::Var("x".to_string())),
+                        right: Box::new(TypingML4Expr::Int(1)),
+                    }),
+                },
+                ty: TypingML4Type::Fun {
+                    param: Box::new(TypingML4Type::Int),
+                    ret: Box::new(TypingML4Type::Int),
+                },
+            }
+        );
+    }
+
+    #[test]
+    fn rejects_derivation_input_in_judgment_only_parser() {
+        let err = parse_judgment_source("|- 1 : int by T-Int {}")
+            .expect_err("judgment-only parser should reject derivation");
+        assert!(err.message().contains("unexpected trailing tokens"));
     }
 }

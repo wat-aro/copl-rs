@@ -198,7 +198,7 @@ impl TypingML4Expr {
                 {
                     right.fmt_with_precedence(f, 0)?;
                 } else {
-                    right.fmt_with_precedence(f, op.precedence())?;
+                    right.fmt_with_precedence(f, op.precedence() + 1)?;
                 }
             }
             Self::If {
@@ -302,4 +302,116 @@ pub struct TypingML4Derivation {
     pub judgment: TypingML4Judgment,
     pub rule_name: String,
     pub subderivations: Vec<TypingML4Derivation>,
+}
+
+impl fmt::Display for TypingML4Derivation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        format_derivation(self, f, 0)
+    }
+}
+
+fn format_derivation(
+    derivation: &TypingML4Derivation,
+    f: &mut fmt::Formatter<'_>,
+    indent: usize,
+) -> fmt::Result {
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "{} by {}", derivation.judgment, derivation.rule_name)?;
+    if derivation.subderivations.is_empty() {
+        return write!(f, " {{}}");
+    }
+
+    writeln!(f, " {{")?;
+    for (index, subderivation) in derivation.subderivations.iter().enumerate() {
+        format_derivation(subderivation, f, indent + 1)?;
+        if index + 1 < derivation.subderivations.len() {
+            writeln!(f, ";")?;
+        } else {
+            writeln!(f)?;
+        }
+    }
+    f.write_str(&"  ".repeat(indent))?;
+    write!(f, "}}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        TypingML4BinOp, TypingML4Derivation, TypingML4Env, TypingML4Expr, TypingML4Judgment,
+        TypingML4Type,
+    };
+    use crate::core::SourceSpan;
+    use crate::games::typing_ml4::parser::parse_source;
+
+    fn derivation(
+        judgment: TypingML4Judgment,
+        rule_name: &str,
+        subderivations: Vec<TypingML4Derivation>,
+    ) -> TypingML4Derivation {
+        TypingML4Derivation {
+            span: SourceSpan { line: 1, column: 1 },
+            judgment,
+            rule_name: rule_name.to_string(),
+            subderivations,
+        }
+    }
+
+    #[test]
+    fn formats_leaf_derivation() {
+        let derivation = derivation(
+            TypingML4Judgment::HasType {
+                env: TypingML4Env::default(),
+                expr: TypingML4Expr::Int(1),
+                ty: TypingML4Type::Int,
+            },
+            "T-Int",
+            Vec::new(),
+        );
+
+        assert_eq!(derivation.to_string(), "|- 1 : int by T-Int {}");
+    }
+
+    #[test]
+    fn formats_nested_derivation_in_checker_accepted_shape() {
+        let derivation = derivation(
+            TypingML4Judgment::HasType {
+                env: TypingML4Env::default(),
+                expr: TypingML4Expr::BinOp {
+                    op: TypingML4BinOp::Plus,
+                    left: Box::new(TypingML4Expr::Int(1)),
+                    right: Box::new(TypingML4Expr::Int(2)),
+                },
+                ty: TypingML4Type::Int,
+            },
+            "T-Plus",
+            vec![
+                derivation(
+                    TypingML4Judgment::HasType {
+                        env: TypingML4Env::default(),
+                        expr: TypingML4Expr::Int(1),
+                        ty: TypingML4Type::Int,
+                    },
+                    "T-Int",
+                    Vec::new(),
+                ),
+                derivation(
+                    TypingML4Judgment::HasType {
+                        env: TypingML4Env::default(),
+                        expr: TypingML4Expr::Int(2),
+                        ty: TypingML4Type::Int,
+                    },
+                    "T-Int",
+                    Vec::new(),
+                ),
+            ],
+        );
+
+        let expected = "\
+|- 1 + 2 : int by T-Plus {
+  |- 1 : int by T-Int {};
+  |- 2 : int by T-Int {}
+}";
+        assert_eq!(derivation.to_string(), expected);
+        parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
 }
