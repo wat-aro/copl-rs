@@ -330,7 +330,7 @@
 
 #### 背景
 
-- 現行実装（`checker`/`prover`）は 21 game 対応だが、公開 syntax ページには未対応 game が追加で存在する。
+- 現行実装（`checker`/`prover`）は 23 game 対応だが、公開 syntax ページには未対応 game が追加で存在する。
 - 実装対象の見落としを防ぐため、確認済み差分を `docs/PLAN.md` の着手順バックログに明示する。
 
 #### 差分確認メモ（2026-02-20）
@@ -346,6 +346,9 @@
 - 2026-02-20（`03` 完了後）時点の残未対応 game:
   - `TypingML5`
   - `TypingML6`
+  - `PolyTypingML3`
+  - `EvalRefML3`
+- 2026-02-20（`04` 完了後）時点の残未対応 game:
   - `PolyTypingML3`
   - `EvalRefML3`
 - `TypingML5` は `<title>` / `<h1>` が欠落しているが、syntax と rule 本体は公開されていることを確認。
@@ -509,7 +512,54 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `04` [P1][Implementation] `TypingML5` / `TypingML6` を `checker`/`prover` の対象に追加し、list/拡張構文を含む回帰テストを追加する。
+- [x] `04` [P1][Implementation] `TypingML5` / `TypingML6` を `checker`/`prover` の対象に追加し、list/拡張構文を含む回帰テストを追加する。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `src/core/mod.rs` の `GameKind` に `TypingML5` / `TypingML6` を追加し、`as_str` / `TryFrom<&str>` を更新。
+      - `src/games/typing_ml5/mod.rs` と `src/games/typing_ml6/mod.rs` を追加し、`TypingML4` 実装へ委譲する checker/prover アダプタ（`TypingML5Game` / `TypingML6Game` / `prove`）を実装。
+      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game TypingML5` / `--game TypingML6` をルーティング。
+      - 委譲実装で non-derivable 診断のゲーム名が `TypingML4` のままにならないよう、`TypingML5` / `TypingML6` 向けに診断メッセージのゲーム名リライトを追加。
+    - テスト:
+      - `src/core/mod.rs`: `parses_typing_ml5_game_kind_case_insensitively` / `parses_typing_ml6_game_kind_case_insensitively`
+      - `src/cli.rs`: `parses_checker_with_derivation_system_name_typing_ml5` / `keeps_backward_compatibility_for_lowercase_typing_ml5` / `parses_checker_with_derivation_system_name_typing_ml6` / `keeps_backward_compatibility_for_lowercase_typing_ml6`
+      - `src/lib.rs`: `routes_checker_typing_ml5_with_derivation_system_name` / `routes_prover_typing_ml5_and_prints_derivation` / `routes_prover_typing_ml5_with_invalid_judgment_to_parse_error` / `routes_prover_typing_ml5_with_non_derivable_judgment_to_check_error` / `prover_typing_ml5_output_round_trips_with_list_extended_expression`
+      - `src/lib.rs`: `routes_checker_typing_ml6_with_derivation_system_name` / `routes_prover_typing_ml6_and_prints_derivation` / `routes_prover_typing_ml6_with_invalid_judgment_to_parse_error` / `routes_prover_typing_ml6_with_non_derivable_judgment_to_check_error` / `prover_typing_ml6_output_round_trips_with_list_extended_expression`
+      - `cargo test typing_ml5`
+      - `cargo test typing_ml6`
+    - ドキュメント:
+      - `README.md`
+      - `docs/design.md`
+      - `AGENTS.md`
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: `GameKind` が `TypingML5` / `TypingML6` を受理できず CLI パースが失敗する。
+      - Action: `GameKind` の variant / `as_str` / `TryFrom<&str>` と core/CLI テストを追加して受理経路を修正。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `checker` / `prover` dispatch 未接続でルーティングが失敗する。
+      - Action: `src/games/mod.rs` / `src/lib.rs` に `TypingML5` / `TypingML6` 分岐を追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 委譲実装で non-derivable 診断のゲーム名が `TypingML4` のままになる。
+      - Action: `src/games/typing_ml5/mod.rs` / `src/games/typing_ml6/mod.rs` に診断メッセージのゲーム名リライトを追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: list/拡張構文（`let rec` + `match` + `::`）を含む回帰テストが未整備。
+      - Action: `src/lib.rs` に `TypingML5` / `TypingML6` の list/拡張構文 round-trip 回帰を追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `05` [P1][Implementation] `PolyTypingML3` を `checker`/`prover` の対象に追加し、多相型環境の最小回帰テストを追加する。
 - [ ] `06` [P1][Implementation] `EvalRefML3` を `checker`/`prover` の対象に追加し、store を伴う評価規則の回帰テストを追加する。
 - [ ] `07` [P1][Validation] 追加 game 対応後に `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5）を更新する。

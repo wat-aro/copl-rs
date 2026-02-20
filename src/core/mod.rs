@@ -19,6 +19,8 @@ pub enum GameKind {
     TypingML2,
     TypingML3,
     TypingML4,
+    TypingML5,
+    TypingML6,
     PolyTypingML4,
     NamelessML3,
     EvalNamelessML3,
@@ -45,6 +47,8 @@ impl GameKind {
             Self::TypingML2 => "TypingML2",
             Self::TypingML3 => "TypingML3",
             Self::TypingML4 => "TypingML4",
+            Self::TypingML5 => "TypingML5",
+            Self::TypingML6 => "TypingML6",
             Self::PolyTypingML4 => "PolyTypingML4",
             Self::NamelessML3 => "NamelessML3",
             Self::EvalNamelessML3 => "EvalNamelessML3",
@@ -90,6 +94,10 @@ impl TryFrom<&str> for GameKind {
             Ok(Self::TypingML3)
         } else if value.eq_ignore_ascii_case("TypingML4") {
             Ok(Self::TypingML4)
+        } else if value.eq_ignore_ascii_case("TypingML5") {
+            Ok(Self::TypingML5)
+        } else if value.eq_ignore_ascii_case("TypingML6") {
+            Ok(Self::TypingML6)
         } else if value.eq_ignore_ascii_case("PolyTypingML4") {
             Ok(Self::PolyTypingML4)
         } else if value.eq_ignore_ascii_case("NamelessML3") {
@@ -406,6 +414,24 @@ mod tests {
 
         let lowercase = GameKind::try_from("typingml4").expect("typingml4 should parse");
         assert_eq!(lowercase.as_str(), "TypingML4");
+    }
+
+    #[test]
+    fn parses_typing_ml5_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("TypingML5").expect("TypingML5 should parse");
+        assert_eq!(canonical.as_str(), "TypingML5");
+
+        let lowercase = GameKind::try_from("typingml5").expect("typingml5 should parse");
+        assert_eq!(lowercase.as_str(), "TypingML5");
+    }
+
+    #[test]
+    fn parses_typing_ml6_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("TypingML6").expect("TypingML6 should parse");
+        assert_eq!(canonical.as_str(), "TypingML6");
+
+        let lowercase = GameKind::try_from("typingml6").expect("typingml6 should parse");
+        assert_eq!(lowercase.as_str(), "TypingML6");
     }
 
     #[test]
