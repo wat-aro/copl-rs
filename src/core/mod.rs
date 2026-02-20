@@ -16,6 +16,8 @@ pub enum GameKind {
     EvalML6,
     EvalContML1,
     EvalContML4,
+    TypingML2,
+    TypingML3,
     TypingML4,
     PolyTypingML4,
     NamelessML3,
@@ -40,6 +42,8 @@ impl GameKind {
             Self::EvalML6 => "EvalML6",
             Self::EvalContML1 => "EvalContML1",
             Self::EvalContML4 => "EvalContML4",
+            Self::TypingML2 => "TypingML2",
+            Self::TypingML3 => "TypingML3",
             Self::TypingML4 => "TypingML4",
             Self::PolyTypingML4 => "PolyTypingML4",
             Self::NamelessML3 => "NamelessML3",
@@ -80,6 +84,10 @@ impl TryFrom<&str> for GameKind {
             Ok(Self::EvalContML1)
         } else if value.eq_ignore_ascii_case("EvalContML4") {
             Ok(Self::EvalContML4)
+        } else if value.eq_ignore_ascii_case("TypingML2") {
+            Ok(Self::TypingML2)
+        } else if value.eq_ignore_ascii_case("TypingML3") {
+            Ok(Self::TypingML3)
         } else if value.eq_ignore_ascii_case("TypingML4") {
             Ok(Self::TypingML4)
         } else if value.eq_ignore_ascii_case("PolyTypingML4") {
@@ -371,6 +379,24 @@ mod tests {
 
         let lowercase = GameKind::try_from("evalcontml4").expect("evalcontml4 should parse");
         assert_eq!(lowercase.as_str(), "EvalContML4");
+    }
+
+    #[test]
+    fn parses_typing_ml2_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("TypingML2").expect("TypingML2 should parse");
+        assert_eq!(canonical.as_str(), "TypingML2");
+
+        let lowercase = GameKind::try_from("typingml2").expect("typingml2 should parse");
+        assert_eq!(lowercase.as_str(), "TypingML2");
+    }
+
+    #[test]
+    fn parses_typing_ml3_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("TypingML3").expect("TypingML3 should parse");
+        assert_eq!(canonical.as_str(), "TypingML3");
+
+        let lowercase = GameKind::try_from("typingml3").expect("typingml3 should parse");
+        assert_eq!(lowercase.as_str(), "TypingML3");
     }
 
     #[test]

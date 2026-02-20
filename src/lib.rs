@@ -55,6 +55,8 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::EvalML6 => games::eval_ml6::prove(&source),
                 core::GameKind::EvalContML1 => games::eval_cont_ml1::prove(&source),
                 core::GameKind::EvalContML4 => games::eval_cont_ml4::prove(&source),
+                core::GameKind::TypingML2 => games::typing_ml2::prove(&source),
+                core::GameKind::TypingML3 => games::typing_ml3::prove(&source),
                 core::GameKind::TypingML4 => games::typing_ml4::prove(&source),
                 core::GameKind::PolyTypingML4 => games::poly_typing_ml4::prove(&source),
                 core::GameKind::NamelessML3 => games::nameless_ml3::prove(&source),
@@ -1752,6 +1754,163 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn routes_prover_typing_ml2_and_prints_derivation() {
+        let mut stdin = &b"|- if 1 < 2 then 3 + 4 else 5 : int\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- if 1 < 2 then 3 + 4 else 5 : int by T-If {
+  |- 1 < 2 : bool by T-Lt {
+    |- 1 : int by T-Int {};
+    |- 2 : int by T-Int {}
+  };
+  |- 3 + 4 : int by T-Plus {
+    |- 3 : int by T-Int {};
+    |- 4 : int by T-Int {}
+  };
+  |- 5 : int by T-Int {}
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_typing_ml2_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("unexpected trailing tokens"));
+    }
+
+    #[test]
+    fn routes_prover_typing_ml2_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 1 : bool\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in TypingML2"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 1 : int, actual: |- 1 : bool"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace conclusion type with int"));
+    }
+
+    #[test]
+    fn prover_typing_ml2_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- let x = 1 in x + 2 : int\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("TypingML2", judgment);
+    }
+
+    #[test]
+    fn routes_prover_typing_ml3_and_prints_derivation() {
+        let mut stdin = &b"|- let f = fun x -> x + 1 in f 2 : int\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- let f = fun x -> x + 1 in f 2 : int by T-Let {
+  |- fun x -> x + 1 : int -> int by T-Fun {
+    x : int |- x + 1 : int by T-Plus {
+      x : int |- x : int by T-Var {};
+      x : int |- 1 : int by T-Int {}
+    }
+  };
+  f : int -> int |- f 2 : int by T-App {
+    f : int -> int |- f : int -> int by T-Var {};
+    f : int -> int |- 2 : int by T-Int {}
+  }
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_typing_ml3_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("unexpected trailing tokens"));
+    }
+
+    #[test]
+    fn routes_prover_typing_ml3_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 1 : bool\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "TypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in TypingML3"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 1 : int, actual: |- 1 : bool"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace conclusion type with int"));
+    }
+
+    #[test]
+    fn prover_typing_ml3_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- let f = fun x -> x + 1 in f 2 : int\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("TypingML3", judgment);
+    }
+
+    #[test]
     fn routes_prover_typing_ml4_and_prints_derivation() {
         let mut stdin = &b"|- fun x -> x + 1 : int -> int\n"[..];
         let mut out = Vec::new();
@@ -2655,6 +2814,42 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert_eq!(text.trim(), "|- 1 >> _ evalto 1");
+    }
+
+    #[test]
+    fn routes_checker_typing_ml2_with_derivation_system_name() {
+        let mut stdin = &b"// -*- copl-game: \"TypingML2\" -*-\n\n|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "TypingML2"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- 1 : int");
+    }
+
+    #[test]
+    fn routes_checker_typing_ml3_with_derivation_system_name() {
+        let mut stdin = &b"// -*- copl-game: \"TypingML3\" -*-\n\n|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "TypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- 1 : int");
     }
 
     #[test]

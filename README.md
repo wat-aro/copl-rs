@@ -40,13 +40,15 @@ cargo run -- prover --game <name> [file]
 - `prover --game EvalML6` currently accepts the same judgment surface as `EvalML5` (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`, `p matches v when (...)`, `p doesn't match v`) and prints a generated derivation in plain text.
 - `prover --game EvalContML1` accepts a single judgment (`... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalContML4` accepts a single judgment (`Gamma |- ... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
+- `prover --game TypingML2` currently accepts the same typing-judgment surface as `TypingML4` (`Gamma |- e : t`) and prints a generated derivation in plain text.
+- `prover --game TypingML3` currently accepts the same typing-judgment surface as `TypingML4` (`Gamma |- e : t`) and prints a generated derivation in plain text.
 - `prover --game TypingML4` accepts a single typing judgment (`Gamma |- e : t`) and prints a generated derivation in plain text.
 - `prover --game PolyTypingML4` accepts a single typing judgment (`Gamma |- e : t`) and prints a generated derivation in plain text.
 - `prover --game NamelessML3` accepts a single translation judgment (`Gamma |- e ==> e'`) and prints a generated derivation in plain text.
 - `prover --game EvalNamelessML3` accepts a single evaluation judgment (`Gamma |- e evalto v`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalNatExp` accepts a single judgment (`... evalto ...`, `... plus ... is ...`, `... times ... is ...`) and prints a generated derivation in plain text.
 - `prover --game ReduceNatExp` accepts a single judgment (`... ---> ...`, `... -d-> ...`, `... -*-> ...`, `... plus ... is ...`, `... times ... is ...`) and prints a generated derivation in plain text.
-- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, `prover --game EvalML4`, `prover --game EvalML5`, `prover --game EvalML6`, `prover --game EvalContML1`, `prover --game EvalContML4`, `prover --game TypingML4`, `prover --game PolyTypingML4`, `prover --game NamelessML3`, `prover --game EvalNamelessML3`, `prover --game EvalNatExp`, and `prover --game ReduceNatExp` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
+- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, `prover --game EvalML4`, `prover --game EvalML5`, `prover --game EvalML6`, `prover --game EvalContML1`, `prover --game EvalContML4`, `prover --game TypingML2`, `prover --game TypingML3`, `prover --game TypingML4`, `prover --game PolyTypingML4`, `prover --game NamelessML3`, `prover --game EvalNamelessML3`, `prover --game EvalNatExp`, and `prover --game ReduceNatExp` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
 
 Examples:
 
@@ -67,6 +69,8 @@ echo "|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1" | cargo run -- prov
 echo "|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1" | cargo run -- prover --game EvalML6
 echo "3 + 5 evalto 8" | cargo run -- prover --game EvalContML1
 echo "|- 1 + 2 evalto 3" | cargo run -- prover --game EvalContML4
+echo "|- let x = 1 in x + 2 : int" | cargo run -- prover --game TypingML2
+echo "|- let f = fun x -> x + 1 in f 2 : int" | cargo run -- prover --game TypingML3
 echo "|- fun x -> x + 1 : int -> int" | cargo run -- prover --game TypingML4
 echo "|- fun x -> x : 'a -> 'a" | cargo run -- prover --game PolyTypingML4
 echo "|- let x = 3 in x ==> let . = 3 in #1" | cargo run -- prover --game NamelessML3
@@ -91,6 +95,8 @@ EvalML5
 EvalML6
 EvalContML1
 EvalContML4
+TypingML2
+TypingML3
 TypingML4
 PolyTypingML4
 NamelessML3
