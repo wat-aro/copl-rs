@@ -1295,6 +1295,28 @@ mod tests {
     }
 
     #[test]
+    fn parses_application_tighter_than_cons() {
+        let source = "|- f 1::2::[] evalto [] by E-Unknown {}";
+        let parsed = parse_source(source).expect("parser should succeed");
+        let EvalContML4Judgment::EvalTo { expr, .. } = parsed.judgment else {
+            panic!("expected evalto");
+        };
+        assert_eq!(
+            expr,
+            EvalContML4Expr::Cons {
+                head: Box::new(EvalContML4Expr::App {
+                    func: Box::new(EvalContML4Expr::Var("f".to_string())),
+                    arg: Box::new(EvalContML4Expr::Int(1)),
+                }),
+                tail: Box::new(EvalContML4Expr::Cons {
+                    head: Box::new(EvalContML4Expr::Int(2)),
+                    tail: Box::new(EvalContML4Expr::Nil),
+                }),
+            }
+        );
+    }
+
+    #[test]
     fn parses_judgment_only_input_for_prover() {
         let parsed = parse_judgment_source("|- if 4 < 5 then 2 + 3 else 8 * 8 evalto 5")
             .expect("judgment should parse");

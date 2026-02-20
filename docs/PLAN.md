@@ -93,7 +93,43 @@
   - 順序を入れ替える場合は、この節に理由を追記する。
   - 実装完了後は `AGENTS.md` の Design Principles にある判断基準（高凝集・低結合 / `YAGNI` / `KISS`）で 5 回レビューし、各回の改善内容（または指摘なし）を完了メモに記録する。
 
-- [ ] `01` [P1][Test] parser 回帰テストを追加し、`f 1::2::[]` が `(f 1)::2::[]` にパースされることを固定する（対象 5 game）。
+- [x] `01` [P1][Test] parser 回帰テストを追加し、`f 1::2::[]` が `(f 1)::2::[]` にパースされることを固定する（対象 5 game）。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4` の `parser.rs` に `parses_application_tighter_than_cons` を追加。
+    - テスト:
+      - `cargo test parses_application_tighter_than_cons`
+    - ドキュメント:
+      - `docs/PLAN.md` の `01` を完了へ更新。
+    - R1:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `02` [P1][Implementation] parser を修正し、`app` が `cons` より強く結合するよう統一する（対象 5 game）。
 - [ ] `03` [P1][Test] syntax 回帰テストを追加し、`App(f, Cons(...))` と `Cons(App(f,1), ...)` の括弧出力を固定する（対象 5 game）。
 - [ ] `04` [P1][Implementation] syntax の precedence / `fmt_with_precedence` を修正し、`prover` 出力で優先順位が崩れないようにする（対象 5 game）。

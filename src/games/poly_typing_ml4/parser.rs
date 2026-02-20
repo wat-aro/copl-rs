@@ -892,6 +892,26 @@ mod tests {
     }
 
     #[test]
+    fn parses_application_tighter_than_cons() {
+        let source = "|- f 1::2::[] : int list by T-Unknown {}";
+        let parsed = parse_source(source).expect("parser should succeed");
+        let PolyTypingML4Judgment::HasType { expr, .. } = parsed.judgment;
+        assert_eq!(
+            expr,
+            PolyTypingML4Expr::Cons {
+                head: Box::new(PolyTypingML4Expr::App {
+                    func: Box::new(PolyTypingML4Expr::Var("f".to_string())),
+                    arg: Box::new(PolyTypingML4Expr::Int(1)),
+                }),
+                tail: Box::new(PolyTypingML4Expr::Cons {
+                    head: Box::new(PolyTypingML4Expr::Int(2)),
+                    tail: Box::new(PolyTypingML4Expr::Nil),
+                }),
+            }
+        );
+    }
+
+    #[test]
     fn parses_judgment_only_input_for_prover() {
         let parsed =
             parse_judgment_source("|- fun x -> x : 'a -> 'a").expect("judgment should parse");
