@@ -56,9 +56,49 @@
 
 ## 現在の計画
 
-### 現在進行中の計画はありません
+### ML 系 `app`/`cons` 優先順位修正計画
 
-- 次の計画は backlog 起票後にこの節へ追加する。
+最終更新日: 2026-02-20
+この計画のスコープ: ML 系 game の式 `f 1::2::[]` を `(f 1)::2::[]` と解釈する仕様を parser / pretty-printer / prover round-trip まで一貫させる。
+
+#### 背景
+
+- 現行実装では ML 系 game の `app` と `cons` の優先順位が仕様どおりかを直接固定する回帰テストが不足している。
+- 目標は `f 1::2::[]` を `f (1::2::[])` ではなく `(f 1)::2::[]` と扱うこと。
+
+#### 対象スコープ
+
+- 対象 game: `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4`
+- parser の `app`/`cons` 優先順位
+- syntax の `Display`（括弧付与規則）
+- `prover -> checker` round-trip 回帰
+
+#### 非スコープ
+
+- list 構文を持たない game への横展開
+- evaluator/checker の規則追加
+- CLI 契約変更
+
+#### 実装方針
+
+- t-wada スタイル TDD（`Red -> Green -> Refactor`）で進める。
+- 先に parser/syntax/lib の回帰テストを追加し、失敗を確認してから最小実装で修正する。
+- 変更は対象 5 game に限定し、共通化は今回必須の範囲を超えて導入しない（`YAGNI`）。
+
+#### バックログ（着手優先順）
+
+- 運用ルール:
+  - 未完了タスクは上から順に着手する。
+  - 優先度は `P1`（最優先）/ `P2`（中優先）/ `P3`（低優先）で表記する。
+  - 順序を入れ替える場合は、この節に理由を追記する。
+  - 実装完了後は `AGENTS.md` の Design Principles にある判断基準（高凝集・低結合 / `YAGNI` / `KISS`）で 5 回レビューし、各回の改善内容（または指摘なし）を完了メモに記録する。
+
+- [ ] `01` [P1][Test] parser 回帰テストを追加し、`f 1::2::[]` が `(f 1)::2::[]` にパースされることを固定する（対象 5 game）。
+- [ ] `02` [P1][Implementation] parser を修正し、`app` が `cons` より強く結合するよう統一する（対象 5 game）。
+- [ ] `03` [P1][Test] syntax 回帰テストを追加し、`App(f, Cons(...))` と `Cons(App(f,1), ...)` の括弧出力を固定する（対象 5 game）。
+- [ ] `04` [P1][Implementation] syntax の precedence / `fmt_with_precedence` を修正し、`prover` 出力で優先順位が崩れないようにする（対象 5 game）。
+- [ ] `05` [P1][Test] `src/lib.rs` に `prover -> checker` round-trip 回帰を追加し、`app`/`cons` 混在入力で AST 変形が起きないことを固定する（対象 5 game）。
+- [ ] `06` [P1][Validation] `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5 含む）を更新する。
 
 ## 履歴計画
 
