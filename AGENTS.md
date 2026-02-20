@@ -42,12 +42,13 @@ Last updated: 2026-02-20
 - `prover` is implemented for `TypingML4` (`copl-rs prover --game TypingML4 [file]`).
 - `prover` is implemented for `TypingML5` (`copl-rs prover --game TypingML5 [file]`).
 - `prover` is implemented for `TypingML6` (`copl-rs prover --game TypingML6 [file]`).
+- `prover` is implemented for `PolyTypingML3` (`copl-rs prover --game PolyTypingML3 [file]`).
 - `prover` is implemented for `PolyTypingML4` (`copl-rs prover --game PolyTypingML4 [file]`).
 - `prover` is implemented for `NamelessML3` (`copl-rs prover --game NamelessML3 [file]`).
 - `prover` is implemented for `EvalNamelessML3` (`copl-rs prover --game EvalNamelessML3 [file]`).
 - `prover` is implemented for `EvalNatExp` (`copl-rs prover --game EvalNatExp [file]`).
 - `prover` is implemented for `ReduceNatExp` (`copl-rs prover --game ReduceNatExp [file]`).
-- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalML6` / `EvalContML1` / `EvalContML4` / `TypingML2` / `TypingML3` / `TypingML4` / `TypingML5` / `TypingML6` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp`, `prover` currently returns a not-implemented error.
+- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalML6` / `EvalContML1` / `EvalContML4` / `TypingML2` / `TypingML3` / `TypingML4` / `TypingML5` / `TypingML6` / `PolyTypingML3` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -91,6 +92,7 @@ Last updated: 2026-02-20
 - `games/typing_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/typing_ml5` currently provides `checker` / `prover` adapters that reuse `games/typing_ml4` internals as an incremental bootstrap.
 - `games/typing_ml6` currently provides `checker` / `prover` adapters that reuse `games/typing_ml4` internals as an incremental bootstrap.
+- `games/poly_typing_ml3` currently provides `checker` / `prover` adapters that reuse `games/poly_typing_ml4` internals as an incremental bootstrap.
 - `games/poly_typing_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/nameless_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_nameless_ml3` is split into `syntax` / `parser` / `checker` / `prover`.

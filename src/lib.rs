@@ -60,6 +60,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::TypingML4 => games::typing_ml4::prove(&source),
                 core::GameKind::TypingML5 => games::typing_ml5::prove(&source),
                 core::GameKind::TypingML6 => games::typing_ml6::prove(&source),
+                core::GameKind::PolyTypingML3 => games::poly_typing_ml3::prove(&source),
                 core::GameKind::PolyTypingML4 => games::poly_typing_ml4::prove(&source),
                 core::GameKind::NamelessML3 => games::nameless_ml3::prove(&source),
                 core::GameKind::EvalNamelessML3 => games::eval_nameless_ml3::prove(&source),
@@ -2197,6 +2198,76 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn routes_prover_poly_typing_ml3_and_prints_derivation() {
+        let mut stdin = &b"|- fun x -> x : 'a -> 'a\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        let expected = "\
+|- fun x -> x : 'a -> 'a by T-Abs {
+  x : 'a |- x : 'a by T-Var {}
+}";
+        assert_eq!(text.trim(), expected);
+    }
+
+    #[test]
+    fn routes_prover_poly_typing_ml3_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 1 : int by T-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("unexpected trailing tokens"));
+    }
+
+    #[test]
+    fn routes_prover_poly_typing_ml3_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- 1 : bool\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "PolyTypingML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in PolyTypingML3"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- 1 : int, actual: |- 1 : bool"));
+        assert!(result
+            .to_string()
+            .contains("fix: replace conclusion type with int"));
+    }
+
+    #[test]
+    fn prover_poly_typing_ml3_output_round_trips_with_polymorphic_environment() {
+        let judgment = "|- let id = fun x -> x in let y = id 1 in id true : bool\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("PolyTypingML3", judgment);
+    }
+
+    #[test]
     fn routes_prover_poly_typing_ml4_and_prints_derivation() {
         let mut stdin = &b"|- fun x -> x : 'a -> 'a\n"[..];
         let mut out = Vec::new();
@@ -3061,6 +3132,25 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
 
         let result = run(
             vec!["copl-rs", "checker", "--game", "PolyTypingML4"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- fun x -> x : 'a -> 'a");
+    }
+
+    #[test]
+    fn routes_checker_poly_typing_ml3_with_derivation_system_name() {
+        let mut stdin =
+            &b"// -*- copl-game: \"PolyTypingML3\" -*-\n\n|- fun x -> x : 'a -> 'a by T-Abs {\n  x : 'a |- x : 'a by T-Var {}\n}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "PolyTypingML3"],
             &mut stdin,
             &mut out,
             &mut err,
