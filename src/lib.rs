@@ -52,6 +52,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::EvalML3 => games::eval_ml3::prove(&source),
                 core::GameKind::EvalML4 => games::eval_ml4::prove(&source),
                 core::GameKind::EvalML5 => games::eval_ml5::prove(&source),
+                core::GameKind::EvalML6 => games::eval_ml6::prove(&source),
                 core::GameKind::EvalContML1 => games::eval_cont_ml1::prove(&source),
                 core::GameKind::EvalContML4 => games::eval_cont_ml4::prove(&source),
                 core::GameKind::TypingML4 => games::typing_ml4::prove(&source),
@@ -1356,6 +1357,47 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn routes_prover_eval_ml6_and_prints_derivation() {
+        let mut stdin = &b"|- 3 + 5 evalto 8\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML6"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert!(text.trim().starts_with("|- 3 + 5 evalto 8 by E-Plus {"));
+    }
+
+    #[test]
+    fn routes_prover_eval_ml6_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- 3 + 5 evalto 8 by E-Plus {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalML6"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected end of input"));
+    }
+
+    #[test]
+    fn prover_eval_ml6_output_round_trips_to_checker_root_judgment() {
+        let judgment = "|- 3 + 5 evalto 8\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalML6", judgment);
+    }
+
+    #[test]
     fn prover_eval_ml5_output_round_trips_to_checker_root_judgment() {
         let judgment = "|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1\n";
         let expected_root = judgment.trim();
@@ -2559,6 +2601,24 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert_eq!(text.trim(), "|- [] evalto []");
+    }
+
+    #[test]
+    fn routes_checker_eval_ml6_with_derivation_system_name() {
+        let mut stdin = &b"// -*- copl-game: \"EvalML6\" -*-\n\n|- 1 evalto 1 by E-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "EvalML6"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- 1 evalto 1");
     }
 
     #[test]

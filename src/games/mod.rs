@@ -11,6 +11,7 @@ pub mod eval_ml2;
 pub mod eval_ml3;
 pub mod eval_ml4;
 pub mod eval_ml5;
+pub mod eval_ml6;
 pub mod eval_nameless_ml3;
 pub mod eval_nat_exp;
 pub mod nameless_ml3;
@@ -33,6 +34,7 @@ pub fn run_checker(game: GameKind, source: &str) -> Result<CheckReport, CheckErr
         GameKind::EvalML3 => eval_ml3::EvalML3Game.check(source),
         GameKind::EvalML4 => eval_ml4::EvalML4Game.check(source),
         GameKind::EvalML5 => eval_ml5::EvalML5Game.check(source),
+        GameKind::EvalML6 => eval_ml6::EvalML6Game.check(source),
         GameKind::EvalContML1 => eval_cont_ml1::EvalContML1Game.check(source),
         GameKind::EvalContML4 => eval_cont_ml4::EvalContML4Game.check(source),
         GameKind::TypingML4 => typing_ml4::TypingML4Game.check(source),

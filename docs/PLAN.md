@@ -330,13 +330,20 @@
 
 #### 背景
 
-- 現行実装（`checker`/`prover`）は 18 game 対応だが、公開 syntax ページには未対応 game が追加で存在する。
+- 現行実装（`checker`/`prover`）は 19 game 対応だが、公開 syntax ページには未対応 game が追加で存在する。
 - 実装対象の見落としを防ぐため、確認済み差分を `docs/PLAN.md` の着手順バックログに明示する。
 
 #### 差分確認メモ（2026-02-20）
 
-- 公開ページ実在を確認した未対応 game:
+- 公開ページ実在を確認した当初未対応 game:
   - `EvalML6`
+  - `TypingML2`
+  - `TypingML3`
+  - `TypingML5`
+  - `TypingML6`
+  - `PolyTypingML3`
+  - `EvalRefML3`
+- 2026-02-20 時点の残未対応 game:
   - `TypingML2`
   - `TypingML3`
   - `TypingML5`
@@ -361,7 +368,7 @@
   - `EvalRefML3` は store を伴う状態モデル追加が必要で差分面積が最も広いため最後に置く。
 - 運用制約:
   - CLI 契約（`copl-rs checker|prover --game <name> [file]`）は変更しない。
-  - 各 game は `syntax` / `parser` / `checker` / `prover` を同一タスク内で揃える。
+  - `EvalML6` は `EvalML5` バックエンド委譲の incremental bootstrap を許容し、残タスクは `syntax` / `parser` / `checker` / `prover` を同一タスク内で揃える。
   - 各段階で回帰テストを追加してから次タスクへ進む。
 
 #### バックログ（着手優先順）
@@ -410,7 +417,52 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `02` [P1][Implementation] `EvalML6` を `checker`/`prover` の対象に追加し、最小導出ケースの回帰テストを追加する。
+- [x] `02` [P1][Implementation] `EvalML6` を `checker`/`prover` の対象に追加し、最小導出ケースの回帰テストを追加する。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `src/core/mod.rs` の `GameKind` に `EvalML6` を追加し、`as_str` / `TryFrom<&str>` を更新。
+      - `src/games/eval_ml6/mod.rs` を追加し、`EvalML5` 実装に委譲する checker/prover アダプタ（`EvalML6Game` / `prove`）を実装。
+      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game EvalML6` をルーティング。
+      - `EvalML5` 由来のエラーメッセージ内ゲーム名を `EvalML6` に置換する診断リライトを追加。
+    - テスト:
+      - `src/core/mod.rs`: `parses_eval_ml6_game_kind_case_insensitively`
+      - `src/cli.rs`: `parses_checker_with_derivation_system_name_eval_ml6` / `keeps_backward_compatibility_for_lowercase_eval_ml6`
+      - `src/lib.rs`: `routes_checker_eval_ml6_with_derivation_system_name` / `routes_prover_eval_ml6_and_prints_derivation` / `routes_prover_eval_ml6_with_invalid_judgment_to_parse_error` / `prover_eval_ml6_output_round_trips_to_checker_root_judgment`
+      - `cargo test eval_ml6`
+    - ドキュメント:
+      - `README.md`
+      - `docs/design.md`
+      - `AGENTS.md`
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: `EvalML6` 追加後も CLI 文字列パースが未対応
+      - Action: `GameKind` と CLI テストを追加して受理経路を修正
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `checker` / `prover` dispatch 未接続
+      - Action: `src/games/mod.rs` / `src/lib.rs` に `EvalML6` 分岐を追加
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 委譲実装で non-derivable 診断のゲーム名が `EvalML5` のままになる
+      - Action: `src/games/eval_ml6/mod.rs` に診断メッセージのゲーム名リライトを追加
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: ドキュメントが `EvalML6` 未対応のままで実装事実と不一致
+      - Action: `README.md` / `docs/design.md` / `AGENTS.md` を同期
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `03` [P1][Implementation] `TypingML2` / `TypingML3` を `checker`/`prover` の対象に追加し、型付け規則ごとの最小回帰テストを追加する。
 - [ ] `04` [P1][Implementation] `TypingML5` / `TypingML6` を `checker`/`prover` の対象に追加し、list/拡張構文を含む回帰テストを追加する。
 - [ ] `05` [P1][Implementation] `PolyTypingML3` を `checker`/`prover` の対象に追加し、多相型環境の最小回帰テストを追加する。

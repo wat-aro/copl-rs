@@ -462,6 +462,28 @@ mod tests {
     }
 
     #[test]
+    fn parses_checker_with_derivation_system_name_eval_ml6() {
+        let cli =
+            Cli::parse(vec!["copl-rs", "checker", "--game", "EvalML6"]).expect("cli should parse");
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game.as_str(), "EvalML6");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn keeps_backward_compatibility_for_lowercase_eval_ml6() {
+        let cli =
+            Cli::parse(vec!["copl-rs", "checker", "--game", "evalml6"]).expect("cli should parse");
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game.as_str(), "EvalML6");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
     fn parses_checker_with_derivation_system_name_eval_cont_ml1() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalContML1"])
             .expect("cli should parse");
