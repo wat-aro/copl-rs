@@ -323,6 +323,43 @@
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
+### `games/{GAME}.html` 差分反映計画（未対応 game 追加）
+
+最終更新日: 2026-02-20
+この計画のスコープ: 公開されている `https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/{GAME}.html` の syntax を基準に、現行実装の対象外 game をバックログへ追加する。
+
+#### 背景
+
+- 現行実装（`checker`/`prover`）は 18 game 対応だが、公開 syntax ページには未対応 game が追加で存在する。
+- 実装対象の見落としを防ぐため、確認済み差分を `docs/PLAN.md` の着手順バックログに明示する。
+
+#### 差分確認メモ（2026-02-20）
+
+- 公開ページ実在を確認した未対応 game:
+  - `EvalML6`
+  - `TypingML2`
+  - `TypingML3`
+  - `TypingML5`
+  - `TypingML6`
+  - `PolyTypingML3`
+  - `EvalRefML3`
+- `TypingML5` は `<title>` / `<h1>` が欠落しているが、syntax と rule 本体は公開されていることを確認。
+
+#### バックログ（着手優先順）
+
+- 運用ルール:
+  - 未完了タスクは上から順に着手する。
+  - 優先度は `P1`（最優先）/ `P2`（中優先）/ `P3`（低優先）で表記する。
+  - 順序を入れ替える場合は、この節に理由を追記する。
+
+- [ ] `01` [P1][Docs] 未対応 game 7 件の実装方針（checker/prover 対応順・依存関係）を確定し、`docs/design.md` と整合させる。
+- [ ] `02` [P1][Implementation] `EvalML6` を `checker`/`prover` の対象に追加し、最小導出ケースの回帰テストを追加する。
+- [ ] `03` [P1][Implementation] `TypingML2` / `TypingML3` を `checker`/`prover` の対象に追加し、型付け規則ごとの最小回帰テストを追加する。
+- [ ] `04` [P1][Implementation] `TypingML5` / `TypingML6` を `checker`/`prover` の対象に追加し、list/拡張構文を含む回帰テストを追加する。
+- [ ] `05` [P1][Implementation] `PolyTypingML3` を `checker`/`prover` の対象に追加し、多相型環境の最小回帰テストを追加する。
+- [ ] `06` [P1][Implementation] `EvalRefML3` を `checker`/`prover` の対象に追加し、store を伴う評価規則の回帰テストを追加する。
+- [ ] `07` [P1][Validation] 追加 game 対応後に `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5）を更新する。
+
 ## 履歴計画
 
 - 完了または凍結した計画は `docs/plans/` に保存する。
