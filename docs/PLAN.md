@@ -206,7 +206,45 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `04` [P1][Implementation] syntax の precedence / `fmt_with_precedence` を修正し、`prover` 出力で優先順位が崩れないようにする（対象 5 game）。
+- [x] `04` [P1][Implementation] syntax の precedence / `fmt_with_precedence` を修正し、`prover` 出力で優先順位が崩れないようにする（対象 5 game）。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4` の `syntax.rs` 実装を確認し、`Expr::precedence` が `App=5` / `Cons=1` で統一され、`fmt_with_precedence` が `App` 引数側で `self.precedence() + 1` を用いて括弧付与していることを確認。
+      - 追加実装は不要（既存実装が要件を満たしていたためコード変更なし）。
+      - 実地確認として、上記 5 game で `App(f, Cons(...))` / `Cons(App(f,1), ...)` を含む judgment を `prover` で導出し、その出力を `checker` へ再入力して全ケースで受理されることを確認。
+    - テスト:
+      - `cargo test formats_app_and_cons_with_expected_parentheses`
+    - ドキュメント:
+      - `docs/PLAN.md` の `04` を完了へ更新。
+    - R1:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `05` [P1][Test] `src/lib.rs` に `prover -> checker` round-trip 回帰を追加し、`app`/`cons` 混在入力で AST 変形が起きないことを固定する（対象 5 game）。
 - [ ] `06` [P1][Validation] `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5 含む）を更新する。
 
