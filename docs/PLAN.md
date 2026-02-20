@@ -345,6 +345,25 @@
   - `EvalRefML3`
 - `TypingML5` は `<title>` / `<h1>` が欠落しているが、syntax と rule 本体は公開されていることを確認。
 
+#### 実装方針確定メモ（2026-02-20）
+
+- checker/prover の対応順を次で確定:
+  1. `EvalML6`
+  2. `TypingML2` / `TypingML3`
+  3. `TypingML5` / `TypingML6`
+  4. `PolyTypingML3`
+  5. `EvalRefML3`
+- 依存関係の判断:
+  - `EvalML6` は既存 `EvalML1`-`EvalML5` の延長線上で着手コストが最小のため先行する。
+  - `TypingML2` / `TypingML3` は `TypingML5` / `TypingML6` より規則面の複雑度が低く、型付け系拡張の土台として先行する。
+  - `TypingML5` / `TypingML6` は list・拡張構文を含むため、前段の typing 系実装後に段階投入する。
+  - `PolyTypingML3` は型付け系の実装知見を再利用しつつ let-polymorphism を導入するため typing 系の後段に置く。
+  - `EvalRefML3` は store を伴う状態モデル追加が必要で差分面積が最も広いため最後に置く。
+- 運用制約:
+  - CLI 契約（`copl-rs checker|prover --game <name> [file]`）は変更しない。
+  - 各 game は `syntax` / `parser` / `checker` / `prover` を同一タスク内で揃える。
+  - 各段階で回帰テストを追加してから次タスクへ進む。
+
 #### バックログ（着手優先順）
 
 - 運用ルール:
@@ -352,7 +371,45 @@
   - 優先度は `P1`（最優先）/ `P2`（中優先）/ `P3`（低優先）で表記する。
   - 順序を入れ替える場合は、この節に理由を追記する。
 
-- [ ] `01` [P1][Docs] 未対応 game 7 件の実装方針（checker/prover 対応順・依存関係）を確定し、`docs/design.md` と整合させる。
+- [x] `01` [P1][Docs] 未対応 game 7 件の実装方針（checker/prover 対応順・依存関係）を確定し、`docs/design.md` と整合させる。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `docs/design.md` に「8.3 Planned unimplemented game onboarding (2026-02-20)」を追加し、未対応 7 game の対応順と依存関係を明文化。
+      - `docs/PLAN.md` に「実装方針確定メモ（2026-02-20）」を追加し、着手順と依存判断をバックログと同一ファイルで固定。
+    - テスト:
+      - なし（ドキュメント更新タスクのため）
+    - ドキュメント:
+      - `docs/design.md`
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 - [ ] `02` [P1][Implementation] `EvalML6` を `checker`/`prover` の対象に追加し、最小導出ケースの回帰テストを追加する。
 - [ ] `03` [P1][Implementation] `TypingML2` / `TypingML3` を `checker`/`prover` の対象に追加し、型付け規則ごとの最小回帰テストを追加する。
 - [ ] `04` [P1][Implementation] `TypingML5` / `TypingML6` を `checker`/`prover` の対象に追加し、list/拡張構文を含む回帰テストを追加する。

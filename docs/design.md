@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-19
+Last updated: 2026-02-20
 
 ## 1. Purpose
 
@@ -490,6 +490,33 @@ Re-evaluation result (2026-02-19):
   - A new prover requires non-deterministic search/backtracking beyond current deterministic evaluators.
   - Shared prover logic grows enough that local helper extraction is no longer sufficient.
   - Adding a new prover repeatedly requires touching multiple existing prover modules for cross-cutting behavior.
+
+### 8.3 Planned unimplemented game onboarding (2026-02-20)
+
+Official CoPL game pages include seven games that are not implemented yet:
+`EvalML6`, `TypingML2`, `TypingML3`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `EvalRefML3`.
+
+Agreed implementation order for both `checker` and `prover`:
+
+1. `EvalML6`
+2. `TypingML2` and `TypingML3`
+3. `TypingML5` and `TypingML6`
+4. `PolyTypingML3`
+5. `EvalRefML3`
+
+Dependency assumptions used for sequencing:
+
+- `EvalML6` is scheduled first because it extends an already-supported EvalML line (`EvalML1` to `EvalML5`) and reuses the existing evaluator-style implementation pattern with the smallest new surface area.
+- `TypingML2`/`TypingML3` are grouped before `TypingML5`/`TypingML6` because they establish the lower-complexity typing-rule baseline needed to evaluate the larger TypingML variants incrementally.
+- `TypingML5`/`TypingML6` are grouped after the previous typing step because they include list and extended constructs; this keeps parsing and typing-rule growth staged.
+- `PolyTypingML3` is scheduled after the TypingML series because it reuses typing infrastructure patterns while introducing let-polymorphic constraints.
+- `EvalRefML3` is scheduled last because store/cell semantics introduce a separate state model and the broadest implementation surface among the seven games.
+
+Operational constraints for this onboarding sequence:
+
+- Keep the CLI contract unchanged: `copl-rs checker|prover --game <name> [file]`.
+- Implement each game as a full `syntax` / `parser` / `checker` / `prover` module set.
+- Land each step with game-local regression tests before moving to the next step.
 
 ## 9. Quality Gates
 
