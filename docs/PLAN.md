@@ -694,7 +694,50 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `08` [P2][Improvement] `EvalRefML3` checker を rule-by-rule 検証へ拡張し、`premise path` 付き `RuleViolation` 診断を他 ML 系 checker と同等にする。
+- [x] `08` [P2][Improvement] `EvalRefML3` checker を rule-by-rule 検証へ拡張し、`premise path` 付き `RuleViolation` 診断を他 ML 系 checker と同等にする。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `src/games/eval_ref_ml3/checker.rs` を canonical-derivation 比較方式から rule-by-rule 検証へ置換し、`E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` の結論形・premise 数・premise 形・side condition を直接検証する構成へ変更。
+      - `EvalRefML3` checker に `annotate_rule_violation_with_premise_path` を導入し、`RuleViolation` で failing premise path（`root`, `1`, `2`, ...）を返すように統一。
+      - `E-Ref` で fresh location 名の canonical 固定（`@l0`）依存を除去し、`@l1` など非 canonical でも規則を満たす導出を受理するようにした。
+    - テスト:
+      - `src/games/eval_ref_ml3/checker.rs`: `reports_rule_violation_for_premise_arity_mismatch` を追加。
+      - `src/games/eval_ref_ml3/checker.rs`: `accepts_non_canonical_fresh_location_for_e_ref` を追加。
+      - `src/games/eval_ref_ml3/checker.rs`: `reports_rule_violation_with_premise_path_for_nested_failure` を追加。
+      - `cargo test eval_ref_ml3::checker`
+      - `cargo test eval_ref_ml3`
+    - ドキュメント:
+      - `docs/design.md`
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: checker が canonical 導出比較に依存し、fresh location が non-canonical な正当導出を誤って拒否する。
+      - Action: rule-by-rule 検証へ置換し、`E-Ref` の fresh location 条件を side condition として直接検証。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 入れ子 premise 失敗時に `premise path` が付与されず、他 ML checker と診断粒度が不一致。
+      - Action: `annotate_rule_violation_with_premise_path` を checker に導入し、失敗ノードまでの path を診断へ付与。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: `EvalRefML3` checker 単体で premise 数不整合を固定する回帰テストが不足。
+      - Action: `reports_rule_violation_for_premise_arity_mismatch` を追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 新規 enum variant 命名が `clippy::enum_variant_names`（全 variant 共通接頭辞）に抵触。
+      - Action: `EvalRefML3DerivationRule` variant 名を `Int` / `Unit` / ... / `Assign` に整理して clippy 警告を解消。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
 ## 履歴計画
 

@@ -596,7 +596,7 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalContML1 prover is implemented with game-specific recursive continuation evaluation that deterministically emits `E-*` / `C-*` / `B-*` derivations and checker-compatible pretty-printed output.
 - EvalContML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalContML4 prover is implemented with game-specific recursive continuation evaluation that deterministically emits `E-*` / `C-*` / `B-*` derivations and checker-compatible pretty-printed output.
-- EvalRefML3 checker is implemented with a canonical-derivation comparison strategy (`parse -> prove(root judgment) -> compare`) for store-threading judgments (`Gamma |- e / sigma evalto v / sigma'`).
+- EvalRefML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker), validating `E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` rule applications directly for store-threading judgments (`Gamma |- e / sigma evalto v / sigma'`) with `SourceSpan` + `premise path` diagnostics.
 - EvalRefML3 prover is implemented with deterministic store-threading evaluation that emits `E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` derivations and checker-compatible pretty-printed output.
 - TypingML2 checker route is implemented as a TypingML4-backed adapter while preserving `GameKind::TypingML2` reporting.
 - TypingML2 prover route is implemented as a TypingML4-backed adapter and rewrites game-name diagnostics from `TypingML4` to `TypingML2`.
