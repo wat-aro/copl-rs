@@ -528,6 +528,28 @@ mod tests {
     }
 
     #[test]
+    fn parses_checker_with_derivation_system_name_eval_ref_ml3() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "EvalRefML3"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game.as_str(), "EvalRefML3");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn keeps_backward_compatibility_for_lowercase_eval_ref_ml3() {
+        let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "evalrefml3"])
+            .expect("cli should parse");
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game.as_str(), "EvalRefML3");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
     fn parses_checker_with_derivation_system_name_typing_ml2() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game", "TypingML2"])
             .expect("cli should parse");

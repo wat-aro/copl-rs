@@ -353,6 +353,8 @@
   - `EvalRefML3`
 - 2026-02-20（`05` 完了後）時点の残未対応 game:
   - `EvalRefML3`
+- 2026-02-20（`06` 完了後）時点の残未対応 game:
+  - なし
 - `TypingML5` は `<title>` / `<h1>` が欠落しているが、syntax と rule 本体は公開されていることを確認。
 
 #### 実装方針確定メモ（2026-02-20）
@@ -608,8 +610,91 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `06` [P1][Implementation] `EvalRefML3` を `checker`/`prover` の対象に追加し、store を伴う評価規則の回帰テストを追加する。
-- [ ] `07` [P1][Validation] 追加 game 対応後に `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5）を更新する。
+- [x] `06` [P1][Implementation] `EvalRefML3` を `checker`/`prover` の対象に追加し、store を伴う評価規則の回帰テストを追加する。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `src/core/mod.rs` の `GameKind` に `EvalRefML3` を追加し、`as_str` / `TryFrom<&str>` を更新。
+      - `src/games/eval_ref_ml3/` に `syntax` / `lexer` / `parser` / `checker` / `prover` / `mod` を追加し、store-threading judgment（`Gamma |- e / sigma evalto v / sigma'`）の parse/check/prove を実装。
+      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game EvalRefML3` をルーティング。
+      - `checker` は `parse -> prove(root judgment) -> canonical derivation comparison` で rule 適用を検証する構成を採用し、比較時は `SourceSpan` を除外した構造比較にした。
+    - テスト:
+      - `src/core/mod.rs`: `parses_eval_ref_ml3_game_kind_case_insensitively`
+      - `src/cli.rs`: `parses_checker_with_derivation_system_name_eval_ref_ml3` / `keeps_backward_compatibility_for_lowercase_eval_ref_ml3`
+      - `src/lib.rs`: `routes_checker_eval_ref_ml3_with_derivation_system_name` / `routes_prover_eval_ref_ml3_and_prints_derivation` / `routes_prover_eval_ref_ml3_with_invalid_judgment_to_parse_error` / `routes_prover_eval_ref_ml3_with_non_derivable_judgment_to_check_error` / `prover_eval_ref_ml3_output_round_trips_with_store_effects`
+      - `src/games/eval_ref_ml3/*`: lexer/parser/checker/prover/syntax の最小単体テストを追加
+      - `cargo test eval_ref_ml3`
+    - ドキュメント:
+      - `README.md`
+      - `docs/design.md`
+      - `AGENTS.md`
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: checker が derivation 比較時に `SourceSpan` 差分まで一致要求しており、`prover -> checker` round-trip が不安定。
+      - Action: `src/games/eval_ref_ml3/checker.rs` に span 非依存の再帰比較を導入。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 初期コピー時に `eval_ml3` 参照が残り、`eval_ref_ml3` 単体でコンパイル不能。
+      - Action: `eval_ref_ml3` モジュールを dedicated 実装へ差し替え、外部 private module 参照を排除。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: store syntax（`/ sigma ... / sigma'`）と `ref`/`!`/`:=` を parser/prover が扱えず、回帰テストが失敗。
+      - Action: `lexer`/`parser`/`prover` を拡張し、`E-Ref`/`E-Deref`/`E-Assign` を含む store-threading 導出を実装。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 実装後に `README` / `design` / `AGENTS` の対応 game 一覧が未同期。
+      - Action: 3 文書を実装事実（`EvalRefML3` 追加、未実装 game なし）へ同期。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: `EvalRefML3` checker は canonical derivation 比較方式のため、同値だが非 canonical な導出の受理と詳細な premise-path 診断は未対応。
+      - Action: なし（スコープ外改善として backlog 化）
+      - Scope: out-of-scope
+      - Backlog: 08
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `07` [P1][Validation] 追加 game 対応後に `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5）を更新する。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - 追加のコード修正はなし（`01`-`06` で導入した変更を対象に最終検証のみ実施）。
+    - テスト:
+      - `cargo test`
+    - ドキュメント:
+      - `docs/PLAN.md` の `07` を完了へ更新。
+    - R1:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [ ] `08` [P2][Improvement] `EvalRefML3` checker を rule-by-rule 検証へ拡張し、`premise path` 付き `RuleViolation` 診断を他 ML 系 checker と同等にする。
 
 ## 履歴計画
 

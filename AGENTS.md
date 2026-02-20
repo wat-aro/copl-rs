@@ -37,6 +37,7 @@ Last updated: 2026-02-20
 - `prover` is implemented for `EvalML6` (`copl-rs prover --game EvalML6 [file]`).
 - `prover` is implemented for `EvalContML1` (`copl-rs prover --game EvalContML1 [file]`).
 - `prover` is implemented for `EvalContML4` (`copl-rs prover --game EvalContML4 [file]`).
+- `prover` is implemented for `EvalRefML3` (`copl-rs prover --game EvalRefML3 [file]`).
 - `prover` is implemented for `TypingML2` (`copl-rs prover --game TypingML2 [file]`).
 - `prover` is implemented for `TypingML3` (`copl-rs prover --game TypingML3 [file]`).
 - `prover` is implemented for `TypingML4` (`copl-rs prover --game TypingML4 [file]`).
@@ -48,7 +49,7 @@ Last updated: 2026-02-20
 - `prover` is implemented for `EvalNamelessML3` (`copl-rs prover --game EvalNamelessML3 [file]`).
 - `prover` is implemented for `EvalNatExp` (`copl-rs prover --game EvalNatExp [file]`).
 - `prover` is implemented for `ReduceNatExp` (`copl-rs prover --game ReduceNatExp [file]`).
-- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalML6` / `EvalContML1` / `EvalContML4` / `TypingML2` / `TypingML3` / `TypingML4` / `TypingML5` / `TypingML6` / `PolyTypingML3` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp`, `prover` currently returns a not-implemented error.
+- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalML6` / `EvalContML1` / `EvalContML4` / `EvalRefML3` / `TypingML2` / `TypingML3` / `TypingML4` / `TypingML5` / `TypingML6` / `PolyTypingML3` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -87,6 +88,7 @@ Last updated: 2026-02-20
 - `games/eval_ml6` currently provides `checker` / `prover` adapters that reuse `games/eval_ml5` internals as an incremental bootstrap.
 - `games/eval_cont_ml1` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_cont_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/eval_ref_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/typing_ml2` currently provides `checker` / `prover` adapters that reuse `games/typing_ml4` internals as an incremental bootstrap.
 - `games/typing_ml3` currently provides `checker` / `prover` adapters that reuse `games/typing_ml4` internals as an incremental bootstrap.
 - `games/typing_ml4` is split into `syntax` / `parser` / `checker` / `prover`.
@@ -186,6 +188,7 @@ Last updated: 2026-02-20
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML4.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML5.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalML6.html
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalRefML3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/TypingML2.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/TypingML3.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/TypingML5.html

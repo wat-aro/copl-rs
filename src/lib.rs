@@ -55,6 +55,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::EvalML6 => games::eval_ml6::prove(&source),
                 core::GameKind::EvalContML1 => games::eval_cont_ml1::prove(&source),
                 core::GameKind::EvalContML4 => games::eval_cont_ml4::prove(&source),
+                core::GameKind::EvalRefML3 => games::eval_ref_ml3::prove(&source),
                 core::GameKind::TypingML2 => games::typing_ml2::prove(&source),
                 core::GameKind::TypingML3 => games::typing_ml3::prove(&source),
                 core::GameKind::TypingML4 => games::typing_ml4::prove(&source),
@@ -1400,6 +1401,72 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     fn prover_eval_ml6_output_round_trips_to_checker_root_judgment() {
         let judgment = "|- 3 + 5 evalto 8\n";
         assert_prover_output_round_trips_to_checker_root_judgment("EvalML6", judgment);
+    }
+
+    #[test]
+    fn routes_prover_eval_ref_ml3_and_prints_derivation() {
+        let mut stdin = &b"|- ref 1 / () evalto @l0 / @l0 = 1\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalRefML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert!(text
+            .trim()
+            .starts_with("|- ref 1 / () evalto @l0 / @l0 = 1 by E-Ref {"));
+    }
+
+    #[test]
+    fn routes_prover_eval_ref_ml3_with_invalid_judgment_to_parse_error() {
+        let mut stdin = &b"|- ref 1 / () evalto @l0 / @l0 = 1 by E-Ref {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalRefML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result.to_string().contains("expected end of input"));
+    }
+
+    #[test]
+    fn routes_prover_eval_ref_ml3_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"|- ref 1 / () evalto @l0 / ()\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "EvalRefML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in EvalRefML3"));
+        assert!(result
+            .to_string()
+            .contains("expected: |- ref 1 / () evalto @l0 / @l0 = 1"));
+        assert!(result.to_string().contains("fix: replace value/store"));
+    }
+
+    #[test]
+    fn prover_eval_ref_ml3_output_round_trips_with_store_effects() {
+        let judgment = "|- let x = ref 1 in let u = x := 2 in !x / () evalto 2 / @l0 = 2\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalRefML3", judgment);
     }
 
     #[test]
@@ -2995,6 +3062,25 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert_eq!(text.trim(), "|- 1 evalto 1");
+    }
+
+    #[test]
+    fn routes_checker_eval_ref_ml3_with_derivation_system_name() {
+        let mut stdin =
+            &b"// -*- copl-game: \"EvalRefML3\" -*-\n\n|- 1 / () evalto 1 / () by E-Int {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "EvalRefML3"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "|- 1 / () evalto 1 / ()");
     }
 
     #[test]
