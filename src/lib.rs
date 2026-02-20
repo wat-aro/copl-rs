@@ -10,7 +10,7 @@ use std::io::{self, Read, Write};
 use cli::{Cli, Command, InputSource};
 
 #[cfg(test)]
-const MAX_INPUT_BYTES: usize = 1024;
+const MAX_INPUT_BYTES: usize = 16 * 1024;
 #[cfg(not(test))]
 const MAX_INPUT_BYTES: usize = 8 * 1024 * 1024;
 
@@ -175,6 +175,37 @@ mod tests {
             .expect("fixture should contain a header and derivation body")
             .1
             .trim()
+    }
+
+    fn assert_prover_output_round_trips_to_checker_root_judgment(game: &str, judgment: &str) {
+        let expected_root = judgment.trim();
+
+        let mut prover_stdin = judgment.as_bytes();
+        let mut prover_out = Vec::new();
+        let mut prover_err = Vec::new();
+        let prover_result = run(
+            vec!["copl-rs", "prover", "--game", game],
+            &mut prover_stdin,
+            &mut prover_out,
+            &mut prover_err,
+        );
+        assert!(prover_result.is_ok());
+
+        let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+        let mut checker_stdin = derivation.as_bytes();
+        let mut checker_out = Vec::new();
+        let mut checker_err = Vec::new();
+        let checker_result = run(
+            vec!["copl-rs", "checker", "--game", game],
+            &mut checker_stdin,
+            &mut checker_out,
+            &mut checker_err,
+        );
+        assert!(checker_result.is_ok());
+
+        let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+        assert_eq!(checker_text.trim(), expected_root);
     }
 
     #[test]
@@ -652,6 +683,13 @@ mod tests {
 
         let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
         assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_eval_ml4_output_round_trips_with_app_cons_mixed_expression() {
+        let judgment =
+            "|- let f = fun x -> x in let g = fun y -> y in f 1 :: g (2 :: []) evalto 1 :: 2 :: []\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalML4", judgment);
     }
 
     #[test]
@@ -1384,6 +1422,13 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn prover_eval_ml5_output_round_trips_with_app_cons_mixed_expression() {
+        let judgment =
+            "|- let f = fun x -> x in let g = fun y -> y in f 1 :: g (2 :: []) evalto 1 :: 2 :: []\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalML5", judgment);
+    }
+
+    #[test]
     fn routes_prover_eval_cont_ml1_and_prints_derivation() {
         let mut stdin = &b"3 + 5 evalto 8\n"[..];
         let mut out = Vec::new();
@@ -1658,6 +1703,13 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn prover_eval_cont_ml4_output_round_trips_with_app_cons_mixed_expression() {
+        let judgment =
+            "|- let f = fun x -> x in let g = fun y -> y in f 1 :: g (2 :: []) evalto 1 :: 2 :: []\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalContML4", judgment);
+    }
+
+    #[test]
     fn routes_prover_typing_ml4_and_prints_derivation() {
         let mut stdin = &b"|- fun x -> x + 1 : int -> int\n"[..];
         let mut out = Vec::new();
@@ -1791,6 +1843,13 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn prover_typing_ml4_output_round_trips_with_app_cons_mixed_expression() {
+        let judgment =
+            "|- let f = fun x -> x in let g = fun y -> y in f 1 :: g (2 :: []) : int list\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("TypingML4", judgment);
+    }
+
+    #[test]
     fn routes_prover_poly_typing_ml4_and_prints_derivation() {
         let mut stdin = &b"|- fun x -> x : 'a -> 'a\n"[..];
         let mut out = Vec::new();
@@ -1918,6 +1977,13 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
 
         let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
         assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn prover_poly_typing_ml4_output_round_trips_with_app_cons_mixed_expression() {
+        let judgment =
+            "|- let f = fun x -> x in let g = fun y -> y in f 1 :: g (2 :: []) : int list\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("PolyTypingML4", judgment);
     }
 
     #[test]

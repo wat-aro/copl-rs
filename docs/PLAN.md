@@ -245,8 +245,83 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `05` [P1][Test] `src/lib.rs` に `prover -> checker` round-trip 回帰を追加し、`app`/`cons` 混在入力で AST 変形が起きないことを固定する（対象 5 game）。
-- [ ] `06` [P1][Validation] `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5 含む）を更新する。
+- [x] `05` [P1][Test] `src/lib.rs` に `prover -> checker` round-trip 回帰を追加し、`app`/`cons` 混在入力で AST 変形が起きないことを固定する（対象 5 game）。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - `src/lib.rs` の test module に `assert_prover_output_round_trips_to_checker_root_judgment` を追加し、`prover -> checker` round-trip の重複ロジックを共通化。
+      - 対象 5 game（`EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4`）に `app`/`cons` 混在入力の round-trip 回帰テスト（`*_app_cons_mixed_expression`）を追加。
+      - テスト時のみの入力上限（`MAX_INPUT_BYTES`）を `16 * 1024` に引き上げ、`EvalContML4` の round-trip 回帰テストが導出木サイズ上限で失敗しないように調整（実行時上限 `8 * 1024 * 1024` は変更なし）。
+    - テスト:
+      - `cargo test app_cons_mixed_expression`
+      - `cargo test rejects_oversized_input`
+    - ドキュメント:
+      - `docs/PLAN.md` の `05` を完了へ更新。
+    - R1:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `06` [P1][Validation] `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5 含む）を更新する。
+  - 完了メモ（2026-02-20）:
+    - 実装:
+      - 追加のコード修正はなし（`05` での変更を対象に検証を実施）。
+    - テスト:
+      - `cargo test`
+    - ドキュメント:
+      - `docs/PLAN.md` の `06` を完了へ更新。
+    - R1:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
 ## 履歴計画
 
