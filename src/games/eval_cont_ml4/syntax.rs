@@ -739,4 +739,31 @@ mod tests {
 }";
         assert_eq!(derivation.to_string(), expected_text);
     }
+
+    #[test]
+    fn formats_app_and_cons_with_expected_parentheses() {
+        let app_with_cons_arg = EvalContML4Expr::App {
+            func: Box::new(EvalContML4Expr::Var("f".to_string())),
+            arg: Box::new(EvalContML4Expr::Cons {
+                head: Box::new(EvalContML4Expr::Int(1)),
+                tail: Box::new(EvalContML4Expr::Cons {
+                    head: Box::new(EvalContML4Expr::Int(2)),
+                    tail: Box::new(EvalContML4Expr::Nil),
+                }),
+            }),
+        };
+        assert_eq!(app_with_cons_arg.to_string(), "f (1 :: 2 :: [])");
+
+        let cons_with_app_head = EvalContML4Expr::Cons {
+            head: Box::new(EvalContML4Expr::App {
+                func: Box::new(EvalContML4Expr::Var("f".to_string())),
+                arg: Box::new(EvalContML4Expr::Int(1)),
+            }),
+            tail: Box::new(EvalContML4Expr::Cons {
+                head: Box::new(EvalContML4Expr::Int(2)),
+                tail: Box::new(EvalContML4Expr::Nil),
+            }),
+        };
+        assert_eq!(cons_with_app_head.to_string(), "f 1 :: 2 :: []");
+    }
 }

@@ -777,4 +777,31 @@ mod tests {
         };
         assert_eq!(judgment.to_string(), "|- 3 - 4 evalto -1 :: 2 :: []");
     }
+
+    #[test]
+    fn formats_app_and_cons_with_expected_parentheses() {
+        let app_with_cons_arg = EvalML5Expr::App {
+            func: Box::new(EvalML5Expr::Var("f".to_string())),
+            arg: Box::new(EvalML5Expr::Cons {
+                head: Box::new(EvalML5Expr::Int(1)),
+                tail: Box::new(EvalML5Expr::Cons {
+                    head: Box::new(EvalML5Expr::Int(2)),
+                    tail: Box::new(EvalML5Expr::Nil),
+                }),
+            }),
+        };
+        assert_eq!(app_with_cons_arg.to_string(), "f (1 :: 2 :: [])");
+
+        let cons_with_app_head = EvalML5Expr::Cons {
+            head: Box::new(EvalML5Expr::App {
+                func: Box::new(EvalML5Expr::Var("f".to_string())),
+                arg: Box::new(EvalML5Expr::Int(1)),
+            }),
+            tail: Box::new(EvalML5Expr::Cons {
+                head: Box::new(EvalML5Expr::Int(2)),
+                tail: Box::new(EvalML5Expr::Nil),
+            }),
+        };
+        assert_eq!(cons_with_app_head.to_string(), "f 1 :: 2 :: []");
+    }
 }
