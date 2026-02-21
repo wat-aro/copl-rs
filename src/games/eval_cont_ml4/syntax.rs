@@ -98,7 +98,8 @@ impl EvalContML4Expr {
     }
 
     fn fmt_with_precedence(&self, f: &mut fmt::Formatter<'_>, parent: u8) -> fmt::Result {
-        let needs_paren = self.precedence() < parent;
+        let needs_paren = self.precedence() < parent
+            || matches!(self, Self::Int(value) if *value < 0 && parent >= self.precedence());
         if needs_paren {
             write!(f, "(")?;
         }
@@ -772,6 +773,18 @@ mod tests {
     }
 
     #[test]
+    fn formats_app_with_parenthesized_negative_int_argument() {
+        let app = EvalContML4Expr::App {
+            func: Box::new(EvalContML4Expr::App {
+                func: Box::new(EvalContML4Expr::Var("f".to_string())),
+                arg: Box::new(EvalContML4Expr::Int(-2)),
+            }),
+            arg: Box::new(EvalContML4Expr::Var("k1".to_string())),
+        };
+        assert_eq!(app.to_string(), "f (-2) k1");
+    }
+
+    #[test]
     fn formats_eval_arg_frame_with_parenthesized_cons_argument() {
         let frame = EvalContML4ContFrame::EvalArg {
             env: Some(EvalContML4Env::default()),
@@ -800,5 +813,14 @@ mod tests {
         };
 
         assert_eq!(frame.to_string(), "{|- _ * (1 - 10)}");
+    }
+
+    #[test]
+    fn formats_eval_arg_frame_with_parenthesized_negative_int_argument() {
+        let frame = EvalContML4ContFrame::EvalArg {
+            env: Some(EvalContML4Env::default()),
+            arg: EvalContML4Expr::Int(-2),
+        };
+        assert_eq!(frame.to_string(), "{|- _ (-2)}");
     }
 }

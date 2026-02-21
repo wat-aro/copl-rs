@@ -849,7 +849,7 @@ fn derivation(
 
 #[cfg(test)]
 mod tests {
-    use super::super::parser::parse_source;
+    use super::super::parser::{parse_judgment_source, parse_source};
     use super::{prove_judgment, EvalContML4Derivation};
     use crate::games::eval_cont_ml4::syntax::{
         EvalContML4BinOp, EvalContML4Binding, EvalContML4ContFrame, EvalContML4Continuation,
@@ -991,6 +991,19 @@ mod tests {
             prove_judgment(expected.judgment.clone()).expect("fixture judgment should be provable");
 
         assert_same_shape(&actual, &expected);
+    }
+
+    #[test]
+    fn keeps_negative_application_arguments_parenthesized_in_output() {
+        let judgment = parse_judgment_source(include_str!("../../../copl/137.exam.copl"))
+            .expect("judgment should parse");
+        let derivation = prove_judgment(judgment).expect("judgment should be provable");
+        let text = derivation.to_string();
+
+        assert!(text.contains("f (-2) k1 k2"));
+        assert!(text.contains("|- _ (-2)"));
+        assert!(!text.contains("f -2 k1 k2"));
+        assert!(!text.contains("|- _ -2"));
     }
 
     fn contains_rule(derivation: &EvalContML4Derivation, rule_name: &str) -> bool {

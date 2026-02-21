@@ -1,6 +1,6 @@
 # PLAN
 
-最終更新日: 2026-02-20
+最終更新日: 2026-02-21
 このファイルは現在計画の単一ソースです。
 
 ## 運用ルール
@@ -9,9 +9,7 @@
 - 実装スコープ（対象機能・着手順・pending 判断）の正本はこのファイルとし、`AGENTS.md` には重複記載しない。
 - 変更時は関連ドキュメント（`README.md` / `docs/design.md` / `AGENTS.md` / ADR）と同一変更セットで同期する。
 - タスク実行中に当該タスクのスコープ外の改善を発見した場合は、バックログに追加し、優先度と依存関係を考慮して適切な位置へ挿入する。
-- 各タスクの完了メモには、`R1` から `R5` までの `review -> improve` 記録をネストして残す（指摘がない回は「指摘なし」と明記する）。
 - レビューで出た指摘は、タスク範囲内なら完了前に必ず修正し、タスク範囲外ならバックログへ追加する。
-- バックログタスクを完了（`[ ] -> [x]`）するときは `task-commit` skill を使い、タスクチェックとコミット作成を同一フローで行う。
 
 ## 完了メモ書式（テンプレート）
 
@@ -56,34 +54,36 @@
 
 ## 現在の計画
 
-### ML 系 `app`/`cons` 優先順位修正計画
+### EvalContML4 負数引数の互換修正計画
 
-最終更新日: 2026-02-20
-この計画のスコープ: ML 系 game の式 `f 1::2::[]` を `(f 1)::2::[]` と解釈する仕様を parser / pretty-printer / prover round-trip まで一貫させる。
+最終更新日: 2026-02-21
+この計画のスコープ: `EvalContML4` の `prover` 出力を copl-tools 互換に修正し、`checker` 側でも同種の非互換フォーマットを検出できるようにする。
 
 #### 背景
 
-- 現行実装では ML 系 game の `app` と `cons` の優先順位が仕様どおりかを直接固定する回帰テストが不足している。
-- 目標は `f 1::2::[]` を `f (1::2::[])` ではなく `(f 1)::2::[]` と扱うこと。
+- `cat copl/137.exam.copl | copl-rs prover --game EvalContML4` の出力を本家 `copl-tools` checker に入力すると、`E-App` / `C-EvalArg` の conclusion form error が発生する。
+- 同じ出力を `copl-rs checker --game EvalContML4` に入力すると valid になってしまい、互換性のない形を見逃している。
+- 原因は関数適用の負数引数が `f -2` / `{... _ -2}` 形式で出力・受理される点にある。
 
 #### 対象スコープ
 
-- 対象 game: `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4`
-- parser の `app`/`cons` 優先順位
-- syntax の `Display`（括弧付与規則）
-- `prover -> checker` round-trip 回帰
+- `src/games/eval_cont_ml4/syntax.rs`
+- `src/games/eval_cont_ml4/parser.rs`
+- `src/games/eval_cont_ml4/prover.rs`
+- `src/lib.rs`
+- `docs/PLAN.md` と `docs/plans/` の同期
 
 #### 非スコープ
 
-- list 構文を持たない game への横展開
-- evaluator/checker の規則追加
+- `EvalContML4` 以外の game への同時展開
 - CLI 契約変更
+- 規則追加や証明探索戦略の変更
 
 #### 実装方針
 
 - t-wada スタイル TDD（`Red -> Green -> Refactor`）で進める。
-- 先に parser/syntax/lib の回帰テストを追加し、失敗を確認してから最小実装で修正する。
-- 変更は対象 5 game に限定し、共通化は今回必須の範囲を超えて導入しない（`YAGNI`）。
+- 先に回帰テストを追加し、`f -2` / `{... _ -2}` を失敗として固定してから最小実装で修正する。
+- 変更は `EvalContML4` に限定し、他 game への抽象化は導入しない（`YAGNI`）。
 
 #### バックログ（着手優先順）
 
@@ -93,596 +93,64 @@
   - 順序を入れ替える場合は、この節に理由を追記する。
   - 実装完了後は `AGENTS.md` の Design Principles にある判断基準（高凝集・低結合 / `YAGNI` / `KISS`）で 5 回レビューし、各回の改善内容（または指摘なし）を完了メモに記録する。
 
-- [x] `01` [P1][Test] parser 回帰テストを追加し、`f 1::2::[]` が `(f 1)::2::[]` にパースされることを固定する（対象 5 game）。
-  - 完了メモ（2026-02-20）:
+- [x] `01` [P1][Test] `EvalContML4` parser/syntax/lib/prover に「負数引数は括弧必須」の回帰テストを追加する。
+  - 完了メモ（2026-02-21）:
     - 実装:
-      - `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4` の `parser.rs` に `parses_application_tighter_than_cons` を追加。
+      - `src/games/eval_cont_ml4/parser.rs` に `f -2` と `{... _ -2}` を拒否する回帰テストを追加。
+      - `src/games/eval_cont_ml4/syntax.rs` に `f (-2)` および `{... _ (-2)}` 出力を固定する回帰テストを追加。
+      - `src/games/eval_cont_ml4/prover.rs` に `copl/137.exam.copl` 由来の出力形回帰テストを追加。
+      - `src/lib.rs` に `checker --game EvalContML4` で `f -2` を拒否する回帰テストを追加。
     - テスト:
-      - `cargo test parses_application_tighter_than_cons`
+      - `cargo test`
     - ドキュメント:
       - `docs/PLAN.md` の `01` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `02` [P1][Implementation] parser を修正し、`app` が `cons` より強く結合するよう統一する（対象 5 game）。
-  - 完了メモ（2026-02-20）:
+- [x] `02` [P1][Implementation] `syntax` の出力を修正し、関数適用引数の負整数を `(-n)` 形式で出力する。
+  - 完了メモ（2026-02-21）:
     - 実装:
-      - `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4` の parser 実装を確認し、`parse_cons_expr` が `parse_lt_expr` を、`parse_mul_expr` が `parse_app_expr` を用いる構造で統一済みであることを確認。
-      - 追加実装は不要（既存実装が要件を満たしていたためコード変更なし）。
+      - `src/games/eval_cont_ml4/syntax.rs` の `fmt_with_precedence` を修正し、適用引数位置の負整数に括弧を付けるように変更。
     - テスト:
-      - `cargo test parses_application_tighter_than_cons`
+      - `cargo test`
     - ドキュメント:
       - `docs/PLAN.md` の `02` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `03` [P1][Test] syntax 回帰テストを追加し、`App(f, Cons(...))` と `Cons(App(f,1), ...)` の括弧出力を固定する（対象 5 game）。
-  - 完了メモ（2026-02-20）:
+- [x] `03` [P1][Implementation] `parser` を修正し、`f -2` / `{... _ -2}` を parse error として拒否する。
+  - 完了メモ（2026-02-21）:
     - 実装:
-      - `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4` の `syntax.rs` テストに `formats_app_and_cons_with_expected_parentheses` を追加。
-      - `App(f, Cons(...))` の表示を `f (1 :: 2 :: [])`、`Cons(App(f,1), ...)` の表示を `f 1 :: 2 :: []` として固定。
+      - `src/games/eval_cont_ml4/parser.rs` に負整数の非括弧適用引数を拒否するガード（`reject_unparenthesized_negative_app_argument`）を追加。
     - テスト:
-      - `cargo test formats_app_and_cons_with_expected_parentheses`
+      - `cargo test`
     - ドキュメント:
       - `docs/PLAN.md` の `03` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `04` [P1][Implementation] syntax の precedence / `fmt_with_precedence` を修正し、`prover` 出力で優先順位が崩れないようにする（対象 5 game）。
-  - 完了メモ（2026-02-20）:
+- [x] `04` [P1][Validation] `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5）を更新する。
+  - 完了メモ（2026-02-21）:
     - 実装:
-      - `EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4` の `syntax.rs` 実装を確認し、`Expr::precedence` が `App=5` / `Cons=1` で統一され、`fmt_with_precedence` が `App` 引数側で `self.precedence() + 1` を用いて括弧付与していることを確認。
-      - 追加実装は不要（既存実装が要件を満たしていたためコード変更なし）。
-      - 実地確認として、上記 5 game で `App(f, Cons(...))` / `Cons(App(f,1), ...)` を含む judgment を `prover` で導出し、その出力を `checker` へ再入力して全ケースで受理されることを確認。
+      - `EvalContML4` の `prover` 出力を `f (-2)` / `{... _ (-2)}` 形式へ修正。
+      - `EvalContML4` `checker` が `f -2` / `{... _ -2}` を parse error として拒否するよう修正。
+      - 現在の `PLAN` を `docs/plans/2026-02-21-eval-cont-ml4-negative-app-arg-fix-pre-archive.md` にアーカイブし、修正計画を `docs/PLAN.md` に再作成。
     - テスト:
-      - `cargo test formats_app_and_cons_with_expected_parentheses`
-    - ドキュメント:
-      - `docs/PLAN.md` の `04` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `05` [P1][Test] `src/lib.rs` に `prover -> checker` round-trip 回帰を追加し、`app`/`cons` 混在入力で AST 変形が起きないことを固定する（対象 5 game）。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/lib.rs` の test module に `assert_prover_output_round_trips_to_checker_root_judgment` を追加し、`prover -> checker` round-trip の重複ロジックを共通化。
-      - 対象 5 game（`EvalML4` / `EvalML5` / `EvalContML4` / `TypingML4` / `PolyTypingML4`）に `app`/`cons` 混在入力の round-trip 回帰テスト（`*_app_cons_mixed_expression`）を追加。
-      - テスト時のみの入力上限（`MAX_INPUT_BYTES`）を `16 * 1024` に引き上げ、`EvalContML4` の round-trip 回帰テストが導出木サイズ上限で失敗しないように調整（実行時上限 `8 * 1024 * 1024` は変更なし）。
-    - テスト:
-      - `cargo test app_cons_mixed_expression`
-      - `cargo test rejects_oversized_input`
-    - ドキュメント:
-      - `docs/PLAN.md` の `05` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `06` [P1][Validation] `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5 含む）を更新する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - 追加のコード修正はなし（`05` での変更を対象に検証を実施）。
-    - テスト:
+      - `cargo fmt`
       - `cargo test`
+      - `cargo clippy --all-targets --all-features -- -D warnings`
     - ドキュメント:
-      - `docs/PLAN.md` の `06` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-
-### `games/{GAME}.html` 差分反映計画（未対応 game 追加）
-
-最終更新日: 2026-02-20
-この計画のスコープ: 公開されている `https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/{GAME}.html` の syntax を基準に、現行実装の対象外 game をバックログへ追加する。
-
-#### 背景
-
-- 現行実装（`checker`/`prover`）は 24 game 対応だが、公開 syntax ページには未対応 game が追加で存在する。
-- 実装対象の見落としを防ぐため、確認済み差分を `docs/PLAN.md` の着手順バックログに明示する。
-
-#### 差分確認メモ（2026-02-20）
-
-- 公開ページ実在を確認した当初未対応 game:
-  - `EvalML6`
-  - `TypingML2`
-  - `TypingML3`
-  - `TypingML5`
-  - `TypingML6`
-  - `PolyTypingML3`
-  - `EvalRefML3`
-- 2026-02-20（`03` 完了後）時点の残未対応 game:
-  - `TypingML5`
-  - `TypingML6`
-  - `PolyTypingML3`
-  - `EvalRefML3`
-- 2026-02-20（`04` 完了後）時点の残未対応 game:
-  - `PolyTypingML3`
-  - `EvalRefML3`
-- 2026-02-20（`05` 完了後）時点の残未対応 game:
-  - `EvalRefML3`
-- 2026-02-20（`06` 完了後）時点の残未対応 game:
-  - なし
-- `TypingML5` は `<title>` / `<h1>` が欠落しているが、syntax と rule 本体は公開されていることを確認。
-
-#### 実装方針確定メモ（2026-02-20）
-
-- checker/prover の対応順を次で確定:
-  1. `EvalML6`
-  2. `TypingML2` / `TypingML3`
-  3. `TypingML5` / `TypingML6`
-  4. `PolyTypingML3`
-  5. `EvalRefML3`
-- 依存関係の判断:
-  - `EvalML6` は既存 `EvalML1`-`EvalML5` の延長線上で着手コストが最小のため先行する。
-  - `TypingML2` / `TypingML3` は `TypingML5` / `TypingML6` より規則面の複雑度が低く、型付け系拡張の土台として先行する。
-  - `TypingML5` / `TypingML6` は list・拡張構文を含むため、前段の typing 系実装後に段階投入する。
-  - `PolyTypingML3` は型付け系の実装知見を再利用しつつ let-polymorphism を導入するため typing 系の後段に置く。
-  - `EvalRefML3` は store を伴う状態モデル追加が必要で差分面積が最も広いため最後に置く。
-- 運用制約:
-  - CLI 契約（`copl-rs checker|prover --game <name> [file]`）は変更しない。
-  - `EvalML6` は `EvalML5` バックエンド委譲の incremental bootstrap を許容し、残タスクは `syntax` / `parser` / `checker` / `prover` を同一タスク内で揃える。
-  - 各段階で回帰テストを追加してから次タスクへ進む。
-
-#### バックログ（着手優先順）
-
-- 運用ルール:
-  - 未完了タスクは上から順に着手する。
-  - 優先度は `P1`（最優先）/ `P2`（中優先）/ `P3`（低優先）で表記する。
-  - 順序を入れ替える場合は、この節に理由を追記する。
-
-- [x] `01` [P1][Docs] 未対応 game 7 件の実装方針（checker/prover 対応順・依存関係）を確定し、`docs/design.md` と整合させる。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `docs/design.md` に「8.3 Planned unimplemented game onboarding (2026-02-20)」を追加し、未対応 7 game の対応順と依存関係を明文化。
-      - `docs/PLAN.md` に「実装方針確定メモ（2026-02-20）」を追加し、着手順と依存判断をバックログと同一ファイルで固定。
-    - テスト:
-      - なし（ドキュメント更新タスクのため）
-    - ドキュメント:
-      - `docs/design.md`
       - `docs/PLAN.md`
+      - `docs/plans/2026-02-21-eval-cont-ml4-negative-app-arg-fix-pre-archive.md`
     - R1:
-      - Finding: 指摘なし
-      - Action: なし
+      - Finding: `EvalContML4` の適用引数における負整数の括弧有無が `copl-tools` 互換性に影響するが、回帰テストで固定されていなかった。
+      - Action: parser/syntax/prover/lib に負数引数専用の回帰テストを追加。
       - Scope: in-scope
       - Backlog: なし
     - R2:
-      - Finding: 指摘なし
-      - Action: なし
+      - Finding: 出力側のみ修正すると checker が旧フォーマットを受理し続け、互換違反を見逃す。
+      - Action: parser で `f -2` / `{... _ -2}` を拒否し checker 経路でも検知するようにした。
       - Scope: in-scope
       - Backlog: なし
     - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `02` [P1][Implementation] `EvalML6` を `checker`/`prover` の対象に追加し、最小導出ケースの回帰テストを追加する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/core/mod.rs` の `GameKind` に `EvalML6` を追加し、`as_str` / `TryFrom<&str>` を更新。
-      - `src/games/eval_ml6/mod.rs` を追加し、`EvalML5` 実装に委譲する checker/prover アダプタ（`EvalML6Game` / `prove`）を実装。
-      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game EvalML6` をルーティング。
-      - `EvalML5` 由来のエラーメッセージ内ゲーム名を `EvalML6` に置換する診断リライトを追加。
-    - テスト:
-      - `src/core/mod.rs`: `parses_eval_ml6_game_kind_case_insensitively`
-      - `src/cli.rs`: `parses_checker_with_derivation_system_name_eval_ml6` / `keeps_backward_compatibility_for_lowercase_eval_ml6`
-      - `src/lib.rs`: `routes_checker_eval_ml6_with_derivation_system_name` / `routes_prover_eval_ml6_and_prints_derivation` / `routes_prover_eval_ml6_with_invalid_judgment_to_parse_error` / `prover_eval_ml6_output_round_trips_to_checker_root_judgment`
-      - `cargo test eval_ml6`
-    - ドキュメント:
-      - `README.md`
-      - `docs/design.md`
-      - `AGENTS.md`
-      - `docs/PLAN.md`
-    - R1:
-      - Finding: `EvalML6` 追加後も CLI 文字列パースが未対応
-      - Action: `GameKind` と CLI テストを追加して受理経路を修正
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: `checker` / `prover` dispatch 未接続
-      - Action: `src/games/mod.rs` / `src/lib.rs` に `EvalML6` 分岐を追加
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 委譲実装で non-derivable 診断のゲーム名が `EvalML5` のままになる
-      - Action: `src/games/eval_ml6/mod.rs` に診断メッセージのゲーム名リライトを追加
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: ドキュメントが `EvalML6` 未対応のままで実装事実と不一致
-      - Action: `README.md` / `docs/design.md` / `AGENTS.md` を同期
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `03` [P1][Implementation] `TypingML2` / `TypingML3` を `checker`/`prover` の対象に追加し、型付け規則ごとの最小回帰テストを追加する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/core/mod.rs` の `GameKind` に `TypingML2` / `TypingML3` を追加し、`as_str` / `TryFrom<&str>` を更新。
-      - `src/games/typing_ml2/mod.rs` と `src/games/typing_ml3/mod.rs` を追加し、`TypingML4` 実装へ委譲する checker/prover アダプタ（`TypingML2Game` / `TypingML3Game` / `prove`）を実装。
-      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game TypingML2` / `--game TypingML3` をルーティング。
-      - 委譲実装で non-derivable 診断のゲーム名が `TypingML4` のままにならないよう、`TypingML2` / `TypingML3` 向けに診断メッセージのゲーム名リライトを追加。
-    - テスト:
-      - `src/core/mod.rs`: `parses_typing_ml2_game_kind_case_insensitively` / `parses_typing_ml3_game_kind_case_insensitively`
-      - `src/cli.rs`: `parses_checker_with_derivation_system_name_typing_ml2` / `keeps_backward_compatibility_for_lowercase_typing_ml2` / `parses_checker_with_derivation_system_name_typing_ml3` / `keeps_backward_compatibility_for_lowercase_typing_ml3`
-      - `src/lib.rs`: `routes_checker_typing_ml2_with_derivation_system_name` / `routes_prover_typing_ml2_and_prints_derivation` / `routes_prover_typing_ml2_with_invalid_judgment_to_parse_error` / `routes_prover_typing_ml2_with_non_derivable_judgment_to_check_error` / `prover_typing_ml2_output_round_trips_to_checker_root_judgment`
-      - `src/lib.rs`: `routes_checker_typing_ml3_with_derivation_system_name` / `routes_prover_typing_ml3_and_prints_derivation` / `routes_prover_typing_ml3_with_invalid_judgment_to_parse_error` / `routes_prover_typing_ml3_with_non_derivable_judgment_to_check_error` / `prover_typing_ml3_output_round_trips_to_checker_root_judgment`
-      - `cargo test typing_ml2`
-      - `cargo test typing_ml3`
-    - ドキュメント:
-      - `README.md`
-      - `docs/design.md`
-      - `AGENTS.md`
-      - `docs/PLAN.md`
-    - R1:
-      - Finding: `GameKind` が `TypingML2` / `TypingML3` を受理できず CLI パースが失敗する。
-      - Action: `GameKind` の variant / `as_str` / `TryFrom<&str>` と core/CLI テストを追加して受理経路を修正。
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: `checker` / `prover` dispatch 未接続で網羅 `match` が壊れる。
-      - Action: `src/games/mod.rs` / `src/lib.rs` に `TypingML2` / `TypingML3` 分岐を追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 委譲実装で non-derivable 診断のゲーム名が `TypingML4` のままになる。
-      - Action: `src/games/typing_ml2/mod.rs` / `src/games/typing_ml3/mod.rs` に診断メッセージのゲーム名リライトを追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: ドキュメントが `TypingML2` / `TypingML3` 未対応のままで実装事実と不一致。
-      - Action: `README.md` / `docs/design.md` / `AGENTS.md` / `docs/PLAN.md` を同期。
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `04` [P1][Implementation] `TypingML5` / `TypingML6` を `checker`/`prover` の対象に追加し、list/拡張構文を含む回帰テストを追加する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/core/mod.rs` の `GameKind` に `TypingML5` / `TypingML6` を追加し、`as_str` / `TryFrom<&str>` を更新。
-      - `src/games/typing_ml5/mod.rs` と `src/games/typing_ml6/mod.rs` を追加し、`TypingML4` 実装へ委譲する checker/prover アダプタ（`TypingML5Game` / `TypingML6Game` / `prove`）を実装。
-      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game TypingML5` / `--game TypingML6` をルーティング。
-      - 委譲実装で non-derivable 診断のゲーム名が `TypingML4` のままにならないよう、`TypingML5` / `TypingML6` 向けに診断メッセージのゲーム名リライトを追加。
-    - テスト:
-      - `src/core/mod.rs`: `parses_typing_ml5_game_kind_case_insensitively` / `parses_typing_ml6_game_kind_case_insensitively`
-      - `src/cli.rs`: `parses_checker_with_derivation_system_name_typing_ml5` / `keeps_backward_compatibility_for_lowercase_typing_ml5` / `parses_checker_with_derivation_system_name_typing_ml6` / `keeps_backward_compatibility_for_lowercase_typing_ml6`
-      - `src/lib.rs`: `routes_checker_typing_ml5_with_derivation_system_name` / `routes_prover_typing_ml5_and_prints_derivation` / `routes_prover_typing_ml5_with_invalid_judgment_to_parse_error` / `routes_prover_typing_ml5_with_non_derivable_judgment_to_check_error` / `prover_typing_ml5_output_round_trips_with_list_extended_expression`
-      - `src/lib.rs`: `routes_checker_typing_ml6_with_derivation_system_name` / `routes_prover_typing_ml6_and_prints_derivation` / `routes_prover_typing_ml6_with_invalid_judgment_to_parse_error` / `routes_prover_typing_ml6_with_non_derivable_judgment_to_check_error` / `prover_typing_ml6_output_round_trips_with_list_extended_expression`
-      - `cargo test typing_ml5`
-      - `cargo test typing_ml6`
-    - ドキュメント:
-      - `README.md`
-      - `docs/design.md`
-      - `AGENTS.md`
-      - `docs/PLAN.md`
-    - R1:
-      - Finding: `GameKind` が `TypingML5` / `TypingML6` を受理できず CLI パースが失敗する。
-      - Action: `GameKind` の variant / `as_str` / `TryFrom<&str>` と core/CLI テストを追加して受理経路を修正。
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: `checker` / `prover` dispatch 未接続でルーティングが失敗する。
-      - Action: `src/games/mod.rs` / `src/lib.rs` に `TypingML5` / `TypingML6` 分岐を追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 委譲実装で non-derivable 診断のゲーム名が `TypingML4` のままになる。
-      - Action: `src/games/typing_ml5/mod.rs` / `src/games/typing_ml6/mod.rs` に診断メッセージのゲーム名リライトを追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: list/拡張構文（`let rec` + `match` + `::`）を含む回帰テストが未整備。
-      - Action: `src/lib.rs` に `TypingML5` / `TypingML6` の list/拡張構文 round-trip 回帰を追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `05` [P1][Implementation] `PolyTypingML3` を `checker`/`prover` の対象に追加し、多相型環境の最小回帰テストを追加する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/core/mod.rs` の `GameKind` に `PolyTypingML3` を追加し、`as_str` / `TryFrom<&str>` を更新。
-      - `src/games/poly_typing_ml3/mod.rs` を追加し、`PolyTypingML4` 実装へ委譲する checker/prover アダプタ（`PolyTypingML3Game` / `prove`）を実装。
-      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game PolyTypingML3` をルーティング。
-      - 委譲実装で non-derivable 診断のゲーム名が `PolyTypingML4` のままにならないよう、`PolyTypingML3` 向けに診断メッセージのゲーム名リライトを追加。
-    - テスト:
-      - `src/core/mod.rs`: `parses_poly_typing_ml3_game_kind_case_insensitively`
-      - `src/cli.rs`: `parses_checker_with_derivation_system_name_poly_typing_ml3` / `keeps_backward_compatibility_for_lowercase_poly_typing_ml3`
-      - `src/lib.rs`: `routes_checker_poly_typing_ml3_with_derivation_system_name` / `routes_prover_poly_typing_ml3_and_prints_derivation` / `routes_prover_poly_typing_ml3_with_invalid_judgment_to_parse_error` / `routes_prover_poly_typing_ml3_with_non_derivable_judgment_to_check_error` / `prover_poly_typing_ml3_output_round_trips_with_polymorphic_environment`
-      - `cargo test poly_typing_ml3`
-    - ドキュメント:
-      - `README.md`
-      - `docs/design.md`
-      - `AGENTS.md`
-      - `docs/PLAN.md`
-    - R1:
-      - Finding: `GameKind` が `PolyTypingML3` を受理できず CLI パースが失敗する。
-      - Action: `GameKind` の variant / `as_str` / `TryFrom<&str>` と core テストを追加して受理経路を修正。
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: `checker` / `prover` dispatch 未接続でルーティングが失敗する。
-      - Action: `src/games/mod.rs` / `src/lib.rs` に `PolyTypingML3` 分岐を追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 委譲実装で non-derivable 診断のゲーム名が `PolyTypingML4` のままになる。
-      - Action: `src/games/poly_typing_ml3/mod.rs` に診断メッセージのゲーム名リライトを追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 多相型環境（`let` 束縛の汎化・再利用）を含む round-trip 回帰テストが未整備。
-      - Action: `src/lib.rs` に `prover_poly_typing_ml3_output_round_trips_with_polymorphic_environment` を追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `06` [P1][Implementation] `EvalRefML3` を `checker`/`prover` の対象に追加し、store を伴う評価規則の回帰テストを追加する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/core/mod.rs` の `GameKind` に `EvalRefML3` を追加し、`as_str` / `TryFrom<&str>` を更新。
-      - `src/games/eval_ref_ml3/` に `syntax` / `lexer` / `parser` / `checker` / `prover` / `mod` を追加し、store-threading judgment（`Gamma |- e / sigma evalto v / sigma'`）の parse/check/prove を実装。
-      - `src/games/mod.rs` と `src/lib.rs` の dispatch を更新し、`checker` / `prover` 両方で `--game EvalRefML3` をルーティング。
-      - `checker` は `parse -> prove(root judgment) -> canonical derivation comparison` で rule 適用を検証する構成を採用し、比較時は `SourceSpan` を除外した構造比較にした。
-    - テスト:
-      - `src/core/mod.rs`: `parses_eval_ref_ml3_game_kind_case_insensitively`
-      - `src/cli.rs`: `parses_checker_with_derivation_system_name_eval_ref_ml3` / `keeps_backward_compatibility_for_lowercase_eval_ref_ml3`
-      - `src/lib.rs`: `routes_checker_eval_ref_ml3_with_derivation_system_name` / `routes_prover_eval_ref_ml3_and_prints_derivation` / `routes_prover_eval_ref_ml3_with_invalid_judgment_to_parse_error` / `routes_prover_eval_ref_ml3_with_non_derivable_judgment_to_check_error` / `prover_eval_ref_ml3_output_round_trips_with_store_effects`
-      - `src/games/eval_ref_ml3/*`: lexer/parser/checker/prover/syntax の最小単体テストを追加
-      - `cargo test eval_ref_ml3`
-    - ドキュメント:
-      - `README.md`
-      - `docs/design.md`
-      - `AGENTS.md`
-      - `docs/PLAN.md`
-    - R1:
-      - Finding: checker が derivation 比較時に `SourceSpan` 差分まで一致要求しており、`prover -> checker` round-trip が不安定。
-      - Action: `src/games/eval_ref_ml3/checker.rs` に span 非依存の再帰比較を導入。
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 初期コピー時に `eval_ml3` 参照が残り、`eval_ref_ml3` 単体でコンパイル不能。
-      - Action: `eval_ref_ml3` モジュールを dedicated 実装へ差し替え、外部 private module 参照を排除。
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: store syntax（`/ sigma ... / sigma'`）と `ref`/`!`/`:=` を parser/prover が扱えず、回帰テストが失敗。
-      - Action: `lexer`/`parser`/`prover` を拡張し、`E-Ref`/`E-Deref`/`E-Assign` を含む store-threading 導出を実装。
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 実装後に `README` / `design` / `AGENTS` の対応 game 一覧が未同期。
-      - Action: 3 文書を実装事実（`EvalRefML3` 追加、未実装 game なし）へ同期。
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: `EvalRefML3` checker は canonical derivation 比較方式のため、同値だが非 canonical な導出の受理と詳細な premise-path 診断は未対応。
-      - Action: なし（スコープ外改善として backlog 化）
+      - Finding: 修正範囲を `EvalContML4` に限定したため、同系 game に同種ギャップが残る可能性。
+      - Action: out-of-scope と判断し、`05` として改善バックログを追加。
       - Scope: out-of-scope
-      - Backlog: 08
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `07` [P1][Validation] 追加 game 対応後に `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を通し、完了メモ（R1-R5）を更新する。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - 追加のコード修正はなし（`01`-`06` で導入した変更を対象に最終検証のみ実施）。
-    - テスト:
-      - `cargo test`
-    - ドキュメント:
-      - `docs/PLAN.md` の `07` を完了へ更新。
-    - R1:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
+      - Backlog: 05
     - R4:
-      - Finding: 指摘なし
-      - Action: なし
+      - Finding: `PLAN` の現行計画と履歴計画の分離が必要。
+      - Action: 旧 `PLAN` を `docs/plans/` にアーカイブし、現行計画を最小差分で再構成。
       - Scope: in-scope
       - Backlog: なし
     - R5:
@@ -694,56 +162,15 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [x] `08` [P2][Improvement] `EvalRefML3` checker を rule-by-rule 検証へ拡張し、`premise path` 付き `RuleViolation` 診断を他 ML 系 checker と同等にする。
-  - 完了メモ（2026-02-20）:
-    - 実装:
-      - `src/games/eval_ref_ml3/checker.rs` を canonical-derivation 比較方式から rule-by-rule 検証へ置換し、`E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` の結論形・premise 数・premise 形・side condition を直接検証する構成へ変更。
-      - `EvalRefML3` checker に `annotate_rule_violation_with_premise_path` を導入し、`RuleViolation` で failing premise path（`root`, `1`, `2`, ...）を返すように統一。
-      - `E-Ref` で fresh location 名の canonical 固定（`@l0`）依存を除去し、`@l1` など非 canonical でも規則を満たす導出を受理するようにした。
-    - テスト:
-      - `src/games/eval_ref_ml3/checker.rs`: `reports_rule_violation_for_premise_arity_mismatch` を追加。
-      - `src/games/eval_ref_ml3/checker.rs`: `accepts_non_canonical_fresh_location_for_e_ref` を追加。
-      - `src/games/eval_ref_ml3/checker.rs`: `reports_rule_violation_with_premise_path_for_nested_failure` を追加。
-      - `cargo test eval_ref_ml3::checker`
-      - `cargo test eval_ref_ml3`
-    - ドキュメント:
-      - `docs/design.md`
-      - `docs/PLAN.md`
-    - R1:
-      - Finding: checker が canonical 導出比較に依存し、fresh location が non-canonical な正当導出を誤って拒否する。
-      - Action: rule-by-rule 検証へ置換し、`E-Ref` の fresh location 条件を side condition として直接検証。
-      - Scope: in-scope
-      - Backlog: なし
-    - R2:
-      - Finding: 入れ子 premise 失敗時に `premise path` が付与されず、他 ML checker と診断粒度が不一致。
-      - Action: `annotate_rule_violation_with_premise_path` を checker に導入し、失敗ノードまでの path を診断へ付与。
-      - Scope: in-scope
-      - Backlog: なし
-    - R3:
-      - Finding: `EvalRefML3` checker 単体で premise 数不整合を固定する回帰テストが不足。
-      - Action: `reports_rule_violation_for_premise_arity_mismatch` を追加。
-      - Scope: in-scope
-      - Backlog: なし
-    - R4:
-      - Finding: 新規 enum variant 命名が `clippy::enum_variant_names`（全 variant 共通接頭辞）に抵触。
-      - Action: `EvalRefML3DerivationRule` variant 名を `Int` / `Unit` / ... / `Assign` に整理して clippy 警告を解消。
-      - Scope: in-scope
-      - Backlog: なし
-    - R5:
-      - Finding: 指摘なし
-      - Action: なし
-      - Scope: in-scope
-      - Backlog: なし
-    - 検証:
-      - `cargo fmt`: pass
-      - `cargo test`: pass
-      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [ ] `05` [P2][Improvement] `EvalML3` / `EvalML4` / `EvalML5` / `TypingML4` / `PolyTypingML4` でも負数の適用引数出力・受理仕様を点検し、`copl-tools` 互換性の有無を確認する。
+  - 理由: `EvalContML4` と同じ `App` 表示ロジックを使う game 群に同種の互換性ギャップが残っている可能性があるため。
 
 ## 履歴計画
 
 - 完了または凍結した計画は `docs/plans/` に保存する。
 - このファイルには現在の計画のみを保持する。
 - 履歴一覧:
+  - [2026-02-21 EvalContML4 修正前 PLAN アーカイブ](plans/2026-02-21-eval-cont-ml4-negative-app-arg-fix-pre-archive.md)
   - [2026-02-20 Prover 実装計画（Nat-first）完了アーカイブ](plans/2026-02-20-prover-roadmap-completed.md)
   - [2026-02-19 Prover 実装計画 完了タスクアーカイブ（01-17）](plans/2026-02-19-prover-roadmap-completed-01-17.md)
   - [2026-02-16 Checker 実装ロードマップ（完了）](plans/2026-02-16-checker-roadmap-completed.md)
