@@ -290,7 +290,9 @@ impl fmt::Display for EvalContML4ContFrame {
             }
             Self::EvalArg { env, arg } => {
                 let prefix = format_env_prefix(env);
-                write!(f, "{{{prefix}_ {arg}}}")
+                write!(f, "{{{prefix}_ ")?;
+                arg.fmt_with_precedence(f, 6)?;
+                write!(f, "}}")
             }
             Self::EvalFun { func } => write!(f, "{{{func} _}}"),
             Self::EvalConsR { env, tail_expr } => {
@@ -765,5 +767,21 @@ mod tests {
             }),
         };
         assert_eq!(cons_with_app_head.to_string(), "f 1 :: 2 :: []");
+    }
+
+    #[test]
+    fn formats_eval_arg_frame_with_parenthesized_cons_argument() {
+        let frame = EvalContML4ContFrame::EvalArg {
+            env: Some(EvalContML4Env::default()),
+            arg: EvalContML4Expr::Cons {
+                head: Box::new(EvalContML4Expr::Int(1)),
+                tail: Box::new(EvalContML4Expr::Cons {
+                    head: Box::new(EvalContML4Expr::Int(2)),
+                    tail: Box::new(EvalContML4Expr::Nil),
+                }),
+            },
+        };
+
+        assert_eq!(frame.to_string(), "{|- _ (1 :: 2 :: [])}");
     }
 }
