@@ -142,7 +142,11 @@ pub enum EvalContML1ContFrame {
 impl fmt::Display for EvalContML1ContFrame {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::EvalR { op, right } => write!(f, "{{_ {} {right}}}", op.symbol()),
+            Self::EvalR { op, right } => {
+                write!(f, "{{_ {} ", op.symbol())?;
+                right.fmt_with_precedence(f, op.precedence() + 1)?;
+                write!(f, "}}")
+            }
             Self::Plus { left } => write!(f, "{{{left} + _}}"),
             Self::Minus { left } => write!(f, "{{{left} - _}}"),
             Self::Times { left } => write!(f, "{{{left} * _}}"),
@@ -458,5 +462,19 @@ mod tests {
 }";
         assert_eq!(derivation.to_string(), expected);
         parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
+
+    #[test]
+    fn formats_evalr_frame_with_parenthesized_lower_precedence_right_expr() {
+        let frame = EvalContML1ContFrame::EvalR {
+            op: EvalContML1BinOp::Times,
+            right: EvalContML1Expr::BinOp {
+                op: EvalContML1BinOp::Minus,
+                left: Box::new(EvalContML1Expr::Int(1)),
+                right: Box::new(EvalContML1Expr::Int(10)),
+            },
+        };
+
+        assert_eq!(frame.to_string(), "{_ * (1 - 10)}");
     }
 }

@@ -270,7 +270,9 @@ impl fmt::Display for EvalContML4ContFrame {
         match self {
             Self::EvalR { env, op, right } => {
                 let prefix = format_env_prefix(env);
-                write!(f, "{{{prefix}_ {} {right}}}", op.symbol())
+                write!(f, "{{{prefix}_ {} ", op.symbol())?;
+                right.fmt_with_precedence(f, op.precedence() + 1)?;
+                write!(f, "}}")
             }
             Self::Plus { left } => write!(f, "{{{left} + _}}"),
             Self::Minus { left } => write!(f, "{{{left} - _}}"),
@@ -783,5 +785,20 @@ mod tests {
         };
 
         assert_eq!(frame.to_string(), "{|- _ (1 :: 2 :: [])}");
+    }
+
+    #[test]
+    fn formats_evalr_frame_with_parenthesized_lower_precedence_right_expr() {
+        let frame = EvalContML4ContFrame::EvalR {
+            env: Some(EvalContML4Env::default()),
+            op: EvalContML4BinOp::Times,
+            right: EvalContML4Expr::BinOp {
+                op: EvalContML4BinOp::Minus,
+                left: Box::new(EvalContML4Expr::Int(1)),
+                right: Box::new(EvalContML4Expr::Int(10)),
+            },
+        };
+
+        assert_eq!(frame.to_string(), "{|- _ * (1 - 10)}");
     }
 }
