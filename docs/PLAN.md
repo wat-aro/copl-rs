@@ -64,6 +64,7 @@
 - 現状の `EvalRefML3` は `E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` の最小実装に留まっており、`E-If*` / `E-Plus` / `E-App` / `E-LetRec` / `E-AppRec` / `B-*` を含む導出を扱えない。
 - `copl/141.copl` から `copl/145.copl` は、参照・代入・関数・クロージャ・条件分岐・算術・比較を横断するため、現状仕様ギャップを埋める回帰セットとして適している。
 - 過去に `EvalContML4` などで「prover 出力は通るが本家 checker 互換で崩れる」問題を修正しており、`EvalRefML3` でも同じ種類のズレを先に防ぐ必要がある。
+- 本家 checker は `checker -game EvalRefML3` コマンドで実行可能であり、`copl/141-145` が通ることを確認済み（2026-02-21）。
 
 #### 対象スコープ
 
@@ -133,7 +134,8 @@
     - `prover` 出力の checker root judgment 一致テストを複数追加。
 - [ ] `07` [P2][External-Validation] 本家 `copl-tools` との互換検証を実施し、差分を記録する。
   - 内容:
-    - `copl-rs prover --game EvalRefML3` 出力を本家 checker に通して検証。
+    - `copl-rs prover --game EvalRefML3` 出力を `checker -game EvalRefML3` に通して検証。
+    - `checker -game EvalRefML3 < copl/141.copl` から `copl/145.copl` をスモークテストとして毎回実施する。
     - 差分が出た場合は `docs/PLAN.md` に原因・対処を追記し、必要なら追加タスク化。
 - [ ] `08` [P1][Validation/Docs] 検証・文書同期・完了メモ（R1-R5）を更新する。
   - 内容:
