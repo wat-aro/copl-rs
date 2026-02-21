@@ -93,7 +93,8 @@ impl NamedExpr {
     }
 
     fn fmt_with_precedence(&self, f: &mut fmt::Formatter<'_>, parent: u8) -> fmt::Result {
-        let needs_paren = self.precedence() < parent;
+        let needs_paren = self.precedence() < parent
+            || matches!(self, Self::Int(value) if *value < 0 && parent >= self.precedence());
         if needs_paren {
             write!(f, "(")?;
         }
@@ -217,7 +218,8 @@ impl NamelessExpr {
     }
 
     fn fmt_with_precedence(&self, f: &mut fmt::Formatter<'_>, parent: u8) -> fmt::Result {
-        let needs_paren = self.precedence() < parent;
+        let needs_paren = self.precedence() < parent
+            || matches!(self, Self::Int(value) if *value < 0 && parent >= self.precedence());
         if needs_paren {
             write!(f, "(")?;
         }
@@ -437,5 +439,20 @@ mod tests {
 }";
         assert_eq!(derivation.to_string(), expected);
         parse_source(&derivation.to_string()).expect("formatted derivation should parse");
+    }
+
+    #[test]
+    fn formats_named_and_nameless_app_with_parenthesized_negative_int_argument() {
+        let named = NamedExpr::App {
+            func: Box::new(NamedExpr::Var("f".to_string())),
+            arg: Box::new(NamedExpr::Int(-2)),
+        };
+        assert_eq!(named.to_string(), "f (-2)");
+
+        let nameless = NamelessExpr::App {
+            func: Box::new(NamelessExpr::Index(1)),
+            arg: Box::new(NamelessExpr::Int(-2)),
+        };
+        assert_eq!(nameless.to_string(), "#1 (-2)");
     }
 }

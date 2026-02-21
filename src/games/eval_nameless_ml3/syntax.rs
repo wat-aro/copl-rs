@@ -114,7 +114,8 @@ impl EvalNamelessML3Expr {
     }
 
     fn fmt_with_precedence(&self, f: &mut fmt::Formatter<'_>, parent: u8) -> fmt::Result {
-        let needs_paren = self.precedence() < parent;
+        let needs_paren = self.precedence() < parent
+            || matches!(self, Self::Int(value) if *value < 0 && parent >= self.precedence());
         if needs_paren {
             write!(f, "(")?;
         }
@@ -377,5 +378,14 @@ true |- 1 + 2 evalto 3 by E-Plus {
   1 plus 2 is 3 by B-Plus {}
 }";
         assert_eq!(derivation.to_string(), expected);
+    }
+
+    #[test]
+    fn formats_app_with_parenthesized_negative_int_argument() {
+        let app = EvalNamelessML3Expr::App {
+            func: Box::new(EvalNamelessML3Expr::Index(1)),
+            arg: Box::new(EvalNamelessML3Expr::Int(-2)),
+        };
+        assert_eq!(app.to_string(), "#1 (-2)");
     }
 }

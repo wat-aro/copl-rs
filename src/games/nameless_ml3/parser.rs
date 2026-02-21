@@ -209,6 +209,7 @@ impl Parser {
     fn parse_named_app_expr(&mut self) -> Result<NamedExpr, CheckError> {
         let mut expr = self.parse_named_atom_expr()?;
         while self.starts_named_atom_expr() {
+            self.reject_unparenthesized_negative_app_argument()?;
             let arg = self.parse_named_atom_expr()?;
             expr = NamedExpr::App {
                 func: Box::new(expr),
@@ -372,6 +373,7 @@ impl Parser {
     fn parse_nameless_app_expr(&mut self) -> Result<NamelessExpr, CheckError> {
         let mut expr = self.parse_nameless_atom_expr()?;
         while self.starts_nameless_atom_expr() {
+            self.reject_unparenthesized_negative_app_argument()?;
             let arg = self.parse_nameless_atom_expr()?;
             expr = NamelessExpr::App {
                 func: Box::new(expr),
@@ -412,6 +414,15 @@ impl Parser {
         }
 
         Err(self.error_here("expected nameless expression"))
+    }
+
+    fn reject_unparenthesized_negative_app_argument(&self) -> Result<(), CheckError> {
+        if matches!(self.peek().kind, TokenKind::Int(value) if value < 0) {
+            return Err(self.error_here(
+                "negative integer application arguments must be parenthesized (use '(-n)')",
+            ));
+        }
+        Ok(())
     }
 
     fn parse_rule_name(&mut self) -> Result<String, CheckError> {
@@ -769,6 +780,24 @@ mod tests {
                 }),
             }
         );
+    }
+
+    #[test]
+    fn rejects_unparenthesized_negative_int_in_named_app_expr() {
+        let source = "|- f -2 ==> #1 (-2) by Tr-App {}";
+        let err = parse_source(source).expect_err("parse should fail");
+        assert!(err
+            .message()
+            .contains("negative integer application arguments must be parenthesized"));
+    }
+
+    #[test]
+    fn rejects_unparenthesized_negative_int_in_nameless_app_expr() {
+        let source = "|- f (-2) ==> #1 -2 by Tr-App {}";
+        let err = parse_source(source).expect_err("parse should fail");
+        assert!(err
+            .message()
+            .contains("negative integer application arguments must be parenthesized"));
     }
 
     #[test]

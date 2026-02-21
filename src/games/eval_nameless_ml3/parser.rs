@@ -276,6 +276,7 @@ impl Parser {
     fn parse_app_expr(&mut self) -> Result<EvalNamelessML3Expr, CheckError> {
         let mut expr = self.parse_atom_expr()?;
         while self.starts_atom_expr() {
+            self.reject_unparenthesized_negative_app_argument()?;
             let arg = self.parse_atom_expr()?;
             expr = EvalNamelessML3Expr::App {
                 func: Box::new(expr),
@@ -316,6 +317,15 @@ impl Parser {
         }
 
         Err(self.error_here("expected expression"))
+    }
+
+    fn reject_unparenthesized_negative_app_argument(&self) -> Result<(), CheckError> {
+        if matches!(self.peek().kind, TokenKind::Int(value) if value < 0) {
+            return Err(self.error_here(
+                "negative integer application arguments must be parenthesized (use '(-n)')",
+            ));
+        }
+        Ok(())
     }
 
     fn parse_value(&mut self) -> Result<EvalNamelessML3Value, CheckError> {
@@ -840,6 +850,15 @@ mod tests {
                 },
             }
         );
+    }
+
+    #[test]
+    fn rejects_unparenthesized_negative_int_in_app_expr() {
+        let source = "|- #1 -2 evalto -2 by E-App {}";
+        let err = parse_source(source).expect_err("parse should fail");
+        assert!(err
+            .message()
+            .contains("negative integer application arguments must be parenthesized"));
     }
 
     #[test]

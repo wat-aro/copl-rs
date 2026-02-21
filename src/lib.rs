@@ -1811,6 +1811,22 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
     }
 
     #[test]
+    fn routes_checker_nameless_ml3_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "NamelessML3",
+            b"|- f -2 ==> #1 -2 by Tr-App {}\n",
+        );
+    }
+
+    #[test]
+    fn routes_checker_eval_nameless_ml3_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "EvalNamelessML3",
+            b"|- #1 -2 evalto -2 by E-App {}\n",
+        );
+    }
+
+    #[test]
     fn routes_prover_eval_cont_ml4_with_non_derivable_judgment_to_check_error() {
         let mut stdin = &b"|- 1 + 2 evalto 2\n"[..];
         let mut out = Vec::new();

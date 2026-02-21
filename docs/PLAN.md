@@ -203,8 +203,47 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `06` [P2][Improvement] `NamelessML3` / `EvalNamelessML3` の `App` でも負数適用引数の出力・受理仕様を点検し、必要なら `(-n)` へ統一する。
+- [x] `06` [P2][Improvement] `NamelessML3` / `EvalNamelessML3` の `App` でも負数適用引数の出力・受理仕様を点検し、必要なら `(-n)` へ統一する。
   - 理由: 同じ `App` precedence/formatter 構造を持つため、今回と同型の互換性不一致が残っている可能性がある。
+  - 完了メモ（2026-02-21）:
+    - 実装:
+      - `src/games/nameless_ml3/parser.rs` / `src/games/eval_nameless_ml3/parser.rs` に、非括弧の負数適用引数を拒否するガードを追加。
+      - `src/games/nameless_ml3/syntax.rs` / `src/games/eval_nameless_ml3/syntax.rs` に、負数適用引数を `(-n)` 形式で出力する修正を追加。
+      - `src/lib.rs` に `NamelessML3` / `EvalNamelessML3` の checker 回帰テストを追加。
+    - テスト:
+      - `cargo test -q negative_int_argument`
+      - `cargo test`
+    - ドキュメント:
+      - `docs/PLAN.md` の `06` を完了へ更新。
+    - R1:
+      - Finding: `NamelessML3` / `EvalNamelessML3` でも `prover` が `f -2` / `#1 -2` を出力しうる。
+      - Action: syntax 側で負数適用引数の括弧付与を追加し、出力を `(-n)` に統一。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: parser が旧形式を受理すると checker 互換性検知ができない。
+      - Action: parser に共通ガードを追加し、`negative integer application arguments must be parenthesized` で拒否。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: `NamelessML3` には `NamedExpr` と `NamelessExpr` の 2 系統 `App` formatter がある。
+      - Action: 両方に同じ括弧付与ルールを実装し、専用テストを追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: `lib.rs` の checker 回帰が game 個別追加だと重複しやすい。
+      - Action: 既存 helper (`assert_checker_rejects_unparenthesized_negative_app_argument`) を流用して最小差分で追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
 ## 履歴計画
 
