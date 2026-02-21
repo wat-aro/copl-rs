@@ -324,7 +324,7 @@ impl Parser {
             return Ok(EvalContML4ContFrame::EvalConsR { env, tail_expr });
         }
 
-        let arg = self.parse_expr()?;
+        let arg = self.parse_eval_arg_expr()?;
         Ok(EvalContML4ContFrame::EvalArg { env, arg })
     }
 
@@ -393,7 +393,7 @@ impl Parser {
                     tail_expr,
                 });
             }
-            let arg = self.parse_expr()?;
+            let arg = self.parse_eval_arg_expr()?;
             return Ok(EvalContML4ContFrame::EvalArg { env: None, arg });
         }
 
@@ -682,6 +682,13 @@ impl Parser {
         }
 
         Err(self.error_here("expected expression"))
+    }
+
+    fn parse_eval_arg_expr(&mut self) -> Result<EvalContML4Expr, CheckError> {
+        if self.starts_atom_expr() {
+            return self.parse_atom_expr();
+        }
+        Err(self.error_here("expected application argument expression"))
     }
 
     fn parse_value(&mut self) -> Result<EvalContML4Value, CheckError> {
@@ -1292,6 +1299,14 @@ mod tests {
         let err = parse_source(source).expect_err("parse should fail");
         assert_eq!(err.kind(), CheckErrorKind::Parse);
         assert!(err.message().contains("expected '_'"));
+    }
+
+    #[test]
+    fn rejects_unparenthesized_cons_in_eval_arg_frame() {
+        let source = "1 => {|- _ 1 :: []} evalto 1 by C-Ret {}";
+        let err = parse_source(source).expect_err("parse should fail");
+        assert_eq!(err.kind(), CheckErrorKind::Parse);
+        assert!(err.message().contains("expected '}'"));
     }
 
     #[test]
