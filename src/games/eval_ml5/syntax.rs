@@ -248,7 +248,8 @@ impl EvalML5Expr {
     }
 
     fn fmt_with_precedence(&self, f: &mut fmt::Formatter<'_>, parent: u8) -> fmt::Result {
-        let needs_paren = self.precedence() < parent;
+        let needs_paren = self.precedence() < parent
+            || matches!(self, Self::Int(value) if *value < 0 && parent >= self.precedence());
         if needs_paren {
             write!(f, "(")?;
         }
@@ -803,5 +804,14 @@ mod tests {
             }),
         };
         assert_eq!(cons_with_app_head.to_string(), "f 1 :: 2 :: []");
+    }
+
+    #[test]
+    fn formats_app_with_parenthesized_negative_int_argument() {
+        let app = EvalML5Expr::App {
+            func: Box::new(EvalML5Expr::Var("f".to_string())),
+            arg: Box::new(EvalML5Expr::Int(-2)),
+        };
+        assert_eq!(app.to_string(), "f (-2)");
     }
 }

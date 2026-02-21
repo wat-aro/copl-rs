@@ -140,7 +140,8 @@ impl EvalML3Expr {
     }
 
     fn fmt_with_precedence(&self, f: &mut fmt::Formatter<'_>, parent: u8) -> fmt::Result {
-        let needs_paren = self.precedence() < parent;
+        let needs_paren = self.precedence() < parent
+            || matches!(self, Self::Int(value) if *value < 0 && parent >= self.precedence());
         if needs_paren {
             write!(f, "(")?;
         }
@@ -411,5 +412,14 @@ mod tests {
 }";
         assert_eq!(rendered, expected);
         assert!(parse_source(&rendered).is_ok());
+    }
+
+    #[test]
+    fn formats_app_with_parenthesized_negative_int_argument() {
+        let app = EvalML3Expr::App {
+            func: Box::new(EvalML3Expr::Var("f".to_string())),
+            arg: Box::new(EvalML3Expr::Int(-2)),
+        };
+        assert_eq!(app.to_string(), "f (-2)");
     }
 }

@@ -215,6 +215,24 @@ mod tests {
         assert_eq!(checker_text.trim(), expected_root);
     }
 
+    fn assert_checker_rejects_unparenthesized_negative_app_argument(game: &str, source: &[u8]) {
+        let mut stdin = source;
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", game],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("negative integer application arguments must be parenthesized"));
+    }
+
     #[test]
     fn routes_checker_nat() {
         let mut stdin = &b"// -*- copl-game: \"Nat\" -*-\n\nZ plus Z is Z by P-Zero {}\n"[..];
@@ -1746,21 +1764,50 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
 
     #[test]
     fn routes_checker_eval_cont_ml4_rejects_unparenthesized_negative_int_argument() {
-        let mut stdin = &b"|- f -2 evalto -2 by E-App {}\n"[..];
-        let mut out = Vec::new();
-        let mut err = Vec::new();
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "EvalContML4",
+            b"|- f -2 evalto -2 by E-App {}\n",
+        );
+    }
 
-        let result = run(
-            vec!["copl-rs", "checker", "--game", "EvalContML4"],
-            &mut stdin,
-            &mut out,
-            &mut err,
-        )
-        .expect_err("run should fail");
+    #[test]
+    fn routes_checker_eval_ml3_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "EvalML3",
+            b"|- f -2 evalto -2 by E-App {}\n",
+        );
+    }
 
-        assert!(result
-            .to_string()
-            .contains("negative integer application arguments must be parenthesized"));
+    #[test]
+    fn routes_checker_eval_ml4_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "EvalML4",
+            b"|- f -2 evalto -2 by E-App {}\n",
+        );
+    }
+
+    #[test]
+    fn routes_checker_eval_ml5_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "EvalML5",
+            b"|- f -2 evalto -2 by E-App {}\n",
+        );
+    }
+
+    #[test]
+    fn routes_checker_typing_ml4_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "TypingML4",
+            b"|- f -2 : int by T-App {}\n",
+        );
+    }
+
+    #[test]
+    fn routes_checker_poly_typing_ml4_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "PolyTypingML4",
+            b"|- f -2 : int by T-App {}\n",
+        );
     }
 
     #[test]

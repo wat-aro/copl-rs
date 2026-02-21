@@ -162,8 +162,49 @@
       - `cargo fmt`: pass
       - `cargo test`: pass
       - `cargo clippy --all-targets --all-features -- -D warnings`: pass
-- [ ] `05` [P2][Improvement] `EvalML3` / `EvalML4` / `EvalML5` / `TypingML4` / `PolyTypingML4` でも負数の適用引数出力・受理仕様を点検し、`copl-tools` 互換性の有無を確認する。
+- [x] `05` [P2][Improvement] `EvalML3` / `EvalML4` / `EvalML5` / `TypingML4` / `PolyTypingML4` でも負数の適用引数出力・受理仕様を点検し、`copl-tools` 互換性の有無を確認する。
   - 理由: `EvalContML4` と同じ `App` 表示ロジックを使う game 群に同種の互換性ギャップが残っている可能性があるため。
+  - 完了メモ（2026-02-21）:
+    - 実装:
+      - `src/games/eval_ml3/parser.rs` / `src/games/eval_ml4/parser.rs` / `src/games/eval_ml5/parser.rs` / `src/games/typing_ml4/parser.rs` / `src/games/poly_typing_ml4/parser.rs` に、非括弧の負数適用引数を拒否するガードを追加。
+      - `src/games/eval_ml3/syntax.rs` / `src/games/eval_ml4/syntax.rs` / `src/games/eval_ml5/syntax.rs` / `src/games/typing_ml4/syntax.rs` / `src/games/poly_typing_ml4/syntax.rs` に、負数適用引数を `(-n)` 形式で出力する修正を追加。
+      - `src/lib.rs` に 5 game の `checker` 経路で `f -2` を拒否する回帰テストを追加。
+    - テスト:
+      - `cargo test -q negative_int_argument`
+      - `cargo test`
+    - ドキュメント:
+      - `docs/PLAN.md` の `05` を完了へ更新。
+    - R1:
+      - Finding: 5 game で `prover` が `f -2` を出力し、`checker` も同形式を受理していた。
+      - Action: parser と syntax を `EvalContML4` と同等方針で修正し、回帰テストを追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: Typing 系 game では `Type` formatter と `Expr` formatter が同名で、誤って `Type` 側を触るリスクがある。
+      - Action: `Expr` 側の `fmt_with_precedence` のみに修正を限定し、テストで検証。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: `lib.rs` に game 横断の checker 回帰が不足し、parser 修正の取りこぼし検知が弱い。
+      - Action: `assert_checker_rejects_unparenthesized_negative_app_argument` を追加し 5 game を一括検証。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: `App` 表示ロジックを持つ Nameless 系（`NamelessML3` / `EvalNamelessML3`）にも同種の互換性ギャップが残る可能性。
+      - Action: out-of-scope として次タスク化。
+      - Scope: out-of-scope
+      - Backlog: 06
+    - R5:
+      - Finding: 指摘なし
+      - Action: なし
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [ ] `06` [P2][Improvement] `NamelessML3` / `EvalNamelessML3` の `App` でも負数適用引数の出力・受理仕様を点検し、必要なら `(-n)` へ統一する。
+  - 理由: 同じ `App` precedence/formatter 構造を持つため、今回と同型の互換性不一致が残っている可能性がある。
 
 ## 履歴計画
 
