@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-20
+Last updated: 2026-02-21
 
 ## 1. Purpose
 
@@ -188,7 +188,7 @@ Key runtime checks in `lib.rs`:
 - EvalML6 prover route currently delegates to the EvalML5 prover core as an incremental bootstrap, preserving checker-compatible derivation output for the EvalML5-compatible judgment subset.
 - EvalContML1 prover core builds an in-memory derivation AST using `E-*` / `C-*` / `B-*` rules in a deterministic continuation-evaluation order.
 - EvalContML4 prover core builds an in-memory derivation AST using `E-*` / `C-*` / `B-*` rules in a deterministic continuation-evaluation order, including continuation capture/application and list/match continuation frames.
-- EvalRefML3 prover core builds an in-memory derivation AST using deterministic store-threading evaluation rules (`E-Int`, `E-Var`, `E-Let`, `E-Ref`, `E-Deref`, `E-Assign`) over `Gamma |- e / sigma evalto v / sigma'`.
+- EvalRefML3 prover core builds an in-memory derivation AST using deterministic store-threading evaluation rules (`E-Int`, `E-Bool`, `E-Unit`, `E-Loc`, `E-Var`, `E-IfT`, `E-IfF`, `E-Let`, `E-LetRec`, `E-Fun`, `E-App`, `E-AppRec`, `E-Plus`, `E-Minus`, `E-Times`, `E-Lt`, `E-Ref`, `E-Deref`, `E-Assign`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`) over canonical `sigma / Gamma |- e evalto v / sigma'` judgments (legacy `Gamma |- e / sigma evalto v / sigma'` remains parser-compatible).
 - TypingML2 prover route currently delegates to the TypingML4 prover core as an incremental bootstrap, preserving checker-compatible derivation output for the TypingML4-compatible typing-judgment subset.
 - TypingML3 prover route currently delegates to the TypingML4 prover core as an incremental bootstrap, preserving checker-compatible derivation output for the TypingML4-compatible typing-judgment subset.
 - TypingML4 prover core builds an in-memory derivation AST using deterministic `T-*` rule construction with internal monomorphic type inference/unification for intermediate premise types.
@@ -514,7 +514,7 @@ Current status:
 - `prover --game EvalML6` currently accepts the EvalML5-compatible judgment subset and prints checker-compatible derivations via the EvalML5-backed bootstrap route.
 - `prover --game EvalContML1` parses judgment-only input (`evalto` / continuation-application / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game EvalContML4` parses judgment-only input (`Gamma |- ... evalto ...` / continuation-application / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
-- `prover --game EvalRefML3` parses judgment-only input (`Gamma |- e / sigma evalto v / sigma'`), constructs derivation ASTs, and prints checker-compatible derivations.
+- `prover --game EvalRefML3` parses judgment-only input (canonical `sigma / Gamma |- e evalto v / sigma'`, plus legacy `Gamma |- e / sigma evalto v / sigma'`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game TypingML2` currently accepts the TypingML4-compatible typing-judgment subset (`Gamma |- e : t`) and prints checker-compatible derivations via the TypingML4-backed bootstrap route.
 - `prover --game TypingML3` currently accepts the TypingML4-compatible typing-judgment subset (`Gamma |- e : t`) and prints checker-compatible derivations via the TypingML4-backed bootstrap route.
 - `prover --game TypingML4` parses judgment-only input (`Gamma |- e : t`), constructs derivation ASTs, and prints checker-compatible derivations.
@@ -596,8 +596,8 @@ Completed or frozen plans are archived under `docs/plans/`.
 - EvalContML1 prover is implemented with game-specific recursive continuation evaluation that deterministically emits `E-*` / `C-*` / `B-*` derivations and checker-compatible pretty-printed output.
 - EvalContML4 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - EvalContML4 prover is implemented with game-specific recursive continuation evaluation that deterministically emits `E-*` / `C-*` / `B-*` derivations and checker-compatible pretty-printed output.
-- EvalRefML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker), validating `E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` rule applications directly for store-threading judgments (`Gamma |- e / sigma evalto v / sigma'`) with `SourceSpan` + `premise path` diagnostics.
-- EvalRefML3 prover is implemented with deterministic store-threading evaluation that emits `E-Int` / `E-Unit` / `E-Loc` / `E-Var` / `E-Let` / `E-Ref` / `E-Deref` / `E-Assign` derivations and checker-compatible pretty-printed output.
+- EvalRefML3 checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker), validating `E-Int` / `E-Bool` / `E-Unit` / `E-Loc` / `E-Var` / `E-IfT` / `E-IfF` / `E-Let` / `E-LetRec` / `E-Fun` / `E-App` / `E-AppRec` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` / `E-Ref` / `E-Deref` / `E-Assign` and `B-Plus` / `B-Minus` / `B-Times` / `B-Lt` for store-threading judgments (canonical `sigma / Gamma |- e evalto v / sigma'`, with legacy `Gamma |- e / sigma evalto v / sigma'` accepted) with `SourceSpan` + `premise path` diagnostics.
+- EvalRefML3 prover is implemented with deterministic store-threading evaluation that emits `E-Int` / `E-Bool` / `E-Unit` / `E-Loc` / `E-Var` / `E-IfT` / `E-IfF` / `E-Let` / `E-LetRec` / `E-Fun` / `E-App` / `E-AppRec` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` / `E-Ref` / `E-Deref` / `E-Assign` / `B-Plus` / `B-Minus` / `B-Times` / `B-Lt` derivations and checker-compatible pretty-printed output, including location-name alpha-renaming alignment for equivalent judgments.
 - TypingML2 checker route is implemented as a TypingML4-backed adapter while preserving `GameKind::TypingML2` reporting.
 - TypingML2 prover route is implemented as a TypingML4-backed adapter and rewrites game-name diagnostics from `TypingML4` to `TypingML2`.
 - TypingML3 checker route is implemented as a TypingML4-backed adapter while preserving `GameKind::TypingML3` reporting.

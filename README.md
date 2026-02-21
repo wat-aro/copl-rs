@@ -41,7 +41,7 @@ copl-rs prover --game <name> [file]
 - `prover --game EvalML6` currently accepts the same judgment surface as `EvalML5` (`Gamma |- ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`, `p matches v when (...)`, `p doesn't match v`) and prints a generated derivation in plain text.
 - `prover --game EvalContML1` accepts a single judgment (`... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalContML4` accepts a single judgment (`Gamma |- ... evalto ...`, `... >> ... evalto ...`, `... => ... evalto ...`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
-- `prover --game EvalRefML3` accepts a single judgment (`Gamma |- e / sigma evalto v / sigma'`) and prints a generated derivation in plain text.
+- `prover --game EvalRefML3` accepts a single judgment (`sigma / Gamma |- e evalto v / sigma'`; legacy `Gamma |- e / sigma evalto v / sigma'` is also accepted) and prints a generated derivation in plain text.
 - `prover --game TypingML2` currently accepts the same typing-judgment surface as `TypingML4` (`Gamma |- e : t`) and prints a generated derivation in plain text.
 - `prover --game TypingML3` currently accepts the same typing-judgment surface as `TypingML4` (`Gamma |- e : t`) and prints a generated derivation in plain text.
 - `prover --game TypingML4` accepts a single typing judgment (`Gamma |- e : t`) and prints a generated derivation in plain text.
@@ -74,7 +74,7 @@ echo "|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1" | copl-rs prover --
 echo "|- match 1 :: [] with [] -> 0 | x :: xs -> x evalto 1" | copl-rs prover --game EvalML6
 echo "3 + 5 evalto 8" | copl-rs prover --game EvalContML1
 echo "|- 1 + 2 evalto 3" | copl-rs prover --game EvalContML4
-echo "|- let x = ref 1 in let u = x := 2 in !x / () evalto 2 / @l0 = 2" | copl-rs prover --game EvalRefML3
+echo "|- let x = ref 1 in let u = x := 2 in !x evalto 2 / @l0 = 2" | copl-rs prover --game EvalRefML3
 echo "|- let x = 1 in x + 2 : int" | copl-rs prover --game TypingML2
 echo "|- let f = fun x -> x + 1 in f 2 : int" | copl-rs prover --game TypingML3
 echo "|- fun x -> x + 1 : int -> int" | copl-rs prover --game TypingML4

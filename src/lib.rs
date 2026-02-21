@@ -184,6 +184,27 @@ mod tests {
             .trim()
     }
 
+    fn assert_checker_accepts_fixture_with_expected_root(
+        game: &str,
+        source: &str,
+        expected_root: &str,
+    ) {
+        let mut stdin = source.as_bytes();
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", game],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), expected_root);
+    }
+
     fn assert_prover_output_round_trips_to_checker_root_judgment(game: &str, judgment: &str) {
         let expected_root = judgment.trim();
 
@@ -1438,7 +1459,7 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         let text = String::from_utf8(out).expect("stdout should be utf-8");
         assert!(text
             .trim()
-            .starts_with("|- ref 1 / () evalto @l0 / @l0 = 1 by E-Ref {"));
+            .starts_with("|- ref 1 evalto @l0 / @l0 = 1 by E-Ref {"));
     }
 
     #[test]
@@ -1477,13 +1498,55 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
             .contains("judgment is not derivable in EvalRefML3"));
         assert!(result
             .to_string()
-            .contains("expected: |- ref 1 / () evalto @l0 / @l0 = 1"));
+            .contains("expected: |- ref 1 evalto @l0 / @l0 = 1"));
+        assert!(result.to_string().contains("actual: |- ref 1 evalto @l0"));
         assert!(result.to_string().contains("fix: replace value/store"));
     }
 
     #[test]
+    fn routes_checker_eval_ref_ml3_accepts_fixtures_141_to_145() {
+        for (source, expected_root) in [
+            (
+                include_str!("../copl/141.copl"),
+                "@l = 2 / x = @l |- !x + 3 evalto 5 / @l = 2",
+            ),
+            (
+                include_str!("../copl/142.copl"),
+                "@l = 2 / x = @l |- x := !x + 1 evalto 3 / @l = 3",
+            ),
+            (
+                include_str!("../copl/143.copl"),
+                "|- let r = ref true in !r evalto true / @l = true",
+            ),
+            (
+                include_str!("../copl/144.copl"),
+                "|- let incr = fun x -> x := !x + 1 in let x = ref 0 in let z = incr x in !x evalto 1 / @l = 1",
+            ),
+            (
+                include_str!("../copl/145.copl"),
+                "|- let c = let x = ref 0 in fun y -> if y then x := !x + 1 else !x in let y = c true in let y = c true in c false evalto 2 / @l = 2",
+            ),
+        ] {
+            assert_checker_accepts_fixture_with_expected_root("EvalRefML3", source, expected_root);
+        }
+    }
+
+    #[test]
     fn prover_eval_ref_ml3_output_round_trips_with_store_effects() {
-        let judgment = "|- let x = ref 1 in let u = x := 2 in !x / () evalto 2 / @l0 = 2\n";
+        let judgment = "|- let x = ref 1 in let u = x := 2 in !x evalto 2 / @l0 = 2\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalRefML3", judgment);
+    }
+
+    #[test]
+    fn prover_eval_ref_ml3_output_round_trips_with_if_and_arithmetic() {
+        let judgment = "|- if 1 < 2 then 3 * 4 - 1 else 0 evalto 11\n";
+        assert_prover_output_round_trips_to_checker_root_judgment("EvalRefML3", judgment);
+    }
+
+    #[test]
+    fn prover_eval_ref_ml3_output_round_trips_with_let_rec_application() {
+        let judgment =
+            "|- let rec f = fun x -> if x < 1 then 0 else x + f (x - 1) in f 3 evalto 6\n";
         assert_prover_output_round_trips_to_checker_root_judgment("EvalRefML3", judgment);
     }
 
@@ -1791,6 +1854,14 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         assert_checker_rejects_unparenthesized_negative_app_argument(
             "EvalML5",
             b"|- f -2 evalto -2 by E-App {}\n",
+        );
+    }
+
+    #[test]
+    fn routes_checker_eval_ref_ml3_rejects_unparenthesized_negative_int_argument() {
+        assert_checker_rejects_unparenthesized_negative_app_argument(
+            "EvalRefML3",
+            b"|- f -2 evalto -2 / () by E-App {}\n",
         );
     }
 
@@ -3179,7 +3250,7 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
 
         assert!(result.is_ok());
         let text = String::from_utf8(out).expect("stdout should be utf-8");
-        assert_eq!(text.trim(), "|- 1 / () evalto 1 / ()");
+        assert_eq!(text.trim(), "|- 1 evalto 1");
     }
 
     #[test]

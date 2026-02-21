@@ -3,10 +3,23 @@ use crate::core::{CheckError, SourceSpan};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     Int(i64),
+    True,
+    False,
+    If,
+    Then,
+    Else,
+    Fun,
     Let,
+    Rec,
     In,
     Ref,
+    Arrow,
     EvalTo,
+    PlusWord,
+    MinusWord,
+    TimesWord,
+    Less,
+    Than,
     Is,
     By,
     Equal,
@@ -14,10 +27,15 @@ pub enum TokenKind {
     Slash,
     Assign,
     Bang,
-    Minus,
+    PlusSymbol,
+    MinusSymbol,
+    TimesSymbol,
+    LtSymbol,
     Comma,
     LParen,
     RParen,
+    LBracket,
+    RBracket,
     LBrace,
     RBrace,
     Semicolon,
@@ -77,8 +95,22 @@ impl<'a> Lexer<'a> {
         };
 
         match ch {
+            '+' => {
+                self.bump_char('+');
+                Ok(Token {
+                    kind: TokenKind::PlusSymbol,
+                    span,
+                })
+            }
             '-' => {
-                if self
+                if self.peek_next_char() == Some('>') {
+                    self.bump_char('-');
+                    self.bump_char('>');
+                    Ok(Token {
+                        kind: TokenKind::Arrow,
+                        span,
+                    })
+                } else if self
                     .peek_next_char()
                     .is_some_and(|next| next.is_ascii_digit())
                 {
@@ -90,15 +122,22 @@ impl<'a> Lexer<'a> {
                 } else {
                     self.bump_char('-');
                     Ok(Token {
-                        kind: TokenKind::Minus,
+                        kind: TokenKind::MinusSymbol,
                         span,
                     })
                 }
             }
-            '0'..='9' => {
-                let value = self.lex_int_literal()?;
+            '*' => {
+                self.bump_char('*');
                 Ok(Token {
-                    kind: TokenKind::Int(value),
+                    kind: TokenKind::TimesSymbol,
+                    span,
+                })
+            }
+            '<' => {
+                self.bump_char('<');
+                Ok(Token {
+                    kind: TokenKind::LtSymbol,
                     span,
                 })
             }
@@ -156,6 +195,20 @@ impl<'a> Lexer<'a> {
                     span,
                 })
             }
+            '[' => {
+                self.bump_char('[');
+                Ok(Token {
+                    kind: TokenKind::LBracket,
+                    span,
+                })
+            }
+            ']' => {
+                self.bump_char(']');
+                Ok(Token {
+                    kind: TokenKind::RBracket,
+                    span,
+                })
+            }
             '{' => {
                 self.bump_char('{');
                 Ok(Token {
@@ -197,13 +250,32 @@ impl<'a> Lexer<'a> {
                     span,
                 })
             }
-            'A'..='Z' | 'a'..='z' | '_' => {
+            c if c.is_ascii_digit() => {
+                let value = self.lex_int_literal()?;
+                Ok(Token {
+                    kind: TokenKind::Int(value),
+                    span,
+                })
+            }
+            c if c.is_ascii_alphabetic() || c == '_' => {
                 let text = self.lex_identifier(span.clone())?;
                 let kind = match text.as_str() {
+                    "true" => TokenKind::True,
+                    "false" => TokenKind::False,
+                    "if" => TokenKind::If,
+                    "then" => TokenKind::Then,
+                    "else" => TokenKind::Else,
+                    "fun" => TokenKind::Fun,
                     "let" => TokenKind::Let,
+                    "rec" => TokenKind::Rec,
                     "in" => TokenKind::In,
                     "ref" => TokenKind::Ref,
                     "evalto" => TokenKind::EvalTo,
+                    "plus" => TokenKind::PlusWord,
+                    "minus" => TokenKind::MinusWord,
+                    "times" => TokenKind::TimesWord,
+                    "less" => TokenKind::Less,
+                    "than" => TokenKind::Than,
                     "is" => TokenKind::Is,
                     "by" => TokenKind::By,
                     _ => TokenKind::Identifier(text),
@@ -271,7 +343,7 @@ impl<'a> Lexer<'a> {
     fn lex_identifier(&mut self, span: SourceSpan) -> Result<String, CheckError> {
         let mut identifier = String::new();
         while let Some(ch) = self.peek_char() {
-            if ch.is_ascii_alphanumeric() || ch == '_' {
+            if ch.is_ascii_alphanumeric() || ch == '_' || ch == '\'' {
                 identifier.push(ch);
                 self.bump_char(ch);
             } else {
@@ -332,5 +404,21 @@ mod tests {
         assert!(tokens
             .iter()
             .any(|token| token.kind == TokenKind::Location("l0".to_string())));
+    }
+
+    #[test]
+    fn tokenizes_fun_and_binary_operator_tokens() {
+        let source = "fun x -> if x < 1 then x + 1 else x * 2";
+        let tokens = tokenize(source).expect("source should tokenize");
+
+        assert!(tokens.iter().any(|token| token.kind == TokenKind::Fun));
+        assert!(tokens.iter().any(|token| token.kind == TokenKind::Arrow));
+        assert!(tokens.iter().any(|token| token.kind == TokenKind::LtSymbol));
+        assert!(tokens
+            .iter()
+            .any(|token| token.kind == TokenKind::PlusSymbol));
+        assert!(tokens
+            .iter()
+            .any(|token| token.kind == TokenKind::TimesSymbol));
     }
 }

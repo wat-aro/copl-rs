@@ -102,47 +102,297 @@
   - 順序を入れ替える場合は、この節に理由を追記する。
   - 実装完了後は `AGENTS.md` の Design Principles にある判断基準（高凝集・低結合 / `YAGNI` / `KISS`）で 5 回レビューし、各回の改善内容（または指摘なし）を完了メモに記録する。
 
-- [ ] `01` [P1][Test] `EvalRefML3` の現行不足を固定する失敗テストを追加する（checker/prover 共通）。
+- [x] `01` [P1][Test] `EvalRefML3` の現行不足を固定する失敗テストを追加する（checker/prover 共通）。
   - 内容:
     - `copl/141-145` を checker へ通す回帰テスト。
     - judgment-only で `if` / `fun` / `app` / `let rec` / `B-*` を含む入力テスト。
     - `prover` 出力の checker round-trip テスト（store 効果込み）。
-- [ ] `02` [P1][Checker-Parser] lexer/parser/syntax を仕様レベルへ拡張する（式・値・判定）。
+  - 進捗 (2026-02-21):
+    - `src/games/eval_ref_ml3/checker.rs` に `copl/141-145` 回帰テストを追加（Red 確認済み）。
+    - `src/games/eval_ref_ml3/prover.rs` に judgment-only（`if` / `fun` / `app` / `let rec` / `B-Plus`）と round-trip（store 効果込み）テストを追加（Red 確認済み）。
+    - 現在の主な失敗要因: lexer/parser 未対応トークン（`+`, `->`, `[ ... ]`）と `B-* judgment` 未対応。
+    - 追記 (2026-02-21): parser 拡張後は parse 失敗が解消し、失敗要因は checker/prover の未実装規則（`E-Plus`, `E-If*`, `E-App`, `E-LetRec` など）へ移行。
+- [x] `02` [P1][Checker-Parser] lexer/parser/syntax を仕様レベルへ拡張する（式・値・判定）。
   - 内容:
     - `bool`、`if then else`、`fun`、`app`、`let rec`、`+/-/*/<`、`B-* judgment` を構文追加。
     - closure 値 / rec closure 値 / store・env の既存形式との整合を定義。
     - parser/checker 境界ポリシーを維持し、未知 rule 名は checker で `RuleViolation` 化する。
-- [ ] `03` [P1][Checker] `E-*` / `B-*` 規則検証を実装し、導出形チェックを強化する。
+  - 進捗 (2026-02-21):
+    - `src/games/eval_ref_ml3/syntax.rs` を拡張し、`Bool` / `If` / `Fun` / `App` / `LetRec` / 二項演算、closure 値 / rec closure 値、`B-* judgment` の AST と表示を追加。
+    - `src/games/eval_ref_ml3/lexer.rs` に `+` `*` `<` `->` `[` `]` と関連キーワード（`if/then/else/fun/rec/plus/minus/times/less/than`）を追加。
+    - `src/games/eval_ref_ml3/parser.rs` で `store / env |- ...` 形式と従来形式を併用受理し、式優先順位・closure 値・`B-* judgment` を実装。
+    - parser 回帰テストを追加し、`copl/141.copl` から `copl/145.copl` の derivation が parse 段階で通ることを確認。
+    - 現在の主な失敗要因は parse ではなく `checker` / `prover` の未実装規則（`E-Plus` など）へ移行。
+- [x] `03` [P1][Checker] `E-*` / `B-*` 規則検証を実装し、導出形チェックを強化する。
   - 内容:
     - 追加規則: `E-Bool`, `E-IfT`, `E-IfF`, `E-Plus`, `E-Minus`, `E-Times`, `E-Lt`, `E-Fun`, `E-App`, `E-LetRec`, `E-AppRec`, `B-Plus`, `B-Minus`, `B-Times`, `B-Lt`。
     - `E-Assign` の結論値を参照仕様どおりに扱う（`()` 固定にしない）。
     - `premise path` / `line:column` 付き診断を既存方針のまま維持する。
-- [ ] `04` [P1][Prover] store-threading evaluator を規則追加分まで拡張する。
+  - 進捗 (2026-02-21):
+    - `src/games/eval_ref_ml3/checker.rs` へ `E-Bool` / `E-If*` / `E-Fun` / `E-App` / `E-LetRec` / `E-AppRec` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` / `B-*` 検証を追加。
+    - `E-Assign` の結論値検証を `()` 固定から「右辺評価値を返す」形へ修正。
+    - 追加回帰テスト: `E-AppRec`、`E-Minus`/`E-Times`/`E-Lt`、`E-Assign` 結論値。
+    - `cargo test games::eval_ref_ml3::checker::tests` は全件 pass。`cargo test eval_ref_ml3` の残失敗は `prover` 未実装分（`04` スコープ）。
+- [x] `04` [P1][Prover] store-threading evaluator を規則追加分まで拡張する。
   - 内容:
     - closure/rec closure と `App`/`AppRec` の環境拡張を実装。
     - `if`・算術・比較・代入の逐次評価順序を `checker` と一致させる。
     - `E-Assign` の結果値・更新後 store を fixture と一致させる。
-- [ ] `05` [P1][Format-Compat] 出力フォーマット互換の回帰を追加し、過去不具合を予防する。
+  - 進捗 (2026-02-21):
+    - `src/games/eval_ref_ml3/prover.rs` の evaluator を拡張し、`E-IfT` / `E-IfF` / `E-Fun` / `E-App` / `E-LetRec` / `E-AppRec` / `E-Plus` / `E-Minus` / `E-Times` / `E-Lt` を導出可能化。
+    - `E-Assign` の結論値を `()` ではなく rhs 評価値へ修正し、store 更新規則を checker 実装と一致させた。
+    - root judgment のロケーション名差分（`@l0` vs `@l` など）で不要に非導出化しないよう、導出結果を期待 judgment へ alpha-renaming 整合する処理を追加。
+    - prover テストを拡張し、`if` + 比較/算術経路と `LetRec -> AppRec` 経路の回帰を固定。
+  - 完了メモ (2026-02-21):
+    - 実装:
+      - `src/games/eval_ref_ml3/prover.rs` に store-threading evaluator の未実装規則（`If`/`Fun`/`App`/`LetRec`/`AppRec`/`BinOp`）を追加した。
+      - `E-Assign` の結論値を rhs 値へ変更し、checker の `E-Assign` 検証規則と整合させた。
+      - 導出可能性判定でロケーション名のみ異なるケースを吸収するため、judgment/derivation のロケーション alpha-renaming 整合を導入した。
+      - `src/games/eval_ref_ml3/syntax.rs` の `EvalRefML3Judgment` に `#[allow(clippy::large_enum_variant)]` を追加し、既存ゲームと同じ clippy 運用へ揃えた。
+    - テスト:
+      - `src/games/eval_ref_ml3/prover.rs` に `proves_if_with_lt_times_and_minus_judgment` を追加した。
+      - `src/games/eval_ref_ml3/prover.rs` の `proves_let_rec_judgment` を拡張し、`E-AppRec` 経路を明示アサートした。
+      - `cargo test games::eval_ref_ml3::prover::tests -- --nocapture` を実行し、Green を確認した。
+      - `cargo test eval_ref_ml3 -- --nocapture` を実行し、EvalRefML3 関連回帰が全件 pass することを確認した。
+    - ドキュメント:
+      - `docs/PLAN.md` のタスク `04` を `[x]` へ更新し、進捗と完了メモを追記した。
+      - `docs/design.md` の `EvalRefML3` prover/checker 実装状態を最新化し、対応規則セットと挙動記述を同期した。
+    - R1:
+      - Finding: `E-Assign` の結論値が `()` 固定で checker 規則と不整合。
+      - Action: rhs 評価値を結論値へ反映するよう prover 実装を修正。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 等価な導出でもロケーション名差分（`@l0`/`@l`）で非導出扱いになる。
+      - Action: root judgment 比較時に alpha-renaming で整合可能かを判定し、整合後 derivation を返すよう修正。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: `E-AppRec` と比較/算術経路の回帰を直接固定する prover テストが弱い。
+      - Action: `LetRec -> AppRec` のアサート追加と `if + (<,*,-)` テストを追加。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: `cargo clippy -D warnings` で `EvalRefML3Judgment` の `large_enum_variant` 警告がエラー化。
+      - Action: 既存ゲーム運用に合わせて `#[allow(clippy::large_enum_variant)]` を付与。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `05` [P1][Format-Compat] 出力フォーマット互換の回帰を追加し、過去不具合を予防する。
   - 内容:
     - 負数適用引数の `(-n)` 出力/受理制約テストを `EvalRefML3` に追加。
     - 優先順位テスト（右結合代入、`!` と `app`、二項演算の括弧）を追加。
     - `prover` 出力を本家 checker に流して conclusion form error が出ないことを確認するテスト手順を整備。
-- [ ] `06` [P1][Integration] `src/lib.rs` の route レベル回帰テストを拡充する。
+  - 進捗 (2026-02-21):
+    - `src/games/eval_ref_ml3/parser.rs` に `f -2` 拒否、`:=` 右結合、`!` と `app` の優先順位、`f (1 + 2)` 括弧保持の回帰テストを追加。
+    - `src/games/eval_ref_ml3/syntax.rs` に `f (-2)`、`x := y := 1`/`(x := y) := 1`、`!f x`/`!(f x)`、`f (1 + 2)` の表示回帰テストを追加。
+    - `src/games/eval_ref_ml3/prover.rs` に `f (-2)` と `f (1 + 2)` が出力で崩れない回帰テストを追加。
+    - `src/lib.rs` に `checker --game EvalRefML3` が非括弧負数適用引数を拒否する route レベル回帰テストを追加。
+    - 本家 checker 互換の確認手順を明文化:
+      - `echo '|- let f = fun x -> x in f (-2) evalto -2' | copl-rs prover --game EvalRefML3 > /tmp/eval_ref_ml3.derivation`
+      - `checker -game EvalRefML3 < /tmp/eval_ref_ml3.derivation`
+      - 標準エラーに parse error / `The form of conclusion is wrong` / `conclusion form error` が出た場合は `07` で差分原因を記録する。
+  - 完了メモ (2026-02-21):
+    - 実装:
+      - `EvalRefML3` の parser/syntax/prover/lib に、過去不具合（非括弧負数引数と優先順位崩れ）を固定する回帰テストを追加した。
+      - 本家 checker で `conclusion form error` 再発有無を確認する実行手順を `PLAN` に追加した。
+    - テスト:
+      - `cargo test -q eval_ref_ml3`
+      - `cargo test -q routes_checker_eval_ref_ml3_rejects_unparenthesized_negative_int_argument`
+    - ドキュメント:
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: `EvalRefML3` には負数適用引数の拒否/出力互換を固定する明示テストが不足していた。
+      - Action: parser/syntax/prover/lib に専用回帰テストを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: `:=` 右結合と `!`/`app` 優先順位の崩れは将来の formatter 変更で再発し得る。
+      - Action: AST 構造と文字列表現の双方を検証する回帰テストを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 二項演算を適用引数にしたときの括弧保持が未固定だった。
+      - Action: parser/syntax/prover で `f (1 + 2)` の保持を検証するテストを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 本家 checker 互換の確認方法が口頭ベースで、再実施しづらかった。
+      - Action: `copl-rs prover -> checker -game EvalRefML3` の確認手順をコマンドとして記録した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 本家 `checker -game EvalRefML3` への prover 出力投入で parse error（`expression expected`）が出るケースを確認した。
+      - Action: out-of-scope として `07` で原因分析・互換方針を整理する。
+      - Scope: out-of-scope
+      - Backlog: 07
+- [x] `06` [P1][Integration] `src/lib.rs` の route レベル回帰テストを拡充する。
   - 内容:
     - `checker --game EvalRefML3` の fixture 141-145 受理テスト。
     - `prover --game EvalRefML3` の non-derivable 診断テスト更新（expected/actual/fix）。
     - `prover` 出力の checker root judgment 一致テストを複数追加。
-- [ ] `07` [P2][External-Validation] 本家 `copl-tools` との互換検証を実施し、差分を記録する。
+  - 進捗 (2026-02-21):
+    - `src/lib.rs` に `routes_checker_eval_ref_ml3_accepts_fixtures_141_to_145` を追加し、`copl/141.copl` から `copl/145.copl` を route レベルで受理することを root judgment 一致で固定した。
+    - `routes_prover_eval_ref_ml3_with_non_derivable_judgment_to_check_error` を更新し、`expected` / `actual` / `fix` の3要素を明示アサートするようにした。
+    - `prover_eval_ref_ml3_output_round_trips_with_if_and_arithmetic` と `prover_eval_ref_ml3_output_round_trips_with_let_rec_application` を追加し、`EvalRefML3` の round-trip を store 更新ケース以外にも拡張した。
+  - 完了メモ (2026-02-21):
+    - 実装:
+      - `src/lib.rs` に route テスト用 helper `assert_checker_accepts_fixture_with_expected_root` を追加した。
+      - `EvalRefML3` 向け route 回帰テストを3系統（fixture 受理 / non-derivable 診断 / round-trip 複数化）へ拡充した。
+    - テスト:
+      - `cargo test -q routes_checker_eval_ref_ml3_accepts_fixtures_141_to_145`
+      - `cargo test -q routes_prover_eval_ref_ml3_with_non_derivable_judgment_to_check_error`
+      - `cargo test -q prover_eval_ref_ml3_output_round_trips_with_store_effects`
+      - `cargo test -q prover_eval_ref_ml3_output_round_trips_with_if_and_arithmetic`
+      - `cargo test -q prover_eval_ref_ml3_output_round_trips_with_let_rec_application`
+    - ドキュメント:
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: `EvalRefML3` の route レベルに `copl/141-145` 一括受理の固定テストがなかった。
+      - Action: fixture ごとの root judgment 一致アサートを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: non-derivable 診断テストが `expected` と `fix` に偏り、`actual` の退行を検知できなかった。
+      - Action: `actual: ...` 断片の明示アサーションを追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: round-trip テストが store 効果1ケースのみで、`if`/算術・`let rec` 経路の回帰を捕捉しづらかった。
+      - Action: 2ケースを追加して経路を拡張した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: checker route 検証コードが重複しやすい構造だった。
+      - Action: expected root 比較の helper 化で重複を抑えた。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+- [x] `07` [P2][External-Validation] 本家 `copl-tools` との互換検証を実施し、差分を記録する。
   - 内容:
     - `copl-rs prover --game EvalRefML3` 出力を `checker -game EvalRefML3` に通して検証。
     - `checker -game EvalRefML3 < copl/141.copl` から `copl/145.copl` をスモークテストとして毎回実施する。
     - 差分が出た場合は `docs/PLAN.md` に原因・対処を追記し、必要なら追加タスク化。
-- [ ] `08` [P1][Validation/Docs] 検証・文書同期・完了メモ（R1-R5）を更新する。
+  - 進捗 (2026-02-21):
+    - `echo '|- let f = fun x -> x in f (-2) evalto -2' | copl-rs prover --game EvalRefML3 | checker -game EvalRefML3` で parse error（`expression expected`）を確認。
+    - 差分原因を特定: `copl-rs` の `EvalRefML3` 表示が `Gamma |- e / sigma evalto ...`（store 後置）で、本家 checker が期待する `sigma / Gamma |- e evalto ...`（store 前置）と不一致。
+    - `src/games/eval_ref_ml3/syntax.rs` の `EvalTo` 表示を canonical 形式へ修正し、空 store のときは ` / ()` を省略するよう変更。
+    - `src/games/eval_ref_ml3/parser.rs` は legacy 形式入力（`Gamma |- e / sigma evalto ...`）の受理を維持しつつ、出力は canonical へ統一。
+    - 修正後に `copl-rs prover --game EvalRefML3 -> checker -game EvalRefML3` が通ることを確認。
+    - `checker -game EvalRefML3 < copl/141.copl` から `copl/145.copl` のスモークも再実行し全件 pass を確認。
+  - 完了メモ (2026-02-21):
+    - 実装:
+      - `src/games/eval_ref_ml3/syntax.rs` の `EvalRefML3Judgment::EvalTo` 表示順序を CoPL 互換（`sigma / Gamma |- e evalto v / sigma'`）へ変更した。
+      - 空 store の場合に ` / ()` を出力しないようにし、fixture と本家 checker の表記に合わせた。
+      - `src/games/eval_ref_ml3/checker.rs` / `src/games/eval_ref_ml3/parser.rs` / `src/lib.rs` の `EvalRefML3` 期待文字列テストを canonical 表記へ同期した。
+    - テスト:
+      - `cargo test -q eval_ref_ml3`
+      - `echo '|- let f = fun x -> x in f (-2) evalto -2' | cargo run -q -- prover --game EvalRefML3 > /tmp/eval_ref_ml3_sample.derivation`
+      - `checker -game EvalRefML3 < /tmp/eval_ref_ml3_sample.derivation`
+      - `checker -game EvalRefML3 < copl/141.copl` 〜 `copl/145.copl`
+    - ドキュメント:
+      - `README.md`（`EvalRefML3` judgment 形式の canonical/legacy 受理を明記、例を更新）
+      - `docs/design.md`（`EvalRefML3` judgment 形式の canonical 表記と legacy 受理を明記）
+      - `docs/PLAN.md`
+    - R1:
+      - Finding: `EvalRefML3` prover 出力が本家 checker に parse error（`expression expected`）で拒否される。
+      - Action: 表示順序差分（store 前置/後置）を特定し、`EvalTo` 表示を canonical 形式へ修正した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 空 store を ` / ()` と常時表示すると fixture 形式と乖離し、互換上のノイズになる。
+      - Action: 空 store の前置/後置表示を省略する条件分岐を追加した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 既存テストは旧表記期待に寄っており、canonical 化の意図を固定できていなかった。
+      - Action: `checker`/`parser`/route テストの期待文字列を canonical へ更新した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 入力互換（legacy 表記受理）を壊すと既存利用者に影響する。
+      - Action: parser 側の受理ロジックは維持し、出力のみ canonical 統一に限定した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: `cargo test -q eval_ref_ml3` は pass（全体テストは `08` で実施）
+      - `cargo clippy --all-targets --all-features -- -D warnings`: 未実施（`08` で実施）
+- [x] `08` [P1][Validation/Docs] 検証・文書同期・完了メモ（R1-R5）を更新する。
   - 内容:
     - `cargo fmt`
     - `cargo test`
     - `cargo clippy --all-targets --all-features -- -D warnings`
     - `README.md` / `docs/design.md` / ADR（必要時）/ `docs/PLAN.md` の同期。
+  - 進捗 (2026-02-21):
+    - `cargo fmt` を実行し、フォーマット差分がないことを確認。
+    - `cargo test` を実行し、`768 passed; 0 failed` を確認。
+    - `cargo clippy --all-targets --all-features -- -D warnings` は初回で `src/games/eval_ref_ml3/syntax.rs` の `collapsible_else_if` で失敗。
+    - `src/games/eval_ref_ml3/syntax.rs` の `EvalRefML3Judgment::EvalTo` 表示分岐を `else if` へ畳み込む最小修正を適用。
+    - 修正後に `cargo fmt` / `cargo test` / `cargo clippy --all-targets --all-features -- -D warnings` を再実行し、全て pass を確認。
+    - `doc-sync` 観点で確認し、今回差分は CLI 仕様・設計境界・開発プロセスを変更しないため `README.md` / `docs/design.md` / ADR は追記不要と判断。
+  - 完了メモ (2026-02-21):
+    - 実装:
+      - `src/games/eval_ref_ml3/syntax.rs` の条件分岐を clippy 指摘に合わせて簡約し、挙動を維持したまま警告を解消した。
+    - テスト:
+      - `cargo fmt`
+      - `cargo test`
+      - `cargo clippy --all-targets --all-features -- -D warnings`
+    - ドキュメント:
+      - `docs/PLAN.md`
+    - Retrospect:
+      - 追加の文書同期候補（`README.md` / `docs/design.md` / ADR / `AGENTS.md`）は今回の差分では不要と判断した。
+      - スコープ外の改善提案は新規に発生しなかったため、バックログ追加はなし。
+    - R1:
+      - Finding: `EvalRefML3Judgment::EvalTo` 表示分岐で `collapsible_else_if` により clippy が失敗した。
+      - Action: `else { if ... }` を `else if ...` へ変換して警告を解消した。
+      - Scope: in-scope
+      - Backlog: なし
+    - R2:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - R3:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - R4:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - R5:
+      - Finding: 指摘なし。
+      - Action: なし。
+      - Scope: in-scope
+      - Backlog: なし
+    - 検証:
+      - `cargo fmt`: pass
+      - `cargo test`: pass
+      - `cargo clippy --all-targets --all-features -- -D warnings`: pass
 
 ## 履歴計画
 
