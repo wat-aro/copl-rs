@@ -792,6 +792,28 @@ mod tests {
     }
 
     #[test]
+    fn parses_checker_with_derivation_system_name_while() {
+        let cli =
+            Cli::parse(vec!["copl-rs", "checker", "--game", "While"]).expect("cli should parse");
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game.as_str(), "While");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
+    fn keeps_backward_compatibility_for_lowercase_while() {
+        let cli =
+            Cli::parse(vec!["copl-rs", "checker", "--game", "while"]).expect("cli should parse");
+        let Command::Checker(cmd) = cli.command else {
+            panic!("expected checker command");
+        };
+        assert_eq!(cmd.game.as_str(), "While");
+        assert_eq!(cmd.input, InputSource::Stdin);
+    }
+
+    #[test]
     fn parses_checker_with_file() {
         let cli = Cli::parse(vec!["copl-rs", "checker", "--game=nat", "001.copl"])
             .expect("cli should parse");

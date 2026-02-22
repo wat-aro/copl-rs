@@ -1,6 +1,6 @@
 # copl-rs Design (Snapshot)
 
-Last updated: 2026-02-21
+Last updated: 2026-02-22
 
 ## 1. Purpose
 
@@ -17,11 +17,11 @@ It is a snapshot of the implementation state and the agreed extension direction.
   - `copl-rs checker --game <name> [file]`
 - `prover` subcommand CLI parsing and runtime route:
   - `copl-rs prover --game <name> [file]`
-- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalML6`, `EvalContML1`, `EvalContML4`, `EvalRefML3`, `TypingML2`, `TypingML3`, `TypingML4`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`.
+- Current game targets: `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalML6`, `EvalContML1`, `EvalContML4`, `EvalRefML3`, `TypingML2`, `TypingML3`, `TypingML4`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`, `While`.
 
 ### Out of scope now
 
-- Prover implementation for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalML6`, `EvalContML1`, `EvalContML4`, `EvalRefML3`, `TypingML2`, `TypingML3`, `TypingML4`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, and `ReduceNatExp`.
+- Prover implementation for games other than `Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalML6`, `EvalContML1`, `EvalContML4`, `EvalRefML3`, `TypingML2`, `TypingML3`, `TypingML4`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`, and `While`.
 - JSON/machine-readable error output format.
 
 ## 3. Architecture Overview
@@ -95,6 +95,8 @@ The project is split into explicit module boundaries:
 - `src/games/eval_nat_exp/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 - `src/games/reduce_nat_exp/`:
+  - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
+- `src/games/while_lang/`:
   - `syntax.rs`, `lexer.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
 - `src/games/nat/`:
   - `syntax.rs`, `parser.rs`, `checker.rs`, `prover.rs`, `mod.rs` (`prove`).
@@ -175,6 +177,7 @@ Key runtime checks in `lib.rs`:
 - `prover --game EvalNamelessML3` validates judgment-only input syntax before proving.
 - `prover --game EvalNatExp` validates judgment-only input syntax before proving.
 - `prover --game ReduceNatExp` validates judgment-only input syntax before proving.
+- `prover --game While` validates judgment-only input syntax before proving.
 - Nat prover core builds an in-memory derivation AST using `P-Zero` / `P-Succ` / `T-Zero` / `T-Succ`.
 - CompareNat1 prover core builds an in-memory derivation AST using `L-Succ` / `L-Trans`.
 - CompareNat2 prover core builds an in-memory derivation AST using `L-Zero` / `L-SuccSucc`.
@@ -200,7 +203,8 @@ Key runtime checks in `lib.rs`:
 - EvalNamelessML3 prover core builds an in-memory derivation AST using deterministic `E-*` / `B-*` rule construction with de Bruijn index lookup (`E-Var`) and recursive-closure application (`E-AppRec`).
 - EvalNatExp prover core builds an in-memory derivation AST using deterministic recursive evaluation and Nat arithmetic rule construction (`E-*`, `P-*`, `T-*`).
 - ReduceNatExp prover core builds an in-memory derivation AST using deterministic Nat arithmetic derivation construction (`P-*`, `T-*`) and reduction-relation derivation construction (`R-*`, `DR-*`, `MR-*`).
-- Nat/CompareNat1/CompareNat2/CompareNat3/EvalML1/EvalML1Err/EvalML2/EvalML3/EvalML4/EvalML5/EvalML6/EvalContML1/EvalContML4/EvalRefML3/TypingML2/TypingML3/TypingML4/TypingML5/TypingML6/PolyTypingML3/PolyTypingML4/NamelessML3/EvalNamelessML3/EvalNatExp/ReduceNatExp provers render derivation trees in checker-compatible plain text and write them to stdout.
+- While prover core builds an in-memory derivation AST using deterministic store-threading evaluation and rule-driven derivation construction (`A-*`, `B-*`, `C-*`) for command/store judgments.
+- Nat/CompareNat1/CompareNat2/CompareNat3/EvalML1/EvalML1Err/EvalML2/EvalML3/EvalML4/EvalML5/EvalML6/EvalContML1/EvalContML4/EvalRefML3/TypingML2/TypingML3/TypingML4/TypingML5/TypingML6/PolyTypingML3/PolyTypingML4/NamelessML3/EvalNamelessML3/EvalNatExp/ReduceNatExp/While provers render derivation trees in checker-compatible plain text and write them to stdout.
 
 ## 6. Error Model
 
@@ -209,7 +213,7 @@ Key runtime checks in `lib.rs`:
   - `CheckErrorKind` (`Parse`, `RuleViolation`, `Internal`)
   - optional `SourceSpan`.
 - Top-level runtime errors are wrapped in `RunError`.
-- For non-derivable Nat, CompareNat1, CompareNat2, CompareNat3, EvalML1, EvalML1Err, EvalML2, EvalML3, EvalML4, EvalML5, EvalML6, EvalContML1, EvalContML4, EvalRefML3, TypingML2, TypingML3, TypingML4, TypingML5, TypingML6, PolyTypingML3, PolyTypingML4, NamelessML3, EvalNamelessML3, EvalNatExp, and ReduceNatExp prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
+- For non-derivable Nat, CompareNat1, CompareNat2, CompareNat3, EvalML1, EvalML1Err, EvalML2, EvalML3, EvalML4, EvalML5, EvalML6, EvalContML1, EvalContML4, EvalRefML3, TypingML2, TypingML3, TypingML4, TypingML5, TypingML6, PolyTypingML3, PolyTypingML4, NamelessML3, EvalNamelessML3, EvalNatExp, ReduceNatExp, and While prover judgments, diagnostics are plain-text `RuleViolation` messages with `expected` / `actual` / `fix` where available.
 
 Error output is currently plain text.
 On successful check, output is the inferred root judgment text in plain text (ADR-0008).
@@ -526,13 +530,14 @@ Current status:
 - `prover --game EvalNamelessML3` parses judgment-only input (`Gamma |- e evalto v` / `plus` / `minus` / `times` / `less than`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game EvalNatExp` parses judgment-only input (`evalto` / `plus` / `times`), constructs derivation ASTs, and prints checker-compatible derivations.
 - `prover --game ReduceNatExp` parses judgment-only input (`--->` / `-d->` / `-*->` / `plus` / `times`), constructs derivation ASTs, and prints checker-compatible derivations.
+- `prover --game While` parses judgment-only input (`changes` / `evalto` for arithmetic/boolean store judgments), constructs derivation ASTs, and prints checker-compatible derivations.
 
 Re-evaluation result (2026-02-19):
 
 - Do not introduce a shared proof-search core at this point.
-- Keep game-specific prover implementations (`Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalML6`, `EvalContML1`, `EvalContML4`, `EvalRefML3`, `TypingML2`, `TypingML3`, `TypingML4`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`) as the default strategy.
+- Keep game-specific prover implementations (`Nat`, `CompareNat1`, `CompareNat2`, `CompareNat3`, `EvalML1`, `EvalML1Err`, `EvalML2`, `EvalML3`, `EvalML4`, `EvalML5`, `EvalML6`, `EvalContML1`, `EvalContML4`, `EvalRefML3`, `TypingML2`, `TypingML3`, `TypingML4`, `TypingML5`, `TypingML6`, `PolyTypingML3`, `PolyTypingML4`, `NamelessML3`, `EvalNamelessML3`, `EvalNatExp`, `ReduceNatExp`, `While`) as the default strategy.
 - Rationale:
-  - The twenty-five prover routes are deterministic, rule-driven evaluators/adapters, but their core domains differ (`Nat` arithmetic recursion, `CompareNat1` transitive less-than chaining, `CompareNat2` structural less-than recursion, `CompareNat3` right-side successor recursion, `EvalML1` expression evaluation, `EvalML1Err` error-aware evaluation, `EvalML2` environment-sensitive evaluation, `EvalML3` environment/closure-sensitive evaluation, `EvalML4` list/match-aware evaluation, `EvalML5` multi-clause/pattern-relation-aware evaluation, `EvalML6` EvalML5-backed bootstrap evaluation, `EvalContML1` continuation-machine evaluation, `EvalContML4` continuation-machine evaluation with environment/list/closure frames, `EvalRefML3` store-threading evaluation, `TypingML2` TypingML4-backed bootstrap typing evaluation, `TypingML3` TypingML4-backed bootstrap typing evaluation, `TypingML4` monomorphic typing-derivation construction, `TypingML5` TypingML4-backed bootstrap typing evaluation, `TypingML6` TypingML4-backed bootstrap typing evaluation, `PolyTypingML3` PolyTypingML4-backed bootstrap typing evaluation, `PolyTypingML4` let-polymorphic typing-derivation construction, `NamelessML3` translation-derivation construction, `EvalNamelessML3` nameless evaluation with de Bruijn closures/recursion, `EvalNatExp` Nat-expression evaluation, and `ReduceNatExp` one-step/deterministic/multi-step reduction derivation construction).
+  - The twenty-six prover routes are deterministic, rule-driven evaluators/adapters, but their core domains differ (`Nat` arithmetic recursion, `CompareNat1` transitive less-than chaining, `CompareNat2` structural less-than recursion, `CompareNat3` right-side successor recursion, `EvalML1` expression evaluation, `EvalML1Err` error-aware evaluation, `EvalML2` environment-sensitive evaluation, `EvalML3` environment/closure-sensitive evaluation, `EvalML4` list/match-aware evaluation, `EvalML5` multi-clause/pattern-relation-aware evaluation, `EvalML6` EvalML5-backed bootstrap evaluation, `EvalContML1` continuation-machine evaluation, `EvalContML4` continuation-machine evaluation with environment/list/closure frames, `EvalRefML3` store-threading evaluation, `TypingML2` TypingML4-backed bootstrap typing evaluation, `TypingML3` TypingML4-backed bootstrap typing evaluation, `TypingML4` monomorphic typing-derivation construction, `TypingML5` TypingML4-backed bootstrap typing evaluation, `TypingML6` TypingML4-backed bootstrap typing evaluation, `PolyTypingML3` PolyTypingML4-backed bootstrap typing evaluation, `PolyTypingML4` let-polymorphic typing-derivation construction, `NamelessML3` translation-derivation construction, `EvalNamelessML3` nameless evaluation with de Bruijn closures/recursion, `EvalNatExp` Nat-expression evaluation, `ReduceNatExp` one-step/deterministic/multi-step reduction derivation construction, and `While` imperative-command/store evaluation with loop unfolding).
   - Current overlap is limited to small helper patterns and does not justify a new cross-game proof-search abstraction.
   - Introducing a generic core now would increase coupling across game modules without a proportional reduction in implementation complexity.
 - Revisit this decision when one of the following becomes true:
@@ -540,10 +545,10 @@ Re-evaluation result (2026-02-19):
   - Shared prover logic grows enough that local helper extraction is no longer sufficient.
   - Adding a new prover repeatedly requires touching multiple existing prover modules for cross-cutting behavior.
 
-### 8.3 Unimplemented game onboarding status (2026-02-20)
+### 8.3 Unimplemented game onboarding status (2026-02-22)
 
 - Official CoPL game pages currently have no remaining unimplemented game in this repository scope.
-- `EvalRefML3` onboarding was completed with a dedicated `syntax` / `lexer` / `parser` / `checker` / `prover` module set.
+- `EvalRefML3` and `While` onboarding were completed with dedicated `syntax` / `lexer` / `parser` / `checker` / `prover` module sets.
 
 ## 9. Quality Gates
 
@@ -621,4 +626,6 @@ Completed or frozen plans are archived under `docs/plans/`.
 - ReduceNatExp checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker).
 - ReduceNatExp prover is implemented with game-specific recursive reduction/arith-derivation construction that deterministically emits `R-*` / `DR-*` / `MR-*` / `P-*` / `T-*` derivations and checker-compatible pretty-printed output.
 - ReduceNatExp checker centralizes shared validation paths for `R-*` and `DR-*` rules by switching relation kind (`--->` / `-d->`) and operator kind (`+` / `*`) in common helper functions.
+- While checker is implemented with the same parser/checker boundary policy as Nat (raw rule names in parser, rule resolution in checker), validating `A-*` / `B-*` / `C-*` rule applications for store-threading judgments (`sigma |- a evalto i`, `sigma |- b evalto bool`, `c changes sigma1 to sigma2`) with `SourceSpan` + `premise path` diagnostics.
+- While prover is implemented with deterministic store-threading evaluation that emits `A-*` / `B-*` / `C-*` derivations and checker-compatible pretty-printed output.
 - Nat arithmetic rule-shape checks (`P-Zero`, `P-Succ`, `T-Zero`, `T-Succ`) are centralized in `src/games/nat_arith.rs` and reused by `Nat`, `EvalNatExp`, and `ReduceNatExp`.

@@ -2,7 +2,7 @@
 
 This file records the agreed development policies for this repository.
 
-Last updated: 2026-02-20
+Last updated: 2026-02-22
 
 ## Scope Ownership
 
@@ -49,7 +49,8 @@ Last updated: 2026-02-20
 - `prover` is implemented for `EvalNamelessML3` (`copl-rs prover --game EvalNamelessML3 [file]`).
 - `prover` is implemented for `EvalNatExp` (`copl-rs prover --game EvalNatExp [file]`).
 - `prover` is implemented for `ReduceNatExp` (`copl-rs prover --game ReduceNatExp [file]`).
-- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalML6` / `EvalContML1` / `EvalContML4` / `EvalRefML3` / `TypingML2` / `TypingML3` / `TypingML4` / `TypingML5` / `TypingML6` / `PolyTypingML3` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp`, `prover` currently returns a not-implemented error.
+- `prover` is implemented for `While` (`copl-rs prover --game While [file]`).
+- For games other than `Nat` / `CompareNat1` / `CompareNat2` / `CompareNat3` / `EvalML1` / `EvalML1Err` / `EvalML2` / `EvalML3` / `EvalML4` / `EvalML5` / `EvalML6` / `EvalContML1` / `EvalContML4` / `EvalRefML3` / `TypingML2` / `TypingML3` / `TypingML4` / `TypingML5` / `TypingML6` / `PolyTypingML3` / `PolyTypingML4` / `NamelessML3` / `EvalNamelessML3` / `EvalNatExp` / `ReduceNatExp` / `While`, `prover` currently returns a not-implemented error.
 - Game selection is unified as `--game <name>`.
 - Expected command shape:
   - `copl-rs checker --game Nat <file>`
@@ -60,6 +61,7 @@ Last updated: 2026-02-20
   - `copl-rs checker --game EvalML6 <file>`
   - `copl-rs checker --game EvalNatExp <file>`
   - `copl-rs checker --game ReduceNatExp <file>`
+  - `copl-rs checker --game While <file>`
   - If `<file>` is omitted, read from `stdin`.
 - Keep game-name input case-insensitive for backward compatibility.
 - On success, checker output should be the inferred root judgment text in plain text.
@@ -100,6 +102,7 @@ Last updated: 2026-02-20
 - `games/eval_nameless_ml3` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/eval_nat_exp` is split into `syntax` / `parser` / `checker` / `prover`.
 - `games/reduce_nat_exp` is split into `syntax` / `parser` / `checker` / `prover`.
+- `games/while_lang` is split into `syntax` / `parser` / `checker` / `prover`.
 - Use `enum GameKind + match` for game registry/dispatch.
 
 ## Design Principles
@@ -195,6 +198,7 @@ Last updated: 2026-02-20
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/TypingML6.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/EvalNatExp.html
 - Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/ReduceNatExp.html
+- Rule definition: https://www.fos.kuis.kyoto-u.ac.jp/~igarashi/CoPL/games/While.html
 - ASCII examples:
   - Nat: `copl/001.copl` to `copl/008.copl`
   - CompareNat1: `copl/009.copl`, `copl/012.copl`
@@ -208,6 +212,7 @@ Last updated: 2026-02-20
   - EvalML5: `copl/078.copl`, `copl/079.copl`
   - EvalNatExp: `copl/015.copl` to `copl/020.copl`
   - ReduceNatExp: `copl/021.copl` to `copl/024.copl`
+  - While: `copl/151.exam.copl` to `copl/160.exam.copl`
 
 ## Operations
 

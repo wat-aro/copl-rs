@@ -28,6 +28,7 @@ pub enum GameKind {
     EvalNamelessML3,
     EvalNatExp,
     ReduceNatExp,
+    While,
 }
 
 impl GameKind {
@@ -58,6 +59,7 @@ impl GameKind {
             Self::EvalNamelessML3 => "EvalNamelessML3",
             Self::EvalNatExp => "EvalNatExp",
             Self::ReduceNatExp => "ReduceNatExp",
+            Self::While => "While",
         }
     }
 }
@@ -116,6 +118,8 @@ impl TryFrom<&str> for GameKind {
             Ok(Self::EvalNatExp)
         } else if value.eq_ignore_ascii_case("ReduceNatExp") {
             Ok(Self::ReduceNatExp)
+        } else if value.eq_ignore_ascii_case("While") {
+            Ok(Self::While)
         } else {
             Err(ParseGameKindError {
                 raw: value.to_string(),
@@ -505,5 +509,14 @@ mod tests {
 
         let lowercase = GameKind::try_from("reducenatexp").expect("reducenatexp should parse");
         assert_eq!(lowercase.as_str(), "ReduceNatExp");
+    }
+
+    #[test]
+    fn parses_while_game_kind_case_insensitively() {
+        let canonical = GameKind::try_from("While").expect("While should parse");
+        assert_eq!(canonical.as_str(), "While");
+
+        let lowercase = GameKind::try_from("while").expect("while should parse");
+        assert_eq!(lowercase.as_str(), "While");
     }
 }

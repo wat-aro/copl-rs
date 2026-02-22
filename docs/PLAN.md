@@ -54,6 +54,52 @@
 
 ## 現在の計画
 
+### While checker/prover 対応（2026-02-22）
+
+完了メモ（2026-02-22）:
+- 実装:
+  - `GameKind` / dispatch / CLI route に `While` を追加した。
+  - `src/games/while_lang/` を新規作成し、`syntax` / `lexer` / `parser` / `checker` / `prover` / `mod` を実装した。
+  - While 規則（`A-*` / `B-*` / `C-*`）に対応する導出検証と導出生成を実装した。
+  - `prover --game While` が `copl/151.exam.copl` から `copl/160.exam.copl` の judgment を導出可能なことを route テストで固定した。
+- テスト:
+  - `src/games/while_lang/parser.rs` に 151-160 の judgment parse テストを追加した。
+  - `src/games/while_lang/prover.rs` に 151-160 の導出生成 + checker 受理 round-trip テストを追加した。
+  - `src/cli.rs` / `src/core/mod.rs` / `src/lib.rs` に `While` ルーティング回帰テストを追加した。
+- ドキュメント:
+  - `README.md` に `While` の prover 入力仕様・例・対応ゲーム一覧を追記した。
+  - `docs/design.md` に `While` モジュールと prover/checker 実装状態を追記した。
+  - `AGENTS.md` に `While` の CLI/実装/参照規則/サンプル入力を追記した。
+- R1:
+  - Finding: prover 出力の `while ... do (...)` 形式を parser が受理できず round-trip が崩れた。
+  - Action: `WhileCom` の表示規則を見直し、`while`/`if` の枝で不要な command 括弧を出さないよう修正した。
+  - Scope: in-scope
+  - Backlog: なし
+- R2:
+  - Finding: exam judgment（`s=0`）と checker 正規化出力（`s = 0`）の表記差で route テストが不安定だった。
+  - Action: `src/lib.rs` の 151-160 round-trip テストを canonical root judgment 比較へ変更した。
+  - Scope: in-scope
+  - Backlog: なし
+- R3:
+  - Finding: `clippy -D warnings` で `nonminimal_bool` 警告が発生した。
+  - Action: `result == !premise_value` を `result != premise_value` へ修正した。
+  - Scope: in-scope
+  - Backlog: なし
+- R4:
+  - Finding: 指摘なし。
+  - Action: なし。
+  - Scope: in-scope
+  - Backlog: なし
+- R5:
+  - Finding: 指摘なし。
+  - Action: なし。
+  - Scope: in-scope
+  - Backlog: なし
+- 検証:
+  - `cargo fmt`: pass
+  - `cargo test`: pass
+  - `cargo clippy --all-targets --all-features -- -D warnings`: pass
+
 ### EvalRefML3 checker/prover 完全対応計画
 
 最終更新日: 2026-02-21

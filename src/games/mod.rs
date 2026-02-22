@@ -25,6 +25,7 @@ pub mod typing_ml3;
 pub mod typing_ml4;
 pub mod typing_ml5;
 pub mod typing_ml6;
+pub mod while_lang;
 
 use crate::core::{CheckError, CheckReport, Game, GameKind};
 
@@ -55,5 +56,6 @@ pub fn run_checker(game: GameKind, source: &str) -> Result<CheckReport, CheckErr
         GameKind::EvalNamelessML3 => eval_nameless_ml3::EvalNamelessML3Game.check(source),
         GameKind::EvalNatExp => eval_nat_exp::EvalNatExpGame.check(source),
         GameKind::ReduceNatExp => reduce_nat_exp::ReduceNatExpGame.check(source),
+        GameKind::While => while_lang::WhileGame.check(source),
     }
 }

@@ -53,7 +53,8 @@ copl-rs prover --game <name> [file]
 - `prover --game EvalNamelessML3` accepts a single evaluation judgment (`Gamma |- e evalto v`, `... plus ... is ...`, `... minus ... is ...`, `... times ... is ...`, `... less than ... is ...`) and prints a generated derivation in plain text.
 - `prover --game EvalNatExp` accepts a single judgment (`... evalto ...`, `... plus ... is ...`, `... times ... is ...`) and prints a generated derivation in plain text.
 - `prover --game ReduceNatExp` accepts a single judgment (`... ---> ...`, `... -d-> ...`, `... -*-> ...`, `... plus ... is ...`, `... times ... is ...`) and prints a generated derivation in plain text.
-- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, `prover --game EvalML4`, `prover --game EvalML5`, `prover --game EvalML6`, `prover --game EvalContML1`, `prover --game EvalContML4`, `prover --game EvalRefML3`, `prover --game TypingML2`, `prover --game TypingML3`, `prover --game TypingML4`, `prover --game TypingML5`, `prover --game TypingML6`, `prover --game PolyTypingML3`, `prover --game PolyTypingML4`, `prover --game NamelessML3`, `prover --game EvalNamelessML3`, `prover --game EvalNatExp`, and `prover --game ReduceNatExp` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
+- `prover --game While` accepts a single judgment (`... changes ... to ...`, `sigma |- a evalto i`, `sigma |- b evalto bool`) and prints a generated derivation in plain text.
+- For non-derivable `prover --game Nat`, `prover --game CompareNat1`, `prover --game CompareNat2`, `prover --game CompareNat3`, `prover --game EvalML1`, `prover --game EvalML1Err`, `prover --game EvalML2`, `prover --game EvalML3`, `prover --game EvalML4`, `prover --game EvalML5`, `prover --game EvalML6`, `prover --game EvalContML1`, `prover --game EvalContML4`, `prover --game EvalRefML3`, `prover --game TypingML2`, `prover --game TypingML3`, `prover --game TypingML4`, `prover --game TypingML5`, `prover --game TypingML6`, `prover --game PolyTypingML3`, `prover --game PolyTypingML4`, `prover --game NamelessML3`, `prover --game EvalNamelessML3`, `prover --game EvalNatExp`, `prover --game ReduceNatExp`, and `prover --game While` input, plain-text diagnostics include `expected` / `actual` / `fix` where available.
 
 Examples:
 
@@ -86,6 +87,7 @@ echo "|- let x = 3 in x ==> let . = 3 in #1" | copl-rs prover --game NamelessML3
 echo "|- let . = 3 in #1 evalto 3" | copl-rs prover --game EvalNamelessML3
 echo "S(Z) + S(Z) evalto S(S(Z))" | copl-rs prover --game EvalNatExp
 echo "S(Z) + S(Z) ---> S(S(Z))" | copl-rs prover --game ReduceNatExp
+echo "while (0 < i) do s := s + i; i := i - 1 changes s = 0, i = 1 to s = 1, i = 0" | copl-rs prover --game While
 ```
 
 Supported `--game` values:
@@ -116,6 +118,7 @@ NamelessML3
 EvalNamelessML3
 EvalNatExp
 ReduceNatExp
+While
 ```
 
 On success, the checker prints the inferred root judgment text in plain text, for example:

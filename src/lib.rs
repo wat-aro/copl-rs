@@ -64,6 +64,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::EvalNamelessML3 => games::eval_nameless_ml3::prove(&source),
                 core::GameKind::EvalNatExp => games::eval_nat_exp::prove(&source),
                 core::GameKind::ReduceNatExp => games::reduce_nat_exp::prove(&source),
+                core::GameKind::While => games::while_lang::prove(&source),
             }
             .map_err(RunError::Check)?;
             write_stdout_line(stdout, &derivation)?;
@@ -3615,6 +3616,138 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
 
         let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
         assert_eq!(checker_text.trim(), expected_root);
+    }
+
+    #[test]
+    fn routes_checker_while_with_derivation_system_name() {
+        let mut stdin =
+            &b"// -*- copl-game: \"While\" -*-\n\nskip changes s = 0 to s = 0 by C-Skip {}\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "checker", "--game", "While"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(text.trim(), "skip changes s = 0 to s = 0");
+    }
+
+    #[test]
+    fn routes_prover_while_and_prints_derivation() {
+        let mut stdin = include_bytes!("../copl/152.exam.copl").as_slice();
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "While"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+
+        assert!(result.is_ok());
+        let text = String::from_utf8(out).expect("stdout should be utf-8");
+        assert_eq!(
+            text.trim(),
+            "x := 1 changes x = 0 to x = 1 by C-Assign {\n  x = 0 |- 1 evalto 1 by A-Const {}\n}"
+        );
+    }
+
+    #[test]
+    fn routes_prover_while_with_non_derivable_judgment_to_check_error() {
+        let mut stdin = &b"x := 1 changes x = 0 to x = 0\n"[..];
+        let mut out = Vec::new();
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "While"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        )
+        .expect_err("run should fail");
+
+        assert!(result
+            .to_string()
+            .contains("judgment is not derivable in While"));
+    }
+
+    #[test]
+    fn prover_while_output_round_trips_for_exam_judgments_151_to_160() {
+        for (fixture, expected_root) in [
+            (
+                include_str!("../copl/151.exam.copl"),
+                "skip changes s = 0 to s = 0",
+            ),
+            (
+                include_str!("../copl/152.exam.copl"),
+                "x := 1 changes x = 0 to x = 1",
+            ),
+            (
+                include_str!("../copl/153.exam.copl"),
+                "x := 1; y := 2 changes x = 0, y = 0 to x = 1, y = 2",
+            ),
+            (
+                include_str!("../copl/154.exam.copl"),
+                "x := x + 1 changes x = 2 to x = 3",
+            ),
+            (
+                include_str!("../copl/155.exam.copl"),
+                "if 1 < x then x := 1 else x := 2 changes x = 5 to x = 1",
+            ),
+            (
+                include_str!("../copl/156.exam.copl"),
+                "if 1 < x then x := x + 1 else x := x + 2 changes x = 0 to x = 2",
+            ),
+            (
+                include_str!("../copl/157.exam.copl"),
+                "while (1 < x) do x := x - 1 changes x = 3 to x = 1",
+            ),
+            (
+                include_str!("../copl/158.exam.copl"),
+                "while (1 < x) do x := x - 1 changes x = 0 to x = 0",
+            ),
+            (
+                include_str!("../copl/159.exam.copl"),
+                "while (0 < i) do s := s + i; i := i - 1 changes s = 0, i = 1 to s = 1, i = 0",
+            ),
+            (
+                include_str!("../copl/160.exam.copl"),
+                "while (0 < x && 0 < y) do if y < x then x := x - 1 else y := y - 1 changes x = 2, y = 2 to x = 1, y = 0",
+            ),
+        ] {
+            let mut prover_stdin = fixture.as_bytes();
+            let mut prover_out = Vec::new();
+            let mut prover_err = Vec::new();
+            let prover_result = run(
+                vec!["copl-rs", "prover", "--game", "While"],
+                &mut prover_stdin,
+                &mut prover_out,
+                &mut prover_err,
+            );
+            assert!(prover_result.is_ok());
+
+            let derivation = String::from_utf8(prover_out).expect("stdout should be utf-8");
+
+            let mut checker_stdin = derivation.as_bytes();
+            let mut checker_out = Vec::new();
+            let mut checker_err = Vec::new();
+            let checker_result = run(
+                vec!["copl-rs", "checker", "--game", "While"],
+                &mut checker_stdin,
+                &mut checker_out,
+                &mut checker_err,
+            );
+            assert!(checker_result.is_ok());
+
+            let checker_text = String::from_utf8(checker_out).expect("stdout should be utf-8");
+            assert_eq!(checker_text.trim(), expected_root);
+        }
     }
 
     #[test]
