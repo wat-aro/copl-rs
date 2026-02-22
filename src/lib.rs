@@ -33,10 +33,7 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
         Command::Checker(command) => {
             let source = read_source(&command.input, stdin)?;
             let report = games::run_checker(command.game, &source).map_err(RunError::Check)?;
-            writeln!(stdout, "{report}").map_err(|source| RunError::Io {
-                source,
-                context: "stdout".to_string(),
-            })?;
+            write_stdout_line(stdout, &report)?;
             Ok(())
         }
         Command::Prover(command) => {
@@ -69,13 +66,23 @@ fn execute(cli: Cli, stdin: &mut dyn Read, stdout: &mut dyn Write) -> Result<(),
                 core::GameKind::ReduceNatExp => games::reduce_nat_exp::prove(&source),
             }
             .map_err(RunError::Check)?;
-            writeln!(stdout, "{derivation}").map_err(|source| RunError::Io {
-                source,
-                context: "stdout".to_string(),
-            })?;
+            write_stdout_line(stdout, &derivation)?;
             Ok(())
         }
     }
+}
+
+fn write_stdout_line(value: &mut dyn Write, output: &dyn fmt::Display) -> Result<(), RunError> {
+    writeln!(value, "{output}").or_else(|source| {
+        if source.kind() == io::ErrorKind::BrokenPipe {
+            Ok(())
+        } else {
+            Err(RunError::Io {
+                source,
+                context: "stdout".to_string(),
+            })
+        }
+    })
 }
 
 fn read_source(input: &InputSource, stdin: &mut dyn Read) -> Result<String, RunError> {
@@ -174,7 +181,21 @@ impl Error for RunError {
 
 #[cfg(test)]
 mod tests {
+    use std::io::{self, Write};
+
     use super::{run, MAX_INPUT_BYTES};
+
+    struct BrokenPipeWriter;
+
+    impl Write for BrokenPipeWriter {
+        fn write(&mut self, _buf: &[u8]) -> io::Result<usize> {
+            Err(io::Error::new(io::ErrorKind::BrokenPipe, "broken pipe"))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
 
     fn fixture_007_derivation_body() -> &'static str {
         include_str!("../copl/007.copl")
@@ -3665,5 +3686,20 @@ S(S(Z)) is less than S(S(S(S(S(Z))))) by L-SuccR {
         let message = result.to_string();
         assert!(message.contains("No such rule: P-Unknown"));
         assert!(message.contains("at 2:3"));
+    }
+
+    #[test]
+    fn ignores_broken_pipe_on_stdout_when_running_prover() {
+        let mut stdin = &b"Z plus Z is Z\n"[..];
+        let mut out = BrokenPipeWriter;
+        let mut err = Vec::new();
+
+        let result = run(
+            vec!["copl-rs", "prover", "--game", "Nat"],
+            &mut stdin,
+            &mut out,
+            &mut err,
+        );
+        assert!(result.is_ok());
     }
 }

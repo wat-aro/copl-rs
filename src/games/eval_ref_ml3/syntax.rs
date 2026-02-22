@@ -280,7 +280,13 @@ impl EvalRefML3Expr {
             }
             Self::Deref { expr } => {
                 write!(f, "!")?;
-                expr.fmt_with_precedence(f, self.precedence())?;
+                if matches!(expr.as_ref(), Self::Deref { .. }) {
+                    write!(f, "(")?;
+                    expr.fmt_with_precedence(f, 0)?;
+                    write!(f, ")")?;
+                } else {
+                    expr.fmt_with_precedence(f, self.precedence())?;
+                }
             }
             Self::Assign { target, value } => {
                 target.fmt_with_precedence(f, self.precedence() + 1)?;
@@ -496,6 +502,13 @@ mod tests {
             }),
         };
         assert_eq!(deref_of_app.to_string(), "!(f x)");
+
+        let nested_deref = EvalRefML3Expr::Deref {
+            expr: Box::new(EvalRefML3Expr::Deref {
+                expr: Box::new(EvalRefML3Expr::Var("x".to_string())),
+            }),
+        };
+        assert_eq!(nested_deref.to_string(), "!(!x)");
     }
 
     #[test]
